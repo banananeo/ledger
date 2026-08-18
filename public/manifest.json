@@ -1,6 +1,6 @@
 {
-  "name": "EduWars Dashboard",
-  "short_name": "EduWars",
+  "name": "Ledger.",
+  "short_name": "Ledger.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -8,7 +8,7 @@
   "description": "A minimal dashboard for SRM Academia: attendance, timetable, marks, and academic calendar in one place.",
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20'/%3E%3C/svg%3E",
+      "src": "/icon.svg",
       "sizes": "192x192 512x512",
       "type": "image/svg+xml"
     }
