@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Shell from './components/dashboard/Shell.jsx';
 import LoginForm from './components/LoginForm.jsx';
-import { refreshSession, clearStoredSession, getStoredCookies } from './api';
+import { refreshSession, clearStoredSession, getStoredCookies, getStoredData, saveStoredData } from './api';
 import type { AppData } from './types';
 import './App.css';
 
@@ -15,18 +15,37 @@ export function App() {
   // Attempt auto-restoring session from stored cookies on mount
   useEffect(() => {
     const savedCookies = getStoredCookies();
+    const savedData = getStoredData();
+
     if (savedCookies && Object.keys(savedCookies).length > 0) {
+      if (savedData) {
+        setData(savedData);
+        setAuthed(true);
+        setLastSynced(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      }
+
       setRefreshing(true);
       refreshSession({ cookies: savedCookies })
         .then((freshData) => {
           setData(freshData);
+          saveStoredData(freshData);
           setAuthed(true);
           setLastSynced(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
         })
-        .catch(() => {
-          clearStoredSession();
-          setAuthed(false);
-          setData(null);
+        .catch((err: any) => {
+          if (err?.statusCode === 401) {
+            clearStoredSession();
+            setAuthed(false);
+            setData(null);
+          } else if (!savedData) {
+            // If we don't have offline data to fallback on, log out to show login screen
+            clearStoredSession();
+            setAuthed(false);
+            setData(null);
+          } else {
+            // We have offline data, just show error
+            setError('Could not connect. Showing offline data.');
+          }
         })
         .finally(() => {
           setRefreshing(false);
@@ -36,13 +55,14 @@ export function App() {
 
   const handleLoginSuccess = (loginData: AppData) => {
     setData(loginData);
+    saveStoredData(loginData);
     setAuthed(true);
     setLastSynced(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     setError('');
   };
 
   const handleSync = useCallback(async () => {
-    if (!data?.session?.cookies) return;
+    if (!data?.session?.cookies || refreshing) return;
     setRefreshing(true);
     setError('');
 
@@ -51,21 +71,26 @@ export function App() {
         cookies: data.session.cookies,
         isDemo: data?.metadata?.loginBy === 'demo',
       });
-      setData((prev) => ({
-        ...prev,
+      const mergedData = {
+        ...data,
         ...fresh,
-        profile: prev?.profile || fresh.profile,
-      }));
+        profile: data?.profile || fresh.profile,
+      };
+      setData(mergedData);
+      saveStoredData(mergedData);
       setLastSynced(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     } catch (err: any) {
-      setError(err?.message || 'Session expired. Please sign in again.');
-      clearStoredSession();
-      setAuthed(false);
-      setData(null);
+      setError(err?.message || 'Failed to sync data.');
+      // Only log out if it's a 401 Unauthorized (invalid session)
+      if (err?.statusCode === 401) {
+        clearStoredSession();
+        setAuthed(false);
+        setData(null);
+      }
     } finally {
       setRefreshing(false);
     }
-  }, [data]);
+  }, [data, refreshing]);
 
   useEffect(() => {
     const onFocus = () => {

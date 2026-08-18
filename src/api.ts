@@ -54,11 +54,29 @@ export function saveStoredCookies(cookies: Record<string, string>) {
   }
 }
 
+export function getStoredData(): AppData | null {
+  try {
+    const raw = localStorage.getItem('eduwars_dashboard_data');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveStoredData(data: AppData) {
+  try {
+    localStorage.setItem('eduwars_dashboard_data', JSON.stringify(data));
+  } catch (err) {
+    console.error("Failed to save data to localStorage:", err);
+  }
+}
+
 export function clearStoredSession() {
   try {
     localStorage.removeItem(COOKIE_STORAGE_KEY);
     localStorage.removeItem(PROFILE_STORAGE_KEY);
     localStorage.removeItem(METADATA_STORAGE_KEY);
+    localStorage.removeItem('eduwars_dashboard_data');
   } catch (err) {
     console.error("Failed to clear session:", err);
   }
