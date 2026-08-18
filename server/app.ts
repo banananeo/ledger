@@ -110,8 +110,13 @@ export function createApp(): Express {
       if (err instanceof HttpError) {
         return res.status(err.statusCode).json({ detail: err.detail });
       }
+      if (err instanceof TypeError || err.name === 'FetchError') {
+        return res.status(503).json({
+          detail: "Academia server is unreachable or timed out.",
+        });
+      }
       const message = err?.message || "Session refresh failed";
-      return res.status(401).json({ detail: message });
+      return res.status(500).json({ detail: message });
     }
   });
 
