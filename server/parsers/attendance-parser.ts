@@ -24,7 +24,8 @@ export class AttendanceParser {
       if (!COURSE_CODE_PATTERN.test(codeText)) return;
 
       const code = codeText.replace("Regular", "").trim();
-      const title = strip($(columns[1]).text());
+      const rawTitle = strip($(columns[1]).text());
+      const title = rawTitle.replace(/\s*\/?\s*(t|p)\s*$/i, "").trim();
       const type = strip($(columns[2]).text());
       const slot = strip($(columns[4]).text());
 

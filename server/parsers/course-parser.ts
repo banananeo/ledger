@@ -59,9 +59,12 @@ export class CourseParser {
       if (faculty.includes("Lab Based")) faculty = "Unknown";
 
       const slotLabel = strip($(cells[8]).text());
+      const rawTitle = strip($(cells[2]).text());
+      const cleanTitle = rawTitle.replace(/\s*\/?\s*(t|p)\s*$/i, "").trim();
+
       const base = {
         courseCode,
-        courseTitle: strip($(cells[2]).text()),
+        courseTitle: cleanTitle,
         credits: strip($(cells[3]).text()),
         rawType: strip($(cells[6]).text()),
         faculty,

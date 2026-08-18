@@ -67,6 +67,22 @@ export function App() {
     }
   }, [data]);
 
+  useEffect(() => {
+    const onFocus = () => {
+      if (authed && data) {
+        handleSync();
+      }
+    };
+    
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('online', onFocus);
+    
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('online', onFocus);
+    };
+  }, [authed, data, handleSync]);
+
   const handleLogout = () => {
     clearStoredSession();
     setAuthed(false);

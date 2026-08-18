@@ -2,6 +2,11 @@ import * as cheerio from "cheerio";
 import type { CourseSlotLookup, ScheduleDay, ScheduleEntry } from "../types.js";
 import { strip } from "../utils/text.js";
 
+function parseTime(time: string) {
+  const [h, m] = time.split(':').map(Number);
+  return (h || 0) * 60 + (m || 0);
+}
+
 export class TimetableParser {
   static extract(
     htmlContent: string | null,
@@ -37,31 +42,45 @@ export class TimetableParser {
       if (!dayMatch) continue;
 
       const entries: ScheduleEntry[] = [];
-      columns.slice(1).forEach((cell, index) => {
-        if (index >= timeHeaders.length) return;
+      let colIndex = 0;
 
-        const rawSlot = strip($(cell).text());
+      columns.slice(1).forEach((cell) => {
+        const $cell = $(cell);
+        const colspan = parseInt($cell.attr("colspan") || "1", 10);
+        
+        if (colIndex >= timeHeaders.length) {
+          colIndex += colspan;
+          return;
+        }
+
+        const rawSlot = strip($cell.text());
         const slotCode = strip(rawSlot.split("/")[0]);
         const slotDetails = courseSlotLookup[slotCode];
 
-        if (!slotCode || slotCode === "-" || !slotDetails) return;
+        if (slotCode && slotCode !== "-" && slotDetails) {
+          const timeLabel = normalizeTimeLabel(timeHeaders[colIndex]);
+          const [startTime, endTime] = splitTimeLabel(timeLabel);
 
-        const timeLabel = normalizeTimeLabel(timeHeaders[index]);
-        const [startTime, endTime] = splitTimeLabel(timeLabel);
+          entries.push({
+            slotCode,
+            courseCode: slotDetails.courseCode,
+            // Clean up any trailing /t, /T, /p, /P that Academia sometimes appends
+            courseTitle: slotDetails.courseTitle.replace(/\s*\/?\s*(t|p)\s*$/i, "").trim(),
+            slotType: slotDetails.slotType,
+            rawType: slotDetails.rawType,
+            room: slotDetails.room || "TBA",
+            faculty: slotDetails.faculty || "TBA",
+            timeLabel,
+            startTime,
+            endTime,
+          });
+        }
 
-        entries.push({
-          slotCode,
-          courseCode: slotDetails.courseCode,
-          courseTitle: slotDetails.courseTitle,
-          slotType: slotDetails.slotType,
-          rawType: slotDetails.rawType,
-          room: slotDetails.room || "TBA",
-          faculty: slotDetails.faculty || "TBA",
-          timeLabel,
-          startTime,
-          endTime,
-        });
+        colIndex += colspan;
       });
+
+      // Sort entries chronologically by startTime just to be safe
+      entries.sort((a, b) => parseTime(a.startTime) - parseTime(b.startTime));
 
       schedule.push({ dayLabel: `Day ${dayMatch[1]}`, entries });
     }
@@ -78,3 +97,4 @@ function splitTimeLabel(value: string): [string, string] {
   const [start = "", end = ""] = value.split("-").map((part) => strip(part));
   return [start, end];
 }
+
