@@ -64,6 +64,22 @@ export function clearStoredSession() {
   }
 }
 
+async function parseJsonResponse(response: Response): Promise<any> {
+  const text = await response.text();
+  try {
+    return text ? JSON.parse(text) : {};
+  } catch {
+    if (!response.ok) {
+      const snippet = text.replace(/<[^>]*>/g, '').trim();
+      throw new ApiError(
+        snippet ? `Server error (${response.status}): ${snippet.slice(0, 120)}` : `Server error (${response.status}: ${response.statusText})`,
+        response.status
+      );
+    }
+    throw new ApiError(`Invalid server response format (${response.status})`, response.status);
+  }
+}
+
 export async function login(payload: LoginPayload): Promise<AppData> {
   const response = await fetch("/api/login", {
     method: "POST",
@@ -71,7 +87,7 @@ export async function login(payload: LoginPayload): Promise<AppData> {
     body: JSON.stringify(payload),
   });
 
-  const data = await response.json();
+  const data = await parseJsonResponse(response);
 
   if (!response.ok) {
     const detail = data?.detail;
@@ -96,7 +112,7 @@ export async function refreshSession(payload: RefreshPayload): Promise<AppData> 
     body: JSON.stringify(payload),
   });
 
-  const data = await response.json();
+  const data = await parseJsonResponse(response);
 
   if (!response.ok) {
     const detail = data?.detail;
@@ -113,3 +129,4 @@ export async function refreshSession(payload: RefreshPayload): Promise<AppData> 
 
   return data as AppData;
 }
+
