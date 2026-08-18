@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express, { Express, Request, Response } from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { loadLoginData, loadRefreshData, buildLoginResponse, loadCalendarData, loadAttendanceHtml } from "./server/shared/loader";
@@ -7,9 +7,8 @@ import { MarksParser } from "./server/parsers/marks-parser";
 import { HttpError } from "./server/shared/errors";
 import { getDemoData } from "./server/shared/demo-data";
 
-async function startServer() {
+export function createApp(): Express {
   const app = express();
-  const PORT = 3000;
 
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
@@ -203,6 +202,14 @@ async function startServer() {
   app.post("/api/calendar", handleCalendar);
   app.post("/calendar", handleCalendar);
 
+  return app;
+}
+
+const app = createApp();
+
+async function startServer() {
+  const PORT = 3000;
+
   // Vite middleware in dev / Static files in production
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
@@ -223,7 +230,13 @@ async function startServer() {
   });
 }
 
-startServer().catch((err) => {
-  console.error("Failed to start server:", err);
-  process.exit(1);
-});
+// Only start the standalone server listener when not running in Vercel Serverless environment
+if (!process.env.VERCEL) {
+  startServer().catch((err) => {
+    console.error("Failed to start server:", err);
+    process.exit(1);
+  });
+}
+
+export default app;
+
