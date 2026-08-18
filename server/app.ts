@@ -1,9 +1,9 @@
 import express, { Express, Request, Response } from "express";
-import { loadLoginData, loadRefreshData, buildLoginResponse, loadCalendarData, loadAttendanceHtml } from "./shared/loader";
-import { AttendanceParser } from "./parsers/attendance-parser";
-import { MarksParser } from "./parsers/marks-parser";
-import { HttpError } from "./shared/errors";
-import { getDemoData } from "./shared/demo-data";
+import { loadLoginData, loadRefreshData, buildLoginResponse, loadCalendarData, loadAttendanceHtml } from "./shared/loader.js";
+import { AttendanceParser } from "./parsers/attendance-parser.js";
+import { MarksParser } from "./parsers/marks-parser.js";
+import { HttpError } from "./shared/errors.js";
+import { getDemoData } from "./shared/demo-data.js";
 
 export function createApp(): Express {
   const app = express();

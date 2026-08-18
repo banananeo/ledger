@@ -1,12 +1,12 @@
-import { PortalClient } from "./academia-client";
-import { ProfileParser } from "../parsers/profile-parser";
-import { CourseParser } from "../parsers/course-parser";
-import { AttendanceParser } from "../parsers/attendance-parser";
-import { MarksParser } from "../parsers/marks-parser";
-import { TimetableParser } from "../parsers/timetable-parser";
-import { CalendarParser } from "../parsers/calendar-parser";
-import { HttpError } from "./errors";
-import type { Credentials, CalendarRequest, LoginMetadata } from "../types";
+import { PortalClient } from "./academia-client.js";
+import { ProfileParser } from "../parsers/profile-parser.js";
+import { CourseParser } from "../parsers/course-parser.js";
+import { AttendanceParser } from "../parsers/attendance-parser.js";
+import { MarksParser } from "../parsers/marks-parser.js";
+import { TimetableParser } from "../parsers/timetable-parser.js";
+import { CalendarParser } from "../parsers/calendar-parser.js";
+import { HttpError } from "./errors.js";
+import type { Credentials, CalendarRequest, LoginMetadata } from "../types.js";
 
 export async function authenticateIfNeeded(
   client: PortalClient,

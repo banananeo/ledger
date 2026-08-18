@@ -1,7 +1,7 @@
 import * as cheerio from "cheerio";
-import { BASE_URL, DEFAULT_HEADERS, LOGIN_URL } from "../config";
-import { HttpError } from "./errors";
-import type { CaptchaRequiredDetail } from "../types";
+import { BASE_URL, DEFAULT_HEADERS, LOGIN_URL } from "../config.js";
+import { HttpError } from "./errors.js";
+import type { CaptchaRequiredDetail } from "../types.js";
 
 type CookieMap = Map<string, string>;
 

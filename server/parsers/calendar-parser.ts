@@ -1,7 +1,7 @@
 import * as cheerio from "cheerio";
 import type { Element } from "domhandler";
-import type { AcademicCalendar, CalendarEntry, CalendarMonth } from "../types";
-import { strip } from "../utils/text";
+import type { AcademicCalendar, CalendarEntry, CalendarMonth } from "../types.js";
+import { strip } from "../utils/text.js";
 
 const MONTH_LOOKUP: Record<string, number> = {
   Jan: 1,

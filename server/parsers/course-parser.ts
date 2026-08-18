@@ -1,6 +1,6 @@
 import * as cheerio from "cheerio";
-import type { CourseCatalogEntry, CourseSlot, CourseSlotLookup } from "../types";
-import { strip } from "../utils/text";
+import type { CourseCatalogEntry, CourseSlot, CourseSlotLookup } from "../types.js";
+import { strip } from "../utils/text.js";
 
 export class CourseParser {
   static extract(htmlContent: string | null): CourseCatalogEntry[] {

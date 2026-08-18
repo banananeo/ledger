@@ -1,6 +1,6 @@
-import { BASE_URL, URLS } from "../config";
-import { PageDecoder } from "./page-decoder";
-import { SessionManager } from "./session-manager";
+import { BASE_URL, URLS } from "../config.js";
+import { PageDecoder } from "./page-decoder.js";
+import { SessionManager } from "./session-manager.js";
 
 export class PortalClient {
   readonly sessionManager: SessionManager;

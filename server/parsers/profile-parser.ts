@@ -1,7 +1,7 @@
 import * as cheerio from "cheerio";
 import type { Element } from "domhandler";
-import type { StudentProfile } from "../types";
-import { strip } from "../utils/text";
+import type { StudentProfile } from "../types.js";
+import { strip } from "../utils/text.js";
 
 export class ProfileParser {
   static extract(htmlContent: string | null): StudentProfile {

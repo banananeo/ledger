@@ -1,6 +1,6 @@
 import * as cheerio from "cheerio";
-import type { AttendanceRecord } from "../types";
-import { strip } from "../utils/text";
+import type { AttendanceRecord } from "../types.js";
+import { strip } from "../utils/text.js";
 
 const COURSE_CODE_PATTERN = /^[A-Z0-9]{8,12}/;
 

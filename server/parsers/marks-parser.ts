@@ -1,7 +1,7 @@
 import * as cheerio from "cheerio";
 import type { AnyNode } from "domhandler";
-import type { MarkAssessment, MarkRecord } from "../types";
-import { strip } from "../utils/text";
+import type { MarkAssessment, MarkRecord } from "../types.js";
+import { strip } from "../utils/text.js";
 
 const COURSE_CODE_RE = /^[A-Z0-9]{8,12}$/;
 

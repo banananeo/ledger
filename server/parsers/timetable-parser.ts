@@ -1,6 +1,6 @@
 import * as cheerio from "cheerio";
-import type { CourseSlotLookup, ScheduleDay, ScheduleEntry } from "../types";
-import { strip } from "../utils/text";
+import type { CourseSlotLookup, ScheduleDay, ScheduleEntry } from "../types.js";
+import { strip } from "../utils/text.js";
 
 export class TimetableParser {
   static extract(

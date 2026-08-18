@@ -1,4 +1,4 @@
-import type { AcademicCalendar, AttendanceRecord, CourseCatalogEntry, MarkRecord, ScheduleDay, StudentProfile } from "../types";
+import type { AcademicCalendar, AttendanceRecord, CourseCatalogEntry, MarkRecord, ScheduleDay, StudentProfile } from "../types.js";
 
 export function getDemoData() {
   const profile: StudentProfile = {
