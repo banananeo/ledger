@@ -1,0 +1,142 @@
+.mtab-wrapper {
+  display: none;
+}
+
+@media (max-width: 880px) {
+  .mtab-wrapper {
+    display: flex;
+    justify-content: center;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    pointer-events: none;
+    padding: 0 16px calc(14px + env(safe-area-inset-bottom));
+  }
+
+  .mtab-glass {
+    pointer-events: auto;
+    width: 100%;
+    max-width: 390px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    padding: 5px;
+    border-radius: 9999px;
+    
+    /* iOS Liquid Glass Frosted Surface */
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.72) 0%,
+      rgba(255, 255, 255, 0.48) 50%,
+      rgba(255, 255, 255, 0.62) 100%
+    );
+    backdrop-filter: blur(28px) saturate(200%) brightness(1.02);
+    -webkit-backdrop-filter: blur(28px) saturate(200%) brightness(1.02);
+    
+    /* Specular glass rim & deep ambient shadow */
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    box-shadow:
+      0 16px 36px -8px rgba(0, 0, 0, 0.15),
+      0 4px 12px rgba(0, 0, 0, 0.06),
+      inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.95),
+      inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.04);
+  }
+
+  .mtab-btn {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 8px 4px;
+    border: none;
+    background: transparent;
+    color: rgba(28, 28, 30, 0.62);
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 550;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    border-radius: 9999px;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.18s ease;
+    z-index: 1;
+  }
+
+  .mtab-btn:hover {
+    color: rgba(28, 28, 30, 0.85);
+  }
+
+  .mtab-btn--active {
+    color: var(--ink);
+    font-weight: 650;
+  }
+
+  .mtab-btn__icon-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .mtab-btn--active .mtab-btn__icon-wrapper {
+    transform: translateY(-1px) scale(1.08);
+  }
+
+  .mtab-btn__label {
+    line-height: 1;
+    font-size: 10.5px;
+  }
+
+  /* Liquid Glass sliding pill */
+  .mtab-indicator {
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.98) 0%,
+      rgba(247, 247, 250, 0.92) 100%
+    );
+    border: 0.5px solid rgba(255, 255, 255, 0.9);
+    box-shadow:
+      0 4px 16px -2px rgba(0, 0, 0, 0.1),
+      0 2px 5px rgba(0, 0, 0, 0.04),
+      inset 0 1px 0 rgba(255, 255, 255, 1),
+      inset 0 -1px 1.5px rgba(0, 0, 0, 0.04);
+    z-index: -1;
+    overflow: hidden;
+  }
+
+  .mtab-indicator__sheen {
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 45%;
+    border-radius: 9999px;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.8) 0%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    pointer-events: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .mtab-btn__label {
+    display: none;
+  }
+  .mtab-btn {
+    padding: 10px 4px;
+  }
+}
+

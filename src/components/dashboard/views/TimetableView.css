@@ -1,0 +1,111 @@
+.timetable {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.timetable__note {
+  font-size: 13px;
+  color: var(--ink-soft);
+  max-width: 60ch;
+}
+
+.timetable__stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+}
+
+.timetable__stepper-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.timetable__today-tag {
+  margin-top: -2px;
+}
+
+.timetable__count {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.timetable__dots {
+  padding: 4px 0;
+}
+
+.timetable__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.timetable__period {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+}
+
+.timetable__period-time {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 12.5px;
+  color: var(--ink);
+  min-width: 62px;
+  flex-shrink: 0;
+}
+
+.timetable__period-time-sep {
+  width: 1px;
+  height: 10px;
+  background: var(--line-strong);
+}
+
+.timetable__period-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.timetable__period-title {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.timetable__period-sub {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  margin-top: 2px;
+}
+
+.timetable__period-type {
+  flex-shrink: 0;
+}
+
+.timetable__empty-card {
+  padding: 28px 20px;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 560px) {
+  .timetable__period {
+    padding: 12px 14px;
+    gap: 12px;
+  }
+  .timetable__period-title {
+    font-size: 14px;
+  }
+}

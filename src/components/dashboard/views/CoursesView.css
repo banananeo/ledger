@@ -1,0 +1,86 @@
+.courses__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.courses__card {
+  padding: 18px 20px;
+}
+
+.courses__card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.courses__card-title {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.courses__card-code {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-top: 2px;
+}
+
+.courses__card-head-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.courses__slots {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.courses__slot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.courses__slot-type {
+  flex-shrink: 0;
+  min-width: 48px;
+  justify-content: center;
+}
+
+.courses__slot-faculty {
+  font-size: 13.5px;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.courses__slot-room {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-top: 1px;
+}
+
+.courses__empty-card {
+  padding: 28px 20px;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 560px) {
+  .courses__card {
+    padding: 16px;
+  }
+}

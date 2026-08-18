@@ -1,0 +1,6 @@
+{
+  "name": "EduWars - Academia Ledger",
+  "description": "Unified SRM Academia dashboard integrating attendance, timetable, courses, marks, and academic calendar with live portal sync.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
