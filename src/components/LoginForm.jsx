@@ -1,6 +1,34 @@
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import { login, ApiError } from '../api';
 import './LoginForm.css';
+
+const containerVariants = {
+  hidden: { opacity: 0, scale: 0.96, y: 16 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: {
+      duration: 0.45,
+      ease: [0.16, 1, 0.3, 1],
+      staggerChildren: 0.08,
+      delayChildren: 0.05,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.35,
+      ease: [0.16, 1, 0.3, 1],
+    },
+  },
+};
 
 function LoginForm({ onSuccess }) {
   const [username, setUsername] = useState('');
@@ -57,20 +85,34 @@ function LoginForm({ onSuccess }) {
 
   return (
     <div className="login-wrapper">
-      <div className="login-card">
-        <div className="login-header">
+      <motion.div
+        className="login-card"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.div className="login-header" variants={itemVariants}>
           <div className="login-header__brand">
             Ledger<span className="login-header__brand-dot">.</span>
           </div>
           <p className="login-header__subtitle">
             Sign in with your official SRM Academia credentials to access your attendance, timetable, and records.
           </p>
-        </div>
+        </motion.div>
 
-        {error && <div className="login-error-banner">{error}</div>}
+        {error && (
+          <motion.div
+            className="login-error-banner"
+            initial={{ opacity: 0, height: 0, y: -6 }}
+            animate={{ opacity: 1, height: 'auto', y: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            {error}
+          </motion.div>
+        )}
 
         <form className="login-form" onSubmit={handleSubmit}>
-          <div className="form-group">
+          <motion.div className="form-group" variants={itemVariants}>
             <label className="form-label" htmlFor="netid-input">
               Net ID
             </label>
@@ -85,9 +127,9 @@ function LoginForm({ onSuccess }) {
               autoComplete="username"
               required
             />
-          </div>
+          </motion.div>
 
-          <div className="form-group">
+          <motion.div className="form-group" variants={itemVariants}>
             <label className="form-label" htmlFor="password-input">
               Password
             </label>
@@ -112,10 +154,15 @@ function LoginForm({ onSuccess }) {
                 {showPassword ? 'HIDE' : 'SHOW'}
               </button>
             </div>
-          </div>
+          </motion.div>
 
           {captchaChallenge && (
-            <div className="captcha-box">
+            <motion.div
+              className="captcha-box"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
+            >
               <label className="form-label" htmlFor="captcha-input">
                 Security Code (Captcha)
               </label>
@@ -137,10 +184,10 @@ function LoginForm({ onSuccess }) {
                 required
                 autoFocus
               />
-            </div>
+            </motion.div>
           )}
 
-          <div className="login-actions">
+          <motion.div className="login-actions" variants={itemVariants}>
             <button
               type="submit"
               className="btn-primary"
@@ -159,13 +206,13 @@ function LoginForm({ onSuccess }) {
             >
               ✨ Try Instant Demo Mode
             </button>
-          </div>
+          </motion.div>
         </form>
 
-        <div className="login-footer-tip">
+        <motion.div className="login-footer-tip" variants={itemVariants}>
           🔒 <strong>Direct Integration</strong>: Your credentials are encrypted and sent directly to the local backend gateway to establish an active session with SRM's ZohoCreator portal. No passwords are ever stored.
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }

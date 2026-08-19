@@ -1,7 +1,31 @@
 import React from 'react';
+import { motion } from 'motion/react';
 import { ClockIcon, CheckRingIcon, CalendarIcon, AwardIcon } from '../Icons.jsx';
 import { todayISO, findEntryForDate, allEntries } from '../../../utils/calendar.js';
 import './HomeView.css';
+
+const homeContainerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.09,
+      delayChildren: 0.04,
+    },
+  },
+};
+
+const homeItemVariants = {
+  hidden: { opacity: 0, y: 14 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.4,
+      ease: [0.16, 1, 0.3, 1],
+    },
+  },
+};
 
 const NAV_CARDS = [
   { id: 'timetable', label: 'Timetable', Icon: ClockIcon, tone: 'sky', blurb: 'Classes by Day Order' },
@@ -161,17 +185,22 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
   const positiveMessage = getDailyAffirmation(todayISO());
 
   return (
-    <div className="home">
-      <section className="bcard bcard--yellow home__hero">
+    <motion.div
+      className="home"
+      variants={homeContainerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.section className="bcard bcard--yellow home__hero" variants={homeItemVariants}>
         <div className="home__hero-info">
           <p className="eyebrow">Welcome</p>
           <h2 className="home__hero-title">{profile?.name || 'Student'}</h2>
           <p className="home__hero-affirmation">✨ {positiveMessage}</p>
         </div>
-      </section>
+      </motion.section>
 
       {/* Next Class with Room Details */}
-      <section className="bcard home__next-class-card">
+      <motion.section className="bcard home__next-class-card" variants={homeItemVariants}>
         <div className="home__next-class-head">
           <div>
             <p className="eyebrow">Next Class & Room Details</p>
@@ -231,19 +260,26 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
             <p>No upcoming classes found in your timetable schedule.</p>
           </div>
         )}
-      </section>
+      </motion.section>
 
       {/* Navigation Shortcuts */}
-      <section className="home__nav-grid">
+      <motion.section className="home__nav-grid" variants={homeItemVariants}>
         {NAV_CARDS.map(({ id, label, Icon, tone, blurb }) => (
-          <button key={id} className={`bcard bcard--${tone} home__nav-card`} onClick={() => onNavigate(id)}>
+          <motion.button
+            key={id}
+            className={`bcard bcard--${tone} home__nav-card`}
+            onClick={() => onNavigate(id)}
+            whileHover={{ y: -3 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 450, damping: 25 }}
+          >
             <Icon width={22} height={22} />
             <span className="home__nav-card-label">{label}</span>
             <span className="home__nav-card-blurb">{blurb}</span>
-          </button>
+          </motion.button>
         ))}
-      </section>
-    </div>
+      </motion.section>
+    </motion.div>
   );
 }
 

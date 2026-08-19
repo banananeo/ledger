@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import Sidebar from './Sidebar.jsx';
 import MobileTabBar from './MobileTabBar.jsx';
 import TopBar from './TopBar.jsx';
@@ -8,6 +9,26 @@ import AttendanceView from './views/AttendanceView.jsx';
 import MarksView from './views/MarksView.jsx';
 import CalendarView from './views/CalendarView.jsx';
 import './Shell.css';
+
+const viewVariants = {
+  initial: { opacity: 0, y: 12 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.35,
+      ease: [0.16, 1, 0.3, 1],
+    },
+  },
+  exit: {
+    opacity: 0,
+    y: -8,
+    transition: {
+      duration: 0.2,
+      ease: 'easeIn',
+    },
+  },
+};
 
 function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error }) {
   const [view, setView] = useState('home');
@@ -86,29 +107,40 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error }) {
           </div>
         )}
         <div className="shell__content">
-          {view === 'home' && (
-            <HomeView
-              profile={profile}
-              attendance={attendance}
-              schedule={schedule}
-              marks={marks}
-              calendar={calendar}
-              lastSynced={lastSynced}
-              onNavigate={navigate}
-            />
-          )}
-          {view === 'timetable' && (
-            <TimetableView schedule={schedule} calendar={calendar} />
-          )}
-          {view === 'attendance' && (
-            <AttendanceView attendance={attendance} />
-          )}
-          {view === 'calendar' && (
-            <CalendarView calendar={calendar} />
-          )}
-          {view === 'marks' && (
-            <MarksView marks={marks} />
-          )}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={view}
+              variants={viewVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="shell__view-wrapper"
+            >
+              {view === 'home' && (
+                <HomeView
+                  profile={profile}
+                  attendance={attendance}
+                  schedule={schedule}
+                  marks={marks}
+                  calendar={calendar}
+                  lastSynced={lastSynced}
+                  onNavigate={navigate}
+                />
+              )}
+              {view === 'timetable' && (
+                <TimetableView schedule={schedule} calendar={calendar} />
+              )}
+              {view === 'attendance' && (
+                <AttendanceView attendance={attendance} />
+              )}
+              {view === 'calendar' && (
+                <CalendarView calendar={calendar} />
+              )}
+              {view === 'marks' && (
+                <MarksView marks={marks} />
+              )}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
       <MobileTabBar view={view} onNavigate={navigate} />

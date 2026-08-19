@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import Shell from './components/dashboard/Shell.jsx';
 import LoginForm from './components/LoginForm.jsx';
 import CaptchaModal from './components/CaptchaModal.jsx';
+import SplashScreen from './components/SplashScreen.jsx';
 import {
   refreshSession,
   clearStoredSession,
@@ -22,6 +24,15 @@ export function App() {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [captchaChallenge, setCaptchaChallenge] = useState<CaptchaChallenge | null>(null);
+  const [showSplash, setShowSplash] = useState<boolean>(true);
+
+  // Brief initial splash on app mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 750);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Attempt auto-restoring session from stored cookies or credentials on mount
   useEffect(() => {
@@ -164,20 +175,43 @@ export function App() {
     setCaptchaChallenge(null);
   };
 
-  if (!authed || !data) {
-    return <LoginForm onSuccess={handleLoginSuccess} />;
-  }
-
   return (
     <>
-      <Shell
-        data={data}
-        lastSynced={lastSynced}
-        onRefresh={() => handleSync()}
-        refreshing={refreshing}
-        onLogout={handleLogout}
-        error={error}
-      />
+      <AnimatePresence>
+        {showSplash && <SplashScreen key="splash" />}
+      </AnimatePresence>
+
+      <AnimatePresence mode="wait">
+        {!authed || !data ? (
+          <motion.div
+            key="login"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <LoginForm onSuccess={handleLoginSuccess} />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="dashboard"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <Shell
+              data={data}
+              lastSynced={lastSynced}
+              onRefresh={() => handleSync()}
+              refreshing={refreshing}
+              onLogout={handleLogout}
+              error={error}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {captchaChallenge && (
         <CaptchaModal
           challenge={captchaChallenge}
