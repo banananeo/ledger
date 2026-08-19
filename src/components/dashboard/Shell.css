@@ -37,13 +37,26 @@
 
 .shell__error {
   max-width: 1040px;
+  width: calc(100% - 48px);
   margin: 16px auto 0;
-  padding: 10px 16px;
+  padding: 8px 16px;
   border: var(--stroke) solid var(--danger);
   background: var(--danger-soft);
   border-radius: var(--radius-btn);
   color: var(--danger);
   font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.shell__error-btn {
+  padding: 4px 10px;
+  font-size: 12px;
+  white-space: nowrap;
+  background: var(--surface);
+  color: var(--ink);
 }
 
 @media (max-width: 880px) {
@@ -52,6 +65,7 @@
   }
 
   .shell__error {
+    width: calc(100% - 32px);
     margin: 14px 16px 0;
   }
 }

@@ -68,7 +68,7 @@
 .form-input-wrapper {
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: left;
 }
 
 .form-input {

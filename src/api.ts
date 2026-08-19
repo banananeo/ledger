@@ -3,6 +3,12 @@ import type { AppData } from "./types";
 const COOKIE_STORAGE_KEY = "eduwars_session_cookies";
 const PROFILE_STORAGE_KEY = "eduwars_student_profile";
 const METADATA_STORAGE_KEY = "eduwars_last_sync";
+const CREDS_STORAGE_KEY = "eduwars_user_creds";
+
+export interface StoredCredentials {
+  username: string;
+  password?: string;
+}
 
 export interface LoginPayload {
   username?: string;
@@ -16,6 +22,8 @@ export interface RefreshPayload {
   cookies?: Record<string, string>;
   username?: string;
   password?: string;
+  captcha?: string;
+  cdigest?: string;
   isDemo?: boolean;
 }
 
@@ -54,6 +62,26 @@ export function saveStoredCookies(cookies: Record<string, string>) {
   }
 }
 
+export function getStoredCredentials(): StoredCredentials | null {
+  try {
+    const raw = localStorage.getItem(CREDS_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(decodeURIComponent(escape(atob(raw))));
+  } catch {
+    return null;
+  }
+}
+
+export function saveStoredCredentials(creds: StoredCredentials) {
+  try {
+    if (!creds.username) return;
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(creds))));
+    localStorage.setItem(CREDS_STORAGE_KEY, encoded);
+  } catch (err) {
+    console.error("Failed to save credentials to localStorage:", err);
+  }
+}
+
 export function getStoredData(): AppData | null {
   try {
     const raw = localStorage.getItem('eduwars_dashboard_data');
@@ -77,6 +105,7 @@ export function clearStoredSession() {
     localStorage.removeItem(PROFILE_STORAGE_KEY);
     localStorage.removeItem(METADATA_STORAGE_KEY);
     localStorage.removeItem('eduwars_dashboard_data');
+    localStorage.removeItem(CREDS_STORAGE_KEY);
   } catch (err) {
     console.error("Failed to clear session:", err);
   }
@@ -118,6 +147,13 @@ export async function login(payload: LoginPayload): Promise<AppData> {
 
   if (data?.session?.cookies) {
     saveStoredCookies(data.session.cookies);
+  }
+
+  if (payload.username && payload.password && !payload.isDemo) {
+    saveStoredCredentials({
+      username: payload.username,
+      password: payload.password,
+    });
   }
 
   return data as AppData;

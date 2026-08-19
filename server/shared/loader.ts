@@ -13,7 +13,7 @@ export async function authenticateIfNeeded(
   creds: Credentials,
   authTime?: { value: number },
 ) {
-  if (!creds.cookies) {
+  if (!creds.cookies || Object.keys(creds.cookies).length === 0) {
     const t0 = performance.now();
     await client.authenticate(creds.captcha, creds.cdigest);
     if (authTime) authTime.value += performance.now() - t0;
@@ -85,20 +85,26 @@ async function loadCalendarForClient(
   didFallback: { value: boolean },
   authTime?: { value: number },
 ) {
-  const plannerType = CalendarParser.resolveSemester(resolveCalendarDate(date));
-  let calendarHtml = await client.fetchCalendar(plannerType);
-  if (!calendarHtml || calendarHtml === "CONCURRENT_ERROR") {
-    requireCredentials(creds);
-    const t0 = performance.now();
-    await client.authenticate(creds.captcha, creds.cdigest);
-    if (authTime) authTime.value += performance.now() - t0;
-    didFallback.value = true;
-    calendarHtml = await client.fetchCalendar(plannerType);
+  try {
+    const plannerType = CalendarParser.resolveSemester(resolveCalendarDate(date));
+    let calendarHtml = await client.fetchCalendar(plannerType);
+    if (!calendarHtml || calendarHtml === "CONCURRENT_ERROR") {
+      if (creds.username && creds.password) {
+        const t0 = performance.now();
+        await client.authenticate(creds.captcha, creds.cdigest);
+        if (authTime) authTime.value += performance.now() - t0;
+        didFallback.value = true;
+        calendarHtml = await client.fetchCalendar(plannerType);
+      }
+    }
+    if (!calendarHtml) {
+      return undefined;
+    }
+    return CalendarParser.extract(calendarHtml, plannerType);
+  } catch (err) {
+    console.warn("Academic calendar fetch skipped/failed:", err);
+    return undefined;
   }
-  if (!calendarHtml) {
-    throw new HttpError(404, "Academic calendar not found");
-  }
-  return CalendarParser.extract(calendarHtml, plannerType);
 }
 
 export async function loadAttendanceHtml(
@@ -268,30 +274,49 @@ export async function loadRefreshData(body: Credentials) {
   const responseTimes: Record<string, number> = {};
   responseTimes.attendance = attendanceTime;
 
-  let t0 = performance.now();
-  const profileHtml = await loadProfileHtml(client, creds, didFallback, authTime);
-  responseTimes.profile = Math.round(performance.now() - t0);
+  let profileHtml: string | null = null;
+  try {
+    let t0 = performance.now();
+    profileHtml = await loadProfileHtml(client, creds, didFallback, authTime);
+    responseTimes.profile = Math.round(performance.now() - t0);
+  } catch (err) {
+    console.warn("Could not load fresh profile on refresh:", err);
+  }
 
-  const profile = ProfileParser.extract(profileHtml);
-  profile.batch = normalizeBatch(profile.batch);
+  let courses: any = undefined;
+  let schedule: any = undefined;
 
-  const courseSlotLookup = CourseParser.buildSlotMap(profileHtml);
-  const courses = CourseParser.extract(profileHtml);
+  if (profileHtml) {
+    try {
+      const profile = ProfileParser.extract(profileHtml);
+      profile.batch = normalizeBatch(profile.batch);
 
-  t0 = performance.now();
-  const gridHtml = await client.fetchTimetable(formatBatchForGrid(profile.batch));
-  responseTimes.timetable = Math.round(performance.now() - t0);
-  const schedule = TimetableParser.extract(gridHtml, courseSlotLookup);
+      const courseSlotLookup = CourseParser.buildSlotMap(profileHtml);
+      courses = CourseParser.extract(profileHtml);
 
-  t0 = performance.now();
-  const calendar = await loadCalendarForClient(
-    client,
-    creds,
-    undefined,
-    didFallback,
-    authTime,
-  );
-  responseTimes.calendar = Math.round(performance.now() - t0);
+      let t0 = performance.now();
+      const gridHtml = await client.fetchTimetable(formatBatchForGrid(profile.batch));
+      responseTimes.timetable = Math.round(performance.now() - t0);
+      schedule = TimetableParser.extract(gridHtml, courseSlotLookup);
+    } catch (err) {
+      console.warn("Could not load fresh timetable on refresh:", err);
+    }
+  }
+
+  let calendar: any = undefined;
+  try {
+    let t0 = performance.now();
+    calendar = await loadCalendarForClient(
+      client,
+      creds,
+      undefined,
+      didFallback,
+      authTime,
+    );
+    responseTimes.calendar = Math.round(performance.now() - t0);
+  } catch (err) {
+    console.warn("Could not load calendar on refresh:", err);
+  }
 
   const metadata: LoginMetadata = {
     loginBy: resolveLoginBy(creds, didFallback),

@@ -14,6 +14,11 @@ function academicYearUrl(semester: "ODD" | "EVEN"): string {
   const next = year + 1;
   return `/srm_university/academia-academic-services/page/Academic_Planner_${year}_${String(next).slice(2)}_${semester}`;
 }
+// config.ts
+export function getCalendarUrl(semester: "ODD" | "EVEN"): string {
+  return academicYearUrl(semester);
+}
+
 
 export const URLS = {
   profile: "/srm_university/academia-academic-services/page/My_Time_Table_2023_24",

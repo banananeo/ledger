@@ -1,6 +1,7 @@
-import { BASE_URL, URLS } from "../config.js";
+
 import { PageDecoder } from "./page-decoder.js";
 import { SessionManager } from "./session-manager.js";
+import { BASE_URL, URLS, getCalendarUrl } from "../config.js";
 
 export class PortalClient {
   readonly sessionManager: SessionManager;
@@ -49,6 +50,16 @@ export class PortalClient {
   }
 
   fetchCalendar(plannerType: "ODD" | "EVEN"): Promise<string | null> {
-    return this.fetchPage(plannerType === "ODD" ? "calendarOdd" : "calendarEven");
+  const url = getCalendarUrl(plannerType);
+  const fullUrl = new URL(url, BASE_URL).toString();
+  return this.sessionManager
+    .get(fullUrl, { followRedirects: false })
+    .then(async (response) => {
+      const location = response.headers.get("location") ?? "";
+      if (response.status === 301 || response.status === 302 || location.toLowerCase().includes("signin")) {
+        return null;
+      }
+      return PageDecoder.decode(await response.text());
+    });
   }
 }

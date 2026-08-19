@@ -71,9 +71,19 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error }) {
           onBack={() => navigate('home')}
           onRefresh={onRefresh}
           refreshing={refreshing}
-          profileName={profile?.name}
+          profile={profile}
+          onLogout={onLogout}
         />
-        {error && <p className="shell__error">{error}</p>}
+        {error && (
+          <div className="shell__error">
+            <span>{error}</span>
+            {error.toLowerCase().includes('sign in') && (
+              <button className="bbtn bbtn--outline shell__error-btn" onClick={onLogout}>
+                Sign in again
+              </button>
+            )}
+          </div>
+        )}
         <div className="shell__content">
           {view === 'home' && (
             <HomeView

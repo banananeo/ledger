@@ -72,13 +72,13 @@ function LoginForm({ onSuccess }) {
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="form-group">
             <label className="form-label" htmlFor="netid-input">
-              Net ID / Reg No / Email
+              Net ID
             </label>
             <input
               id="netid-input"
               type="text"
               className="form-input"
-              placeholder="e.g. RA2311003010482 or ab1234@srmist.edu.in"
+              placeholder="e.g. ab1234@srmist.edu.in"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               disabled={loading}
@@ -89,14 +89,14 @@ function LoginForm({ onSuccess }) {
 
           <div className="form-group">
             <label className="form-label" htmlFor="password-input">
-              Academia Password
+              Password
             </label>
             <div className="form-input-wrapper">
               <input
                 id="password-input"
                 type={showPassword ? 'text' : 'password'}
                 className="form-input"
-                placeholder="Enter your Academia password"
+                placeholder="Enter your Academia Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}

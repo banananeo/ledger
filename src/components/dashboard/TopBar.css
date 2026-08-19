@@ -30,6 +30,27 @@
   align-items: center;
   gap: 10px;
   flex-shrink: 0;
+  position: relative;
+}
+
+.topbar__avatar-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease;
+}
+
+.topbar__avatar-btn:hover {
+  transform: translateY(-1px);
+}
+
+.topbar__avatar-btn:active {
+  transform: translateY(1px);
 }
 
 .topbar__avatar {
@@ -48,6 +69,85 @@
   text-transform: uppercase;
 }
 
+.topbar__dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 220px;
+  padding: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: dropdown-appear 0.15s ease-out;
+}
+
+@keyframes dropdown-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.topbar__dropdown-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.topbar__dropdown-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar__dropdown-reg {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--mute);
+}
+
+.topbar__dropdown-divider {
+  height: 1px;
+  background: var(--ink);
+  opacity: 0.15;
+  margin: 4px 0;
+}
+
+.topbar__dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: var(--stroke) solid transparent;
+  border-radius: var(--radius-btn);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.12s ease;
+}
+
+.topbar__dropdown-item--danger {
+  color: var(--danger);
+}
+
+.topbar__dropdown-item--danger:hover {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+}
+
 .topbar__spin {
   animation: topbar-spin 0.9s linear infinite;
 }
@@ -58,9 +158,17 @@
 
 @media (max-width: 560px) {
   .topbar {
-    padding: 14px 16px;
+    padding: 12px 14px;
   }
   .topbar__title {
     font-size: 17px;
+  }
+  .topbar__right {
+    gap: 8px;
+  }
+  .topbar__avatar {
+    width: 34px;
+    height: 34px;
+    font-size: 11px;
   }
 }

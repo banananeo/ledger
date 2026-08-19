@@ -91,8 +91,11 @@ export function createApp(): Express {
         });
       }
 
-      if (!cookies || Object.keys(cookies).length === 0) {
-        return res.status(401).json({ detail: "No session cookies provided" });
+      const hasCookies = cookies && Object.keys(cookies).length > 0;
+      const hasCreds = req.body?.username && req.body?.password;
+
+      if (!hasCookies && !hasCreds) {
+        return res.status(401).json({ detail: "No session cookies or login credentials provided" });
       }
 
       const data = await loadRefreshData(req.body);
@@ -108,13 +111,16 @@ export function createApp(): Express {
       });
     } catch (err: any) {
       if (err instanceof HttpError) {
+        // Genuine auth problems (invalid/expired cookies with no fallback creds)
         return res.status(err.statusCode).json({ detail: err.detail });
       }
-      if (err instanceof TypeError || err.name === 'FetchError') {
+      if (err instanceof TypeError) {
+        // Network-level failure reaching Academia — not an auth problem
         return res.status(503).json({
-          detail: "Academia server is unreachable or timed out.",
+          detail: "Academia server is unreachable or timed out. Please try again.",
         });
       }
+      // Parsing errors, unexpected page structure, etc. — not an auth problem
       const message = err?.message || "Session refresh failed";
       return res.status(500).json({ detail: message });
     }

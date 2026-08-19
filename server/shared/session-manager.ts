@@ -207,10 +207,16 @@ export class SessionManager {
   }
 
   private captureCookies(response: Response): void {
-    const responseHeaders = response.headers as Headers & {
-      getSetCookie?: () => string[];
-    };
-    const setCookies = responseHeaders.getSetCookie?.() ?? [];
+    let setCookies: string[] = [];
+    const headersAny = response.headers as any;
+    if (typeof headersAny.getSetCookie === "function") {
+      setCookies = headersAny.getSetCookie() || [];
+    } else {
+      const raw = response.headers.get("set-cookie");
+      if (raw) {
+        setCookies = raw.split(/,(?=\s*[A-Za-z0-9_-]+=)/);
+      }
+    }
 
     for (const header of setCookies) {
       const [cookiePart] = header.split(";");

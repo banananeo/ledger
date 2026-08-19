@@ -1,5 +1,5 @@
-import React from 'react';
-import { ArrowLeftIcon, RefreshIcon, UserIcon } from './Icons.jsx';
+import React, { useState, useRef, useEffect } from 'react';
+import { ArrowLeftIcon, RefreshIcon, UserIcon, LogoutIcon } from './Icons.jsx';
 import './TopBar.css';
 
 const TITLES = {
@@ -15,8 +15,28 @@ function initials(name) {
   return (parts[0]?.[0] || '') + (parts[1]?.[0] || '');
 }
 
-function TopBar({ view, onBack, onRefresh, refreshing, profileName }) {
+function TopBar({ view, onBack, onRefresh, refreshing, profile, onLogout }) {
   const isHome = view === 'home';
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef(null);
+
+  const profileName = profile?.name;
+  const regNo = profile?.registrationNumber;
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setShowMenu(false);
+      }
+    };
+    if (showMenu) {
+      document.addEventListener('pointerdown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('pointerdown', handleClickOutside);
+    };
+  }, [showMenu]);
+
   return (
     <header className="topbar">
       <div className="topbar__left">
@@ -27,7 +47,7 @@ function TopBar({ view, onBack, onRefresh, refreshing, profileName }) {
         )}
         <h1 className="topbar__title">{TITLES[view] || 'Ledger'}</h1>
       </div>
-      <div className="topbar__right">
+      <div className="topbar__right" ref={menuRef}>
         <button
           className="bbtn bbtn--outline bbtn--icon topbar__sync"
           onClick={onRefresh}
@@ -37,9 +57,46 @@ function TopBar({ view, onBack, onRefresh, refreshing, profileName }) {
         >
           <RefreshIcon width={17} height={17} className={refreshing ? 'topbar__spin' : ''} />
         </button>
-        <div className="topbar__avatar" title={profileName || 'Profile'}>
-          {profileName ? initials(profileName) : <UserIcon width={16} height={16} />}
-        </div>
+
+        <button
+          className="bbtn bbtn--outline bbtn--icon topbar__logout"
+          onClick={onLogout}
+          aria-label="Log out"
+          title="Log out"
+        >
+          <LogoutIcon width={17} height={17} />
+        </button>
+
+        <button
+          className="topbar__avatar-btn"
+          onClick={() => setShowMenu(!showMenu)}
+          aria-label="Account menu"
+          aria-expanded={showMenu}
+        >
+          <div className="topbar__avatar" title={profileName || 'Profile'}>
+            {profileName ? initials(profileName) : <UserIcon width={16} height={16} />}
+          </div>
+        </button>
+
+        {showMenu && (
+          <div className="topbar__dropdown bcard">
+            <div className="topbar__dropdown-header">
+              <div className="topbar__dropdown-name">{profileName || 'Student'}</div>
+              {regNo && <div className="topbar__dropdown-reg">{regNo}</div>}
+            </div>
+            <div className="topbar__dropdown-divider" />
+            <button
+              className="topbar__dropdown-item topbar__dropdown-item--danger"
+              onClick={() => {
+                setShowMenu(false);
+                onLogout();
+              }}
+            >
+              <LogoutIcon width={16} height={16} />
+              <span>Log out</span>
+            </button>
+          </div>
+        )}
       </div>
     </header>
   );

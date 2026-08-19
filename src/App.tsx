@@ -1,7 +1,17 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Shell from './components/dashboard/Shell.jsx';
 import LoginForm from './components/LoginForm.jsx';
-import { refreshSession, clearStoredSession, getStoredCookies, getStoredData, saveStoredData } from './api';
+import CaptchaModal from './components/CaptchaModal.jsx';
+import {
+  refreshSession,
+  clearStoredSession,
+  getStoredCookies,
+  getStoredCredentials,
+  getStoredData,
+  saveStoredData,
+  ApiError,
+  CaptchaChallenge,
+} from './api';
 import type { AppData } from './types';
 import './App.css';
 
@@ -11,40 +21,59 @@ export function App() {
   const [lastSynced, setLastSynced] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
+  const [captchaChallenge, setCaptchaChallenge] = useState<CaptchaChallenge | null>(null);
 
-  // Attempt auto-restoring session from stored cookies on mount
+  // Attempt auto-restoring session from stored cookies or credentials on mount
   useEffect(() => {
     const savedCookies = getStoredCookies();
     const savedData = getStoredData();
+    const savedCreds = getStoredCredentials();
 
-    if (savedCookies && Object.keys(savedCookies).length > 0) {
-      if (savedData) {
-        setData(savedData);
-        setAuthed(true);
-        setLastSynced(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-      }
+    if (savedData) {
+      setData(savedData);
+      setAuthed(true);
+      setLastSynced(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    }
 
+    if ((savedCookies && Object.keys(savedCookies).length > 0) || savedCreds) {
       setRefreshing(true);
-      refreshSession({ cookies: savedCookies })
+      refreshSession({
+        cookies: savedCookies || undefined,
+        username: savedCreds?.username,
+        password: savedCreds?.password,
+      })
         .then((freshData) => {
-          setData(freshData);
-          saveStoredData(freshData);
+          setData((prev) => {
+            const merged = {
+              ...(prev || {}),
+              ...freshData,
+              profile: prev?.profile || freshData.profile,
+              courses: freshData.courses || prev?.courses,
+              schedule: freshData.schedule || prev?.schedule,
+              calendar: freshData.calendar || prev?.calendar,
+            } as AppData;
+            saveStoredData(merged);
+            return merged;
+          });
           setAuthed(true);
           setLastSynced(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+          setError('');
         })
         .catch((err: any) => {
-          if (err?.statusCode === 401) {
-            clearStoredSession();
-            setAuthed(false);
-            setData(null);
-          } else if (!savedData) {
-            // If we don't have offline data to fallback on, log out to show login screen
-            clearStoredSession();
-            setAuthed(false);
-            setData(null);
+          if (err instanceof ApiError && err.captchaChallenge) {
+            setCaptchaChallenge(err.captchaChallenge);
+          } else if (savedData) {
+            // Keep user logged in with cached offline data
+            setError(
+              err?.statusCode === 401
+                ? 'Session expired on Academia. Showing offline data.'
+                : 'Could not connect to Academia. Showing offline data.'
+            );
           } else {
-            // We have offline data, just show error
-            setError('Could not connect. Showing offline data.');
+            // No offline data available at all, show login
+            clearStoredSession();
+            setAuthed(false);
+            setData(null);
           }
         })
         .finally(() => {
@@ -61,40 +90,58 @@ export function App() {
     setError('');
   };
 
-  const handleSync = useCallback(async () => {
-    if (!data?.session?.cookies || refreshing) return;
+  const handleSync = useCallback(async (captchaText?: string) => {
+    if (refreshing) return;
+    const savedCreds = getStoredCredentials();
+    const currentCookies = data?.session?.cookies || getStoredCookies() || undefined;
+
+    if (!currentCookies && !savedCreds) return;
+
     setRefreshing(true);
     setError('');
 
     try {
       const fresh = await refreshSession({
-        cookies: data.session.cookies,
+        cookies: currentCookies,
+        username: savedCreds?.username,
+        password: savedCreds?.password,
+        captcha: captchaText,
+        cdigest: captchaChallenge?.cdigest,
         isDemo: data?.metadata?.loginBy === 'demo',
       });
-      const mergedData = {
+      const mergedData: AppData = {
         ...data,
         ...fresh,
         profile: data?.profile || fresh.profile,
+        courses: fresh.courses || data?.courses,
+        schedule: fresh.schedule || data?.schedule,
+        calendar: fresh.calendar || data?.calendar,
       };
       setData(mergedData);
       saveStoredData(mergedData);
       setLastSynced(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      setError('');
+      setCaptchaChallenge(null);
     } catch (err: any) {
-      setError(err?.message || 'Failed to sync data.');
-      // Only log out if it's a 401 Unauthorized (invalid session)
-      if (err?.statusCode === 401) {
-        clearStoredSession();
-        setAuthed(false);
-        setData(null);
+      if (err instanceof ApiError && err.captchaChallenge) {
+        setCaptchaChallenge(err.captchaChallenge);
+      } else if (err?.statusCode === 401) {
+        setError('Session expired on Academia. Please sign in again to sync latest data.');
+      } else {
+        setError(err?.message || 'Failed to sync with Academia. Showing saved data.');
       }
     } finally {
       setRefreshing(false);
     }
-  }, [data, refreshing]);
+  }, [data, refreshing, captchaChallenge]);
 
   useEffect(() => {
+    let lastSyncTime = Date.now();
     const onFocus = () => {
-      if (authed && data) {
+      const now = Date.now();
+      // Auto-sync at most once every 3 minutes on window focus/network recovery
+      if (authed && data && now - lastSyncTime > 180000 && !refreshing) {
+        lastSyncTime = now;
         handleSync();
       }
     };
@@ -106,7 +153,7 @@ export function App() {
       window.removeEventListener('focus', onFocus);
       window.removeEventListener('online', onFocus);
     };
-  }, [authed, data, handleSync]);
+  }, [authed, data, handleSync, refreshing]);
 
   const handleLogout = () => {
     clearStoredSession();
@@ -114,6 +161,7 @@ export function App() {
     setData(null);
     setLastSynced(null);
     setError('');
+    setCaptchaChallenge(null);
   };
 
   if (!authed || !data) {
@@ -121,15 +169,26 @@ export function App() {
   }
 
   return (
-    <Shell
-      data={data}
-      lastSynced={lastSynced}
-      onRefresh={handleSync}
-      refreshing={refreshing}
-      onLogout={handleLogout}
-      error={error}
-    />
+    <>
+      <Shell
+        data={data}
+        lastSynced={lastSynced}
+        onRefresh={() => handleSync()}
+        refreshing={refreshing}
+        onLogout={handleLogout}
+        error={error}
+      />
+      {captchaChallenge && (
+        <CaptchaModal
+          challenge={captchaChallenge}
+          onSubmit={(code) => handleSync(code)}
+          onCancel={() => setCaptchaChallenge(null)}
+          loading={refreshing}
+        />
+      )}
+    </>
   );
 }
 
 export default App;
+
