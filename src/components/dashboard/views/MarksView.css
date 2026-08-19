@@ -101,8 +101,9 @@
 }
 
 .score-low {
-  background: #f7d9d2;
+  background: var(--danger-soft);
 }
+
 
 .marks__no-tests {
   font-size: 13px;
@@ -115,3 +116,29 @@
   text-align: center;
   color: var(--ink-soft);
 }
+
+/* =========================================================================
+   Marks View Dark Theme Overrides
+   ========================================================================= */
+
+[data-theme="dark"] .score-high,
+.dark .score-high {
+  background: var(--mint-soft);
+  color: var(--mint);
+  border-color: rgba(52, 211, 153, 0.6);
+}
+
+[data-theme="dark"] .score-mid,
+.dark .score-mid {
+  background: var(--yellow-soft);
+  color: var(--yellow);
+  border-color: rgba(251, 191, 36, 0.6);
+}
+
+[data-theme="dark"] .score-low,
+.dark .score-low {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-color: rgba(248, 113, 113, 0.6);
+}
+

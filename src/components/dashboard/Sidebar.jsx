@@ -1,5 +1,6 @@
 import React from 'react';
-import { HomeIcon, ClockIcon, CheckRingIcon, CalendarIcon, AwardIcon, RefreshIcon, LogoutIcon } from './Icons.jsx';
+import { HomeIcon, ClockIcon, CheckRingIcon, CalendarIcon, AwardIcon, RefreshIcon, LogoutIcon, SunIcon, MoonIcon } from './Icons.jsx';
+import { useTheme } from '../../context/ThemeContext.tsx';
 import './Sidebar.css';
 
 export const NAV_ITEMS = [
@@ -11,6 +12,8 @@ export const NAV_ITEMS = [
 ];
 
 function Sidebar({ view, onNavigate, onRefresh, refreshing, onLogout }) {
+  const { theme, toggleTheme } = useTheme();
+
   return (
     <aside className="sidebar">
       <div className="sidebar__mark">
@@ -29,6 +32,10 @@ function Sidebar({ view, onNavigate, onRefresh, refreshing, onLogout }) {
         ))}
       </nav>
       <div className="sidebar__footer">
+        <button className="sidebar__item" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}>
+          {theme === 'dark' ? <SunIcon width={18} height={18} /> : <MoonIcon width={18} height={18} />}
+          <span>{theme === 'dark' ? 'Light Theme' : 'Dark Theme'}</span>
+        </button>
         <button className="sidebar__item" onClick={onRefresh} disabled={refreshing}>
           <RefreshIcon width={18} height={18} className={refreshing ? 'sidebar__spin' : ''} />
           <span>{refreshing ? 'Syncing…' : 'Sync'}</span>
@@ -43,3 +50,4 @@ function Sidebar({ view, onNavigate, onRefresh, refreshing, onLogout }) {
 }
 
 export default Sidebar;
+

@@ -100,7 +100,17 @@
   color: var(--ink-soft);
 }
 
+/* =========================================================================
+   Timetable View Dark Theme Overrides
+   ========================================================================= */
+
+[data-theme="dark"] .timetable__period:hover,
+.dark .timetable__period:hover {
+  border-color: var(--ink);
+}
+
 @media (max-width: 560px) {
+
   .timetable__period {
     padding: 12px 14px;
     gap: 12px;

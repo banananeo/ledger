@@ -398,3 +398,84 @@
     min-width: auto;
   }
 }
+
+/* =========================================================================
+   Calendar Dark Theme Overrides
+   ========================================================================= */
+
+[data-theme="dark"] .calendar__cell--working,
+.dark .calendar__cell--working {
+  background: #14281f;
+  border-color: #1f4f38;
+}
+
+[data-theme="dark"] .calendar__cell--holiday,
+.dark .calendar__cell--holiday {
+  background: #2b161a;
+  border-color: #5c1f2b;
+}
+
+[data-theme="dark"] .calendar__cell--event,
+.dark .calendar__cell--event {
+  background: #171d33;
+  border-color: #2b386b;
+}
+
+[data-theme="dark"] .calendar__cell-do,
+.dark .calendar__cell-do {
+  color: #5eead4;
+  background: #134e48;
+}
+
+[data-theme="dark"] .calendar__cell-tag--holiday,
+.dark .calendar__cell-tag--holiday {
+  background: #711027;
+  color: #fecdd3;
+}
+
+[data-theme="dark"] .calendar__cell-tag--event,
+.dark .calendar__cell-tag--event {
+  background: #27226c;
+  color: #e0e7ff;
+}
+
+[data-theme="dark"] .calendar__legend-swatch--working,
+.dark .calendar__legend-swatch--working {
+  background: #14281f;
+  border-color: #1f4f38;
+}
+
+[data-theme="dark"] .calendar__legend-swatch--holiday,
+.dark .calendar__legend-swatch--holiday {
+  background: #2b161a;
+  border-color: #5c1f2b;
+}
+
+[data-theme="dark"] .calendar__legend-swatch--event,
+.dark .calendar__legend-swatch--event {
+  background: #171d33;
+  border-color: #2b386b;
+}
+
+[data-theme="dark"] .calendar__highlights-item,
+.dark .calendar__highlights-item {
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+[data-theme="dark"] .calendar__highlights-item:hover,
+.dark .calendar__highlights-item:hover {
+  background: var(--line);
+}
+
+[data-theme="dark"] .calendar__highlights-item--active,
+.dark .calendar__highlights-item--active {
+  border-color: var(--accent);
+  background: #14281f;
+}
+
+[data-theme="dark"] .calendar__highlights-do,
+.dark .calendar__highlights-do {
+  color: #5eead4;
+}
+

@@ -315,3 +315,26 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================================================================
+   Home View Dark Theme Overrides
+   ========================================================================= */
+
+[data-theme="dark"] .home__next-class-room-badge,
+.dark .home__next-class-room-badge {
+  border-color: rgba(56, 189, 248, 0.5);
+  background: var(--sky-soft);
+}
+
+[data-theme="dark"] .home__next-class-room-type,
+.dark .home__next-class-room-type {
+  background: var(--surface);
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .home__nav-card:hover,
+.dark .home__nav-card:hover {
+  border-color: var(--ink);
+}
+

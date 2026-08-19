@@ -9,9 +9,9 @@ function ProgressRing({ percentage = 0, size = 64, stroke = 6 }) {
   const tone = getStatusTone(clamped);
 
   const strokeColors = {
-    good: '#4b5d46',
-    warning: '#a6790a',
-    danger: '#9a3b2b',
+    good: 'var(--mint, #34d399)',
+    warning: 'var(--yellow, #fbbf24)',
+    danger: 'var(--danger, #f87171)',
   };
 
   const color = strokeColors[tone] || strokeColors.good;
@@ -34,15 +34,17 @@ function ProgressRing({ percentage = 0, size = 64, stroke = 6 }) {
         style={{
           transform: 'rotate(-90deg)',
           display: 'block',
+          overflow: 'visible',
         }}
       >
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="#cfcfcb"
+          stroke="var(--line-strong)"
           strokeWidth={stroke}
           fill="transparent"
+          opacity={0.6}
         />
         <circle
           cx={size / 2}
@@ -55,7 +57,7 @@ function ProgressRing({ percentage = 0, size = 64, stroke = 6 }) {
           strokeLinecap="round"
           fill="transparent"
           style={{
-            transition: 'stroke-dashoffset 0.6s ease',
+            transition: 'stroke-dashoffset 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
           }}
         />
       </svg>

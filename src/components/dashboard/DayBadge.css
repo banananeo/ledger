@@ -72,3 +72,20 @@
 .day-badge--mint {
   background: var(--mint);
 }
+
+/* =========================================================================
+   Day Badge Dark Theme Contrast Overrides
+   ========================================================================= */
+
+[data-theme="dark"] .day-badge,
+.dark .day-badge {
+  color: #0c0d10;
+}
+
+[data-theme="dark"] .day-badge__label,
+.dark .day-badge__label,
+[data-theme="dark"] .day-badge__number,
+.dark .day-badge__number {
+  color: #0c0d10;
+}
+

@@ -62,16 +62,23 @@
   background: var(--surface);
 }
 
+.sidebar__item:active:not(:disabled) {
+  transform: translate(1px, 1px);
+}
+
 .sidebar__item--active {
   background: var(--ink);
   color: var(--paper);
   border-color: var(--ink);
   box-shadow: var(--shadow-hard-sm);
+  font-weight: 600;
 }
 
 .sidebar__item--active:hover {
   background: var(--ink);
+  color: var(--paper);
 }
+
 
 .sidebar__item:disabled {
   opacity: 0.6;

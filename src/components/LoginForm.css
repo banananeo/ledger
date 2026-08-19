@@ -26,6 +26,19 @@
   gap: 6px;
 }
 
+.login-header__top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.login-theme-toggle {
+  padding: 8px;
+  border-radius: var(--radius-btn);
+}
+
+
 .login-header__brand {
   font-family: var(--display);
   font-size: 26px;
@@ -236,3 +249,33 @@
   border-radius: 8px;
   border: 1px solid var(--line);
 }
+
+/* =========================================================================
+   Login Form Dark Theme Overrides
+   ========================================================================= */
+
+[data-theme="dark"] .form-input,
+.dark .form-input {
+  box-shadow: 2px 2px 0 #000000;
+}
+
+[data-theme="dark"] .form-input:focus,
+.dark .form-input:focus {
+  box-shadow: 3px 3px 0 #000000;
+  border-color: var(--accent);
+}
+
+[data-theme="dark"] .btn-demo,
+.dark .btn-demo {
+  background: var(--mint-soft);
+  color: var(--mint);
+  border-color: rgba(52, 211, 153, 0.5);
+}
+
+[data-theme="dark"] .btn-primary,
+.dark .btn-primary {
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: 3px 3px 0 #000000;
+}
+

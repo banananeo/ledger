@@ -74,7 +74,17 @@
   color: var(--ink-soft);
 }
 
+/* =========================================================================
+   Attendance View Dark Theme Overrides
+   ========================================================================= */
+
+[data-theme="dark"] .attendance__card:hover,
+.dark .attendance__card:hover {
+  border-color: var(--ink);
+}
+
 @media (max-width: 640px) {
+
   .attendance__summary {
     padding: 16px;
     gap: 14px;
