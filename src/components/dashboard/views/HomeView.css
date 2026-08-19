@@ -16,11 +16,21 @@
 .home__hero-info {
   min-width: 220px;
   flex: 1;
+  font-weight: bold;
 }
 
 .home__hero-title {
   font-size: 30px;
-  margin: 8px 0 10px;
+  margin: 6px 0 8px;
+  color: var(--ink);
+}
+
+.home__hero-affirmation {
+  font-size: 14px;
+  color: var(--ink-soft);
+  font-weight: 500;
+  line-height: 1.5;
+  margin: 0;
 }
 
 .home__hero-meta {

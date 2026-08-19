@@ -1,11 +1,12 @@
 import React from 'react';
-import { HomeIcon, ClockIcon, CheckRingIcon, AwardIcon, RefreshIcon, LogoutIcon } from './Icons.jsx';
+import { HomeIcon, ClockIcon, CheckRingIcon, CalendarIcon, AwardIcon, RefreshIcon, LogoutIcon } from './Icons.jsx';
 import './Sidebar.css';
 
 export const NAV_ITEMS = [
   { id: 'home', label: 'Home', Icon: HomeIcon },
   { id: 'timetable', label: 'Timetable', Icon: ClockIcon },
   { id: 'attendance', label: 'Attendance', Icon: CheckRingIcon },
+  { id: 'calendar', label: 'Calendar', Icon: CalendarIcon },
   { id: 'marks', label: 'Marks', Icon: AwardIcon },
 ];
 

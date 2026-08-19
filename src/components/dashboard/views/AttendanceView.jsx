@@ -1,6 +1,6 @@
 import React from 'react';
 import ProgressRing from '../../ProgressRing.jsx';
-import { getAttendanceMargin, getStatusTone, marginMessage, REQUIRED_PERCENTAGE } from '../../../utils/attendance.js';
+import { getAttendanceMargin, getStatusTone, marginMessage, marginTone,REQUIRED_PERCENTAGE } from '../../../utils/attendance.js';
 import './AttendanceView.css';
 
 function AttendanceView({ attendance = [] }) {
@@ -40,7 +40,7 @@ function AttendanceView({ attendance = [] }) {
       <ul className="attendance__list">
         {sorted.map((r) => {
           const margin = getAttendanceMargin(r.classesConducted, r.classesAbsent);
-          const tone = getStatusTone(r.attendancePercentage);
+          const tone = margin.status === 'unknown' ? getStatusTone(r.attendancePercentage) : marginTone(margin);
           const attended = r.classesConducted ? r.classesConducted - r.classesAbsent : null;
 
           return (

@@ -6,6 +6,7 @@ import HomeView from './views/HomeView.jsx';
 import TimetableView from './views/TimetableView.jsx';
 import AttendanceView from './views/AttendanceView.jsx';
 import MarksView from './views/MarksView.jsx';
+import CalendarView from './views/CalendarView.jsx';
 import './Shell.css';
 
 function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error }) {
@@ -101,6 +102,9 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error }) {
           )}
           {view === 'attendance' && (
             <AttendanceView attendance={attendance} />
+          )}
+          {view === 'calendar' && (
+            <CalendarView calendar={calendar} />
           )}
           {view === 'marks' && (
             <MarksView marks={marks} />

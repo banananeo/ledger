@@ -6,6 +6,7 @@ const TITLES = {
   home: 'Home',
   timetable: 'Timetable',
   attendance: 'Attendance',
+  calendar: 'Academic Calendar',
   marks: 'Internal Marks',
 };
 

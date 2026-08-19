@@ -37,3 +37,10 @@ export function marginMessage(margin) {
       return "Not enough data yet";
   }
 }
+
+export function marginTone(margin) {
+  if (margin.status === "risk") return "danger";
+  if (margin.status === "tight") return "warning";
+  if (margin.status === "safe") return "good";
+  return "warning"; // "unknown" — no conducted/absent data
+}

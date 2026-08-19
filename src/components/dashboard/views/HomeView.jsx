@@ -1,24 +1,38 @@
 import React from 'react';
-import { ClockIcon, CheckRingIcon, AwardIcon } from '../Icons.jsx';
+import { ClockIcon, CheckRingIcon, CalendarIcon, AwardIcon } from '../Icons.jsx';
 import { todayISO, findEntryForDate, allEntries } from '../../../utils/calendar.js';
 import './HomeView.css';
 
 const NAV_CARDS = [
   { id: 'timetable', label: 'Timetable', Icon: ClockIcon, tone: 'sky', blurb: 'Classes by Day Order' },
   { id: 'attendance', label: 'Attendance', Icon: CheckRingIcon, tone: 'pink', blurb: 'Per-course % and margin' },
+  { id: 'calendar', label: 'Academic Calendar', Icon: CalendarIcon, tone: 'mint', blurb: 'Semester dates & day orders' },
   { id: 'marks', label: 'Marks', Icon: AwardIcon, tone: 'yellow', blurb: 'Internal tests & cycles' },
 ];
 
 function parseTimeMinutes(timeStr) {
   if (!timeStr) return null;
-  const match = timeStr.trim().match(/(\d+):(\d+)(?:\s*(AM|PM))?/i);
+  const match = String(timeStr).trim().match(/(\d+):(\d+)(?:\s*(AM|PM))?/i);
   if (!match) return null;
   let hours = parseInt(match[1], 10);
   const minutes = parseInt(match[2], 10);
   const meridiem = match[3]?.toUpperCase();
-  if (meridiem === 'PM' && hours < 12) hours += 12;
-  if (meridiem === 'AM' && hours === 12) hours = 0;
+  if (meridiem === 'PM' && hours < 12) {
+    hours += 12;
+  } else if (meridiem === 'AM' && hours === 12) {
+    hours = 0;
+  } else if (!meridiem) {
+    // In university timetables, hours 1 to 6 are afternoon (PM: 13:00 - 18:00)
+    if (hours >= 1 && hours <= 6) {
+      hours += 12;
+    }
+  }
   return hours * 60 + minutes;
+}
+
+function dayNumber(dayLabel) {
+  const match = String(dayLabel || '').match(/\d+/);
+  return match ? match[0] : String(dayLabel || '');
 }
 
 function getNextClassInfo(schedule = [], calendar) {
@@ -29,36 +43,40 @@ function getNextClassInfo(schedule = [], calendar) {
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
   if (todayDayOrder) {
-    const todaysDayObj = schedule.find((d) => d.dayLabel === `Day ${todayDayOrder}`);
+    const todaysDayObj = schedule.find(
+      (d) => dayNumber(d.dayLabel) === String(todayDayOrder)
+    );
     const todaysClasses = todaysDayObj?.entries ? [...todaysDayObj.entries] : [];
     todaysClasses.sort((a, b) => (parseTimeMinutes(a.startTime) ?? 0) - (parseTimeMinutes(b.startTime) ?? 0));
 
     for (const c of todaysClasses) {
-      const startMin = parseTimeMinutes(c.startTime) ?? 0;
-      const endMin = parseTimeMinutes(c.endTime) ?? startMin + 50;
+      const startMin = parseTimeMinutes(c.startTime);
+      const endMin = parseTimeMinutes(c.endTime) || (startMin != null ? startMin + 50 : null);
 
-      if (currentMinutes >= startMin && currentMinutes <= endMin) {
-        return {
-          entry: c,
-          status: 'Ongoing Now',
-          statusTone: 'warning',
-          timingNote: `Ends at ${c.endTime}`,
-          dayLabel: `Day ${todayDayOrder} (Today)`,
-          isOngoing: true,
-        };
-      }
+      if (startMin != null && endMin != null) {
+        if (currentMinutes >= startMin && currentMinutes <= endMin) {
+          return {
+            entry: c,
+            status: 'Ongoing Now',
+            statusTone: 'warning',
+            timingNote: `Ends at ${c.endTime}`,
+            dayLabel: `Day ${todayDayOrder} (Today)`,
+            isOngoing: true,
+          };
+        }
 
-      if (currentMinutes < startMin) {
-        const diff = startMin - currentMinutes;
-        const diffText = diff < 60 ? `in ${diff} min` : `at ${c.startTime}`;
-        return {
-          entry: c,
-          status: 'Next Class Today',
-          statusTone: 'good',
-          timingNote: `Starts ${diffText}`,
-          dayLabel: `Day ${todayDayOrder} (Today)`,
-          isOngoing: false,
-        };
+        if (currentMinutes < startMin) {
+          const diff = startMin - currentMinutes;
+          const diffText = diff < 60 ? `in ${diff} min` : `at ${c.startTime}`;
+          return {
+            entry: c,
+            status: 'Next Class Today',
+            statusTone: 'good',
+            timingNote: `Starts ${diffText}`,
+            dayLabel: `Day ${todayDayOrder} (Today)`,
+            isOngoing: false,
+          };
+        }
       }
     }
   }
@@ -68,7 +86,9 @@ function getNextClassInfo(schedule = [], calendar) {
   const futureWorkingDay = entries.find((e) => e.date > today && e.category === 'working-day' && e.dayOrder);
 
   if (futureWorkingDay && futureWorkingDay.dayOrder) {
-    const nextDayObj = schedule.find((d) => d.dayLabel === `Day ${futureWorkingDay.dayOrder}`);
+    const nextDayObj = schedule.find(
+      (d) => dayNumber(d.dayLabel) === String(futureWorkingDay.dayOrder)
+    );
     const nextClasses = nextDayObj?.entries ? [...nextDayObj.entries] : [];
     nextClasses.sort((a, b) => (parseTimeMinutes(a.startTime) ?? 0) - (parseTimeMinutes(b.startTime) ?? 0));
 
@@ -84,16 +104,24 @@ function getNextClassInfo(schedule = [], calendar) {
     }
   }
 
-  // Fallback to first scheduled class of any available day order
-  for (const day of schedule) {
-    if (day.entries && day.entries.length > 0) {
-      const sorted = [...day.entries].sort((a, b) => (parseTimeMinutes(a.startTime) ?? 0) - (parseTimeMinutes(b.startTime) ?? 0));
+  // Fallback to next cyclic or available day order in timetable schedule
+  if (schedule.length > 0) {
+    let nextDayIndex = 0;
+    if (todayDayOrder) {
+      const curIdx = schedule.findIndex((d) => dayNumber(d.dayLabel) === String(todayDayOrder));
+      if (curIdx >= 0 && curIdx + 1 < schedule.length) {
+        nextDayIndex = curIdx + 1;
+      }
+    }
+    const targetDay = schedule[nextDayIndex] || schedule[0];
+    if (targetDay && targetDay.entries && targetDay.entries.length > 0) {
+      const sorted = [...targetDay.entries].sort((a, b) => (parseTimeMinutes(a.startTime) ?? 0) - (parseTimeMinutes(b.startTime) ?? 0));
       return {
         entry: sorted[0],
         status: 'Next Scheduled Class',
         statusTone: 'neutral',
         timingNote: `Starts at ${sorted[0].startTime}`,
-        dayLabel: day.dayLabel,
+        dayLabel: targetDay.dayLabel,
         isOngoing: false,
       };
     }
@@ -102,21 +130,43 @@ function getNextClassInfo(schedule = [], calendar) {
   return null;
 }
 
+const DAILY_AFFIRMATIONS = [
+  "Make today count — focus on progress, not perfection.",
+  "Every lecture is a step closer to your goals. Stay curious!",
+  "Consistency is what transforms effort into excellence.",
+  "Your potential is endless. Go make the most of today!",
+  "Small daily improvements build extraordinary achievements.",
+  "Believe in your capabilities and trust your journey today.",
+  "Approach every class with focus, passion, and curiosity.",
+  "You've got this! Step into today with confidence.",
+  "Great achievements begin with small, disciplined actions.",
+  "Stay focused, stay determined, and enjoy the learning curve.",
+  "Today is full of new opportunities to learn and grow.",
+  "Your dedication today creates the success of tomorrow.",
+  "Turn every challenge into an opportunity to excel.",
+  "One concept, one class, one victory at a time."
+];
+
+function getDailyAffirmation(dateStr) {
+  const date = dateStr || todayISO();
+  let hash = 0;
+  for (let i = 0; i < date.length; i++) {
+    hash = (hash * 31 + date.charCodeAt(i)) >>> 0;
+  }
+  return DAILY_AFFIRMATIONS[hash % DAILY_AFFIRMATIONS.length];
+}
+
 function HomeView({ profile, attendance = [], schedule = [], marks = [], calendar, lastSynced, onNavigate }) {
   const nextClassInfo = getNextClassInfo(schedule, calendar);
+  const positiveMessage = getDailyAffirmation(todayISO());
 
   return (
     <div className="home">
       <section className="bcard bcard--yellow home__hero">
         <div className="home__hero-info">
-          <p className="eyebrow">SRM Academic Record</p>
-          <h2 className="home__hero-title">{profile?.name || 'Welcome'}</h2>
-          {profile && (
-            <p className="home__hero-meta num">
-              {profile.registrationNumber} · {profile.department} {profile.section} · Sem {profile.semester}
-            </p>
-          )}
-          {lastSynced && <p className="home__hero-synced num">Last synced {lastSynced}</p>}
+          <p className="eyebrow">Welcome</p>
+          <h2 className="home__hero-title">{profile?.name || 'Student'}</h2>
+          <p className="home__hero-affirmation">✨ {positiveMessage}</p>
         </div>
       </section>
 

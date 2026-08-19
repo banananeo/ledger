@@ -2,9 +2,17 @@ import * as cheerio from "cheerio";
 import type { CourseSlotLookup, ScheduleDay, ScheduleEntry } from "../types.js";
 import { strip } from "../utils/text.js";
 
-function parseTime(time: string) {
-  const [h, m] = time.split(':').map(Number);
-  return (h || 0) * 60 + (m || 0);
+function parseTime(time: string): number {
+  if (!time) return 0;
+  const match = time.trim().match(/(\d+):(\d+)(?:\s*(AM|PM))?/i);
+  if (!match) return 0;
+  let hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  const meridiem = match[3]?.toUpperCase();
+  if (meridiem === "PM" && hours < 12) hours += 12;
+  if (meridiem === "AM" && hours === 12) hours = 0;
+  if (!meridiem && hours >= 1 && hours <= 6) hours += 12;
+  return hours * 60 + minutes;
 }
 
 export class TimetableParser {
@@ -58,8 +66,12 @@ export class TimetableParser {
         const slotDetails = courseSlotLookup[slotCode];
 
         if (slotCode && slotCode !== "-" && slotDetails) {
-          const timeLabel = normalizeTimeLabel(timeHeaders[colIndex]);
-          const [startTime, endTime] = splitTimeLabel(timeLabel);
+          const startLabel = normalizeTimeLabel(timeHeaders[colIndex]);
+          const endHeader = timeHeaders[colIndex + colspan - 1] || timeHeaders[colIndex];
+          const endLabel = normalizeTimeLabel(endHeader);
+          const [startTime] = splitTimeLabel(startLabel);
+          const [, endTime] = splitTimeLabel(endLabel);
+          const timeLabel = `${startTime} - ${endTime}`;
 
           entries.push({
             slotCode,
@@ -79,7 +91,7 @@ export class TimetableParser {
         colIndex += colspan;
       });
 
-      // Sort entries chronologically by startTime just to be safe
+      // Sort entries chronologically by parsed time
       entries.sort((a, b) => parseTime(a.startTime) - parseTime(b.startTime));
 
       schedule.push({ dayLabel: `Day ${dayMatch[1]}`, entries });

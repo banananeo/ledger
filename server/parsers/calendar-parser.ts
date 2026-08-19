@@ -4,18 +4,18 @@ import type { AcademicCalendar, CalendarEntry, CalendarMonth } from "../types.js
 import { strip } from "../utils/text.js";
 
 const MONTH_LOOKUP: Record<string, number> = {
-  Jan: 1,
-  Feb: 2,
-  Mar: 3,
-  Apr: 4,
-  May: 5,
-  Jun: 6,
-  Jul: 7,
-  Aug: 8,
-  Sep: 9,
-  Oct: 10,
-  Nov: 11,
-  Dec: 12,
+  jan: 1, january: 1,
+  feb: 2, february: 2,
+  mar: 3, march: 3,
+  apr: 4, april: 4,
+  may: 5,
+  jun: 6, june: 6,
+  jul: 7, july: 7,
+  aug: 8, august: 8,
+  sep: 9, sept: 9, september: 9,
+  oct: 10, october: 10,
+  nov: 11, november: 11,
+  dec: 12, december: 12,
 };
 
 export class CalendarParser {
@@ -121,19 +121,20 @@ export class CalendarParser {
 function extractMonthHeaders($: cheerio.CheerioAPI, headerCells: Element[]) {
   return headerCells
     .map((cell) => strip($(cell).text()))
-    .filter((text) => /^[A-Za-z]{3}\s+'\d{2}$/.test(text))
     .map((label) => {
-      const match = label.match(/^([A-Za-z]{3})\s+'(\d{2})$/);
+      const match = label.match(/^([A-Za-z]{3,9})\s*[-']?\s*(\d{2,4})$/i);
       if (!match) {
         return null;
       }
-      const month = match[1];
-      const monthIndex = MONTH_LOOKUP[month];
-      const year = 2000 + Number.parseInt(match[2], 10);
+      const rawMonth = match[1].toLowerCase();
+      const monthIndex = MONTH_LOOKUP[rawMonth] || MONTH_LOOKUP[rawMonth.slice(0, 3)];
+      const rawYear = Number.parseInt(match[2], 10);
+      const year = match[2].length === 2 ? 2000 + rawYear : rawYear;
       if (!monthIndex) {
         return null;
       }
-      return { label, month, monthIndex, year };
+      const monthName = match[1].slice(0, 3);
+      return { label, month: monthName.charAt(0).toUpperCase() + monthName.slice(1).toLowerCase(), monthIndex, year };
     })
     .filter((value): value is { label: string; month: string; monthIndex: number; year: number } => Boolean(value));
 }

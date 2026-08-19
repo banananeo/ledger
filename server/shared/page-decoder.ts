@@ -23,8 +23,9 @@ export class PageDecoder {
           .replace(/\\x([\dA-Fa-f]{2})/g, (_, code: string) =>
             String.fromCharCode(Number.parseInt(code, 16)),
           )
+          .replace(/\\t/g, ' ')
+          .replace(/\\"/g,'"')
           .replace(/\\'/g, "'")
-          .replace(/\\"/g, '"')
           .replace(/\\\\/g, "\\")
           .replace(/\\-/g, "-")
           .replace(/\\\//g, "/");

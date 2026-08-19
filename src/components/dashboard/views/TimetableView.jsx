@@ -6,13 +6,20 @@ import './TimetableView.css';
 
 function parseTimeMinutes(timeStr) {
   if (!timeStr) return 0;
-  const match = timeStr.trim().match(/(\d+):(\d+)(?:\s*(AM|PM))?/i);
+  const match = String(timeStr).trim().match(/(\d+):(\d+)(?:\s*(AM|PM))?/i);
   if (!match) return 0;
   let hours = parseInt(match[1], 10);
   const minutes = parseInt(match[2], 10);
   const meridiem = match[3]?.toUpperCase();
-  if (meridiem === 'PM' && hours < 12) hours += 12;
-  if (meridiem === 'AM' && hours === 12) hours = 0;
+  if (meridiem === 'PM' && hours < 12) {
+    hours += 12;
+  } else if (meridiem === 'AM' && hours === 12) {
+    hours = 0;
+  } else if (!meridiem) {
+    if (hours >= 1 && hours <= 6) {
+      hours += 12;
+    }
+  }
   return hours * 60 + minutes;
 }
 
@@ -42,9 +49,7 @@ function TimetableView({ schedule = [], calendar }) {
   const safeIndex = Math.min(index, schedule.length - 1);
   const day = schedule[safeIndex];
   const isToday = todayDayOrder && dayNumber(day?.dayLabel) === String(todayDayOrder);
-  const entries = day?.entries
-    ? [...day.entries].sort((a, b) => parseTimeMinutes(a.startTime) - parseTimeMinutes(b.startTime))
-    : [];
+  const entries = day?.entries || [];
 
   const goTo = (next) => setIndex(Math.max(0, Math.min(schedule.length - 1, next)));
 
