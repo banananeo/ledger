@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeftIcon, RefreshIcon, UserIcon, LogoutIcon, SunIcon, MoonIcon } from './Icons.jsx';
+import { ArrowLeftIcon, RefreshIcon, UserIcon, LogoutIcon, SunIcon, MoonIcon, BellIcon, BellOffIcon } from './Icons.jsx';
 import { useTheme } from '../../context/ThemeContext.tsx';
+import { useNotifications } from '../../context/NotificationContext.tsx';
 import './TopBar.css';
 
 const TITLES = {
@@ -23,9 +24,11 @@ function TopBar({ view, onBack, onRefresh, refreshing, profile, onLogout }) {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
   const { theme, toggleTheme } = useTheme();
+  const { notificationsEnabled, activeReminders, testReminder, setIsDrawerOpen } = useNotifications();
 
   const profileName = profile?.name;
   const regNo = profile?.registrationNumber;
+  const hasActiveAlert = (activeReminders.length > 0) || Boolean(testReminder);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -44,14 +47,38 @@ function TopBar({ view, onBack, onRefresh, refreshing, profile, onLogout }) {
   return (
     <header className="topbar">
       <div className="topbar__left">
-        {!isHome && (
-          <button className="bbtn bbtn--outline bbtn--icon topbar__back" onClick={onBack} aria-label="Back to home">
+        {isHome ? (
+          <div className="topbar__logo">
+            <div className="topbar__logo-icon-box">
+              <img src="/icon.svg" alt="Ledger" className="topbar__logo-img" />
+            </div>
+            <span className="topbar__logo-text">
+              Ledger<span className="topbar__logo-dot">.</span>
+            </span>
+          </div>
+        ) : (
+          <button className="bbtn bbtn--outline bbtn--icon topbar__back" onClick={onBack} aria-label="Back to home" title="Back to home">
             <ArrowLeftIcon width={18} height={18} />
           </button>
         )}
-        <h1 className="topbar__title">{TITLES[view] || 'Ledger'}</h1>
       </div>
       <div className="topbar__right" ref={menuRef}>
+
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.92 }}
+          className="bbtn bbtn--outline bbtn--icon topbar__notif"
+          onClick={() => setIsDrawerOpen(true)}
+          aria-label="Class Reminders"
+          title="Class Reminders & Notification Settings"
+          style={{ position: 'relative' }}
+        >
+          {notificationsEnabled ? <BellIcon width={17} height={17} /> : <BellOffIcon width={17} height={17} />}
+          {hasActiveAlert && (
+            <span className="topbar__notif-badge" />
+          )}
+        </motion.button>
+
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.92 }}
@@ -73,6 +100,7 @@ function TopBar({ view, onBack, onRefresh, refreshing, profile, onLogout }) {
             </motion.span>
           </AnimatePresence>
         </motion.button>
+
 
         <button
           className="bbtn bbtn--outline bbtn--icon topbar__sync"

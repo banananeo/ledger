@@ -213,7 +213,32 @@
   font-size: 13px;
 }
 
+.home__next-class-reminder-footer {
+  margin-top: 6px;
+}
+
+.home__next-class-reminder-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1.5px solid var(--ink);
+  background: var(--yellow-soft);
+  color: var(--ink);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.15s ease;
+}
+
+.home__next-class-reminder-pill:hover {
+  transform: translateY(-1px);
+  background: var(--yellow);
+}
+
 .home__next-class-empty {
+
   padding: 24px;
   text-align: center;
   color: var(--ink-soft);
@@ -337,4 +362,18 @@
 .dark .home__nav-card:hover {
   border-color: var(--ink);
 }
+
+[data-theme="dark"] .home__next-class-reminder-pill,
+.dark .home__next-class-reminder-pill {
+  background: var(--yellow-soft);
+  color: var(--yellow);
+  border-color: rgba(251, 191, 36, 0.5);
+}
+
+[data-theme="dark"] .home__next-class-reminder-pill:hover,
+.dark .home__next-class-reminder-pill:hover {
+  background: var(--yellow);
+  color: #0c0d10;
+}
+
 

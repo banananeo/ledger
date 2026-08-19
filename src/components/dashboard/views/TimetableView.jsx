@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import DayBadge from '../DayBadge.jsx';
-import { ChevronLeftIcon, ChevronRightIcon } from '../Icons.jsx';
+import { ChevronLeftIcon, ChevronRightIcon, DownloadIcon, ImageIcon } from '../Icons.jsx';
 import { todayISO, findEntryForDate } from '../../../utils/calendar.js';
+import TimetableExportModal from '../TimetableExportModal.jsx';
 import './TimetableView.css';
 
 function parseTimeMinutes(timeStr) {
@@ -28,7 +29,7 @@ function dayNumber(dayLabel) {
   return match ? match[0] : dayLabel;
 }
 
-function TimetableView({ schedule = [], calendar }) {
+function TimetableView({ schedule = [], calendar, profile }) {
   const todayDayOrder = findEntryForDate(calendar, todayISO())?.dayOrder;
   const initialIndex = useMemo(() => {
     if (!todayDayOrder) return 0;
@@ -37,6 +38,7 @@ function TimetableView({ schedule = [], calendar }) {
   }, [schedule, todayDayOrder]);
 
   const [index, setIndex] = useState(initialIndex);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   if (schedule.length === 0) {
     return (
@@ -55,10 +57,21 @@ function TimetableView({ schedule = [], calendar }) {
 
   return (
     <div className="timetable">
-      <p className="timetable__note">
-        SRM runs on a rotating Day Order rather than the calendar week — check the academic
-        calendar to see which Day today falls on.
-      </p>
+      {/* Top Banner & Download Button */}
+      <div className="timetable__header-bar">
+        <p className="timetable__note">
+          SRM runs on a rotating Day Order — check the academic calendar to see which Day today falls on.
+        </p>
+
+        <button
+          className="bbtn timetable__download-trigger-btn"
+          onClick={() => setShowExportModal(true)}
+          title="Download full weekly timetable poster as PNG"
+        >
+          <DownloadIcon width={16} height={16} />
+          <span>Download Weekly Timetable Image</span>
+        </button>
+      </div>
 
       <div className="bcard timetable__stepper">
         <button
@@ -115,7 +128,7 @@ function TimetableView({ schedule = [], calendar }) {
               <div className="timetable__period-main">
                 <p className="timetable__period-title">{p.courseTitle}</p>
                 <p className="timetable__period-sub">
-                  {p.room} · {p.faculty}
+                  <strong className="timetable__period-room">{p.room}</strong> · {p.faculty}
                 </p>
               </div>
               <span className={`bchip timetable__period-type${p.slotType === 'Practical' ? ' bchip--warning' : ''}`}>
@@ -125,8 +138,17 @@ function TimetableView({ schedule = [], calendar }) {
           ))}
         </ul>
       )}
+
+      {/* Export Timetable Modal */}
+      <TimetableExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        schedule={schedule}
+        profile={profile}
+      />
     </div>
   );
 }
 
 export default TimetableView;
+

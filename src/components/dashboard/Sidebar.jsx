@@ -1,6 +1,7 @@
 import React from 'react';
-import { HomeIcon, ClockIcon, CheckRingIcon, CalendarIcon, AwardIcon, RefreshIcon, LogoutIcon, SunIcon, MoonIcon } from './Icons.jsx';
+import { HomeIcon, ClockIcon, CheckRingIcon, CalendarIcon, AwardIcon, RefreshIcon, LogoutIcon, SunIcon, MoonIcon, BellIcon } from './Icons.jsx';
 import { useTheme } from '../../context/ThemeContext.tsx';
+import { useNotifications } from '../../context/NotificationContext.tsx';
 import './Sidebar.css';
 
 export const NAV_ITEMS = [
@@ -13,6 +14,8 @@ export const NAV_ITEMS = [
 
 function Sidebar({ view, onNavigate, onRefresh, refreshing, onLogout }) {
   const { theme, toggleTheme } = useTheme();
+  const { activeReminders, testReminder, setIsDrawerOpen } = useNotifications();
+  const hasActiveAlert = activeReminders.length > 0 || Boolean(testReminder);
 
   return (
     <aside className="sidebar">
@@ -32,6 +35,18 @@ function Sidebar({ view, onNavigate, onRefresh, refreshing, onLogout }) {
         ))}
       </nav>
       <div className="sidebar__footer">
+        <button
+          className="sidebar__item"
+          onClick={() => setIsDrawerOpen(true)}
+          title="Class Reminders & Notification Settings"
+          style={{ position: 'relative' }}
+        >
+          <BellIcon width={18} height={18} />
+          <span>Reminders</span>
+          {hasActiveAlert && (
+            <span className="sidebar__notif-dot" />
+          )}
+        </button>
         <button className="sidebar__item" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}>
           {theme === 'dark' ? <SunIcon width={18} height={18} /> : <MoonIcon width={18} height={18} />}
           <span>{theme === 'dark' ? 'Light Theme' : 'Dark Theme'}</span>
@@ -50,4 +65,5 @@ function Sidebar({ view, onNavigate, onRefresh, refreshing, onLogout }) {
 }
 
 export default Sidebar;
+
 

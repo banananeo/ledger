@@ -89,7 +89,18 @@
   animation: sidebar-spin 0.9s linear infinite;
 }
 
+.sidebar__notif-dot {
+  margin-left: auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--danger);
+  box-shadow: 0 0 6px rgba(248, 113, 113, 0.6);
+  animation: notif-ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
 @keyframes sidebar-spin {
+
   to { transform: rotate(360deg); }
 }
 

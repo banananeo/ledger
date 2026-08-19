@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { ClockIcon, CheckRingIcon, CalendarIcon, AwardIcon } from '../Icons.jsx';
+import { ClockIcon, CheckRingIcon, CalendarIcon, AwardIcon, BellIcon } from '../Icons.jsx';
 import { todayISO, findEntryForDate, allEntries } from '../../../utils/calendar.js';
+import { useNotifications } from '../../../context/NotificationContext.tsx';
 import './HomeView.css';
 
 const homeContainerVariants = {
@@ -183,6 +184,7 @@ function getDailyAffirmation(dateStr) {
 function HomeView({ profile, attendance = [], schedule = [], marks = [], calendar, lastSynced, onNavigate }) {
   const nextClassInfo = getNextClassInfo(schedule, calendar);
   const positiveMessage = getDailyAffirmation(todayISO());
+  const { notificationsEnabled, leadMinutes, setIsDrawerOpen } = useNotifications();
 
   return (
     <motion.div
@@ -253,6 +255,21 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
                   <span className="home__next-class-meta-val">{nextClassInfo.entry.faculty || 'Assigned Faculty'}</span>
                 </div>
               </div>
+
+              <div className="home__next-class-reminder-footer">
+                <button
+                  className="home__next-class-reminder-pill"
+                  onClick={() => setIsDrawerOpen(true)}
+                  title="Configure Class Reminder"
+                >
+                  <BellIcon width={13} height={13} />
+                  <span>
+                    {notificationsEnabled
+                      ? `Reminder set for ${leadMinutes}m before class`
+                      : 'Class reminders are paused — Tap to enable'}
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
         ) : (
@@ -261,6 +278,7 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
           </div>
         )}
       </motion.section>
+
 
       {/* Navigation Shortcuts */}
       <motion.section className="home__nav-grid" variants={homeItemVariants}>

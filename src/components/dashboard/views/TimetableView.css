@@ -4,13 +4,48 @@
   gap: 16px;
 }
 
+.timetable__header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
 .timetable__note {
   font-size: 13px;
   color: var(--ink-soft);
-  max-width: 60ch;
+  max-width: 54ch;
+  margin: 0;
+}
+
+.timetable__download-trigger-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  background: var(--yellow);
+  color: #121317;
+  border: var(--stroke) solid var(--ink);
+  box-shadow: var(--shadow-hard-sm);
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: var(--radius-btn);
+  transition: transform 0.12s ease;
+}
+
+.timetable__download-trigger-btn:hover {
+  transform: translate(-1px, -1px);
+}
+
+.timetable__period-room {
+  color: var(--ink);
+  font-weight: 700;
 }
 
 .timetable__stepper {
+
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -108,6 +143,20 @@
 .dark .timetable__period:hover {
   border-color: var(--ink);
 }
+
+[data-theme="dark"] .timetable__download-trigger-btn,
+.dark .timetable__download-trigger-btn {
+  background: var(--yellow);
+  color: #0c0d10;
+  border-color: rgba(251, 191, 36, 0.5);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="dark"] .timetable__period-room,
+.dark .timetable__period-room {
+  color: var(--sky);
+}
+
 
 @media (max-width: 560px) {
 

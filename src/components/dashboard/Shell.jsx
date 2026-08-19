@@ -3,6 +3,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import Sidebar from './Sidebar.jsx';
 import MobileTabBar from './MobileTabBar.jsx';
 import TopBar from './TopBar.jsx';
+import ClassReminderBanner from './ClassReminderBanner.jsx';
+import NotificationDrawer from './NotificationDrawer.jsx';
+import { NotificationProvider } from '../../context/NotificationContext.tsx';
 import HomeView from './views/HomeView.jsx';
 import TimetableView from './views/TimetableView.jsx';
 import AttendanceView from './views/AttendanceView.jsx';
@@ -70,82 +73,89 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error }) {
   };
 
   return (
-    <div 
-      className="shell" 
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
-      <Sidebar
-        view={view}
-        onNavigate={navigate}
-        onRefresh={onRefresh}
-        refreshing={refreshing}
-        onLogout={onLogout}
-      />
-      <div className="shell__main" style={{ transform: `translateY(${pullDistance}px)`, transition: pullDistance === 0 ? 'transform 0.2s ease-out' : 'none' }}>
-        {/* Pull Indicator */}
-        <div className="shell__pull-indicator" style={{ height: pullDistance > 0 ? 60 : 0, opacity: pullDistance / 80 }}>
-          {refreshing ? 'Syncing...' : pullDistance > 60 ? 'Release to refresh' : 'Pull down to refresh'}
-        </div>
-        <TopBar
+    <NotificationProvider schedule={schedule} calendar={calendar}>
+      <div 
+        className="shell" 
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <Sidebar
           view={view}
-          onBack={() => navigate('home')}
+          onNavigate={navigate}
           onRefresh={onRefresh}
           refreshing={refreshing}
-          profile={profile}
           onLogout={onLogout}
         />
-        {error && (
-          <div className="shell__error">
-            <span>{error}</span>
-            {error.toLowerCase().includes('sign in') && (
-              <button className="bbtn bbtn--outline shell__error-btn" onClick={onLogout}>
-                Sign in again
-              </button>
-            )}
+        <div className="shell__main" style={{ transform: `translateY(${pullDistance}px)`, transition: pullDistance === 0 ? 'transform 0.2s ease-out' : 'none' }}>
+          {/* Pull Indicator */}
+          <div className="shell__pull-indicator" style={{ height: pullDistance > 0 ? 60 : 0, opacity: pullDistance / 80 }}>
+            {refreshing ? 'Syncing...' : pullDistance > 60 ? 'Release to refresh' : 'Pull down to refresh'}
           </div>
-        )}
-        <div className="shell__content">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={view}
-              variants={viewVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              className="shell__view-wrapper"
-            >
-              {view === 'home' && (
-                <HomeView
-                  profile={profile}
-                  attendance={attendance}
-                  schedule={schedule}
-                  marks={marks}
-                  calendar={calendar}
-                  lastSynced={lastSynced}
-                  onNavigate={navigate}
-                />
+          <TopBar
+            view={view}
+            onBack={() => navigate('home')}
+            onRefresh={onRefresh}
+            refreshing={refreshing}
+            profile={profile}
+            onLogout={onLogout}
+          />
+          {error && (
+            <div className="shell__error">
+              <span>{error}</span>
+              {error.toLowerCase().includes('sign in') && (
+                <button className="bbtn bbtn--outline shell__error-btn" onClick={onLogout}>
+                  Sign in again
+                </button>
               )}
-              {view === 'timetable' && (
-                <TimetableView schedule={schedule} calendar={calendar} />
-              )}
-              {view === 'attendance' && (
-                <AttendanceView attendance={attendance} />
-              )}
-              {view === 'calendar' && (
-                <CalendarView calendar={calendar} />
-              )}
-              {view === 'marks' && (
-                <MarksView marks={marks} />
-              )}
-            </motion.div>
-          </AnimatePresence>
+            </div>
+          )}
+          <div className="shell__content">
+            <ClassReminderBanner onNavigate={navigate} />
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={view}
+                variants={viewVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="shell__view-wrapper"
+              >
+                {view === 'home' && (
+                  <HomeView
+                    profile={profile}
+                    attendance={attendance}
+                    schedule={schedule}
+                    marks={marks}
+                    calendar={calendar}
+                    lastSynced={lastSynced}
+                    onNavigate={navigate}
+                  />
+                )}
+                {view === 'timetable' && (
+                  <TimetableView schedule={schedule} calendar={calendar} profile={profile} />
+                )}
+
+                {view === 'attendance' && (
+                  <AttendanceView attendance={attendance} />
+                )}
+                {view === 'calendar' && (
+                  <CalendarView calendar={calendar} />
+                )}
+                {view === 'marks' && (
+                  <MarksView marks={marks} />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </div>
+        <MobileTabBar view={view} onNavigate={navigate} />
+        <NotificationDrawer onNavigate={navigate} />
       </div>
-      <MobileTabBar view={view} onNavigate={navigate} />
-    </div>
+    </NotificationProvider>
   );
 }
 
 export default Shell;
+
