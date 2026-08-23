@@ -313,6 +313,65 @@
   flex: 1;
 }
 
+.home__games-banner {
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  background: var(--surface);
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.home__games-banner:hover {
+  transform: translate(-2px, -2px);
+}
+
+.home__games-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  min-width: 260px;
+}
+
+.home__games-banner-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--mint);
+  color: #111827;
+  border: var(--stroke) solid var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-hard-sm);
+}
+
+.home__games-banner-title {
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 2px 0 4px;
+}
+
+.home__games-banner-desc {
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.home__games-banner-btn {
+  white-space: nowrap;
+  padding: 10px 20px;
+  font-size: 13.5px;
+}
+
 @media (max-width: 680px) {
   .home__next-class-body {
     flex-direction: column;

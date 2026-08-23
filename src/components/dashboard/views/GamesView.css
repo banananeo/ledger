@@ -1,0 +1,70 @@
+.games-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 100%;
+}
+
+.games-view__header {
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: var(--surface);
+  border: var(--stroke) solid var(--ink);
+  box-shadow: var(--shadow-hard);
+}
+
+.games-view__title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.games-view__icon-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: var(--yellow);
+  color: #121317;
+  border: var(--stroke) solid var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-hard-sm);
+}
+
+.games-view__title {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+}
+
+.games-view__tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.games-view__tab {
+  padding: 8px 18px;
+  font-size: 13.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.games-view__content {
+  width: 100%;
+}
+
+.games-view__snake-card {
+  padding: 20px;
+  background: var(--surface);
+  border: var(--stroke) solid var(--ink);
+  box-shadow: var(--shadow-hard);
+}

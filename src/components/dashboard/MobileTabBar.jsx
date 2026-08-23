@@ -3,6 +3,8 @@ import { motion } from 'motion/react';
 import { NAV_ITEMS } from './Sidebar.jsx';
 import './MobileTabBar.css';
 
+const MOBILE_NAV_ITEMS = NAV_ITEMS.filter((item) => item.id !== 'games');
+
 function MobileTabBar({ view, onNavigate }) {
   return (
     <nav className="mtab-wrapper" aria-label="Main Navigation">
@@ -10,7 +12,7 @@ function MobileTabBar({ view, onNavigate }) {
         {/* Specular Edge Lens Highlight */}
         <div className="mtab-glass__rim-light" />
         
-        {NAV_ITEMS.map(({ id, label, Icon }) => {
+        {MOBILE_NAV_ITEMS.map(({ id, label, Icon }) => {
           const isActive = view === id;
           return (
             <motion.button

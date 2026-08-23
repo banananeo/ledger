@@ -5,13 +5,16 @@ import MobileTabBar from './MobileTabBar.jsx';
 import TopBar from './TopBar.jsx';
 import ClassReminderBanner from './ClassReminderBanner.jsx';
 import NotificationDrawer from './NotificationDrawer.jsx';
+import AcademiaDownBanner from './AcademiaDownBanner.jsx';
 import { NotificationProvider } from '../../context/NotificationContext.tsx';
 import HomeView from './views/HomeView.jsx';
 import TimetableView from './views/TimetableView.jsx';
 import AttendanceView from './views/AttendanceView.jsx';
 import MarksView from './views/MarksView.jsx';
 import CalendarView from './views/CalendarView.jsx';
+import GamesView from './views/GamesView.jsx';
 import './Shell.css';
+
 
 const viewVariants = {
   initial: { opacity: 0, y: 12 },
@@ -101,14 +104,13 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error }) {
             onLogout={onLogout}
           />
           {error && (
-            <div className="shell__error">
-              <span>{error}</span>
-              {error.toLowerCase().includes('sign in') && (
-                <button className="bbtn bbtn--outline shell__error-btn" onClick={onLogout}>
-                  Sign in again
-                </button>
-              )}
-            </div>
+            <AcademiaDownBanner
+              error={error}
+              onRetry={onRefresh}
+              onPlayGame={(gameType) => {
+                navigate('games');
+              }}
+            />
           )}
           <div className="shell__content">
             <ClassReminderBanner onNavigate={navigate} />
@@ -139,6 +141,9 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error }) {
 
                 {view === 'attendance' && (
                   <AttendanceView attendance={attendance} />
+                )}
+                {view === 'games' && (
+                  <GamesView schedule={schedule} attendance={attendance} calendar={calendar} />
                 )}
                 {view === 'calendar' && (
                   <CalendarView calendar={calendar} />

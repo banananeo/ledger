@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { ClockIcon, CheckRingIcon, CalendarIcon, AwardIcon, BellIcon } from '../Icons.jsx';
+import { ClockIcon, CheckRingIcon, CalendarIcon, AwardIcon, BellIcon, GamepadIcon } from '../Icons.jsx';
 import { todayISO, findEntryForDate, allEntries } from '../../../utils/calendar.js';
 import { useNotifications } from '../../../context/NotificationContext.tsx';
 import './HomeView.css';
@@ -31,9 +31,11 @@ const homeItemVariants = {
 const NAV_CARDS = [
   { id: 'timetable', label: 'Timetable', Icon: ClockIcon, tone: 'sky', blurb: 'Classes by Day Order' },
   { id: 'attendance', label: 'Attendance', Icon: CheckRingIcon, tone: 'pink', blurb: 'Per-course % and margin' },
-  { id: 'calendar', label: 'Academic Calendar', Icon: CalendarIcon, tone: 'mint', blurb: 'Semester dates & day orders' },
+  { id: 'games', label: 'Campus Games', Icon: GamepadIcon, tone: 'mint', blurb: 'Bunk Roulette & Snake' },
+  { id: 'calendar', label: 'Calendar', Icon: CalendarIcon, tone: 'lavender', blurb: 'Academic day orders' },
   { id: 'marks', label: 'Marks', Icon: AwardIcon, tone: 'yellow', blurb: 'Internal tests & cycles' },
 ];
+
 
 function parseTimeMinutes(timeStr) {
   if (!timeStr) return null;
@@ -296,6 +298,30 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
             <span className="home__nav-card-blurb">{blurb}</span>
           </motion.button>
         ))}
+      </motion.section>
+
+      {/* Quick Launch Games Card */}
+      <motion.section variants={homeItemVariants}>
+        <div className="bcard home__games-banner" onClick={() => onNavigate('games')}>
+          <div className="home__games-banner-left">
+            <div className="home__games-banner-icon">
+              <GamepadIcon width={24} height={24} />
+            </div>
+            <div>
+              <p className="eyebrow">Student Arcade & Simulator</p>
+              <h3 className="home__games-banner-title">Bunk Roulette & Retro Snake</h3>
+              <p className="home__games-banner-desc">
+                Calculate live attendance margin risk per day order, or play classic Retro Snake during free periods.
+              </p>
+            </div>
+          </div>
+          <button className="bbtn bbtn--good home__games-banner-btn" onClick={(e) => {
+            e.stopPropagation();
+            onNavigate('games');
+          }}>
+            <span>Launch Games →</span>
+          </button>
+        </div>
       </motion.section>
     </motion.div>
   );

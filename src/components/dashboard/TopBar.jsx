@@ -9,6 +9,7 @@ const TITLES = {
   home: 'Home',
   timetable: 'Timetable',
   attendance: 'Attendance',
+  games: 'Games & Roulette',
   calendar: 'Academic Calendar',
   marks: 'Internal Marks',
 };

@@ -145,8 +145,11 @@ function NotificationDrawer({ onNavigate }) {
                 }}
               >
                 <BellIcon width={16} height={16} />
-                <span>Test 15-Min Class Reminder Popup</span>
+                <span>📲 Test Mobile Push & Vibration</span>
               </button>
+              <p className="notif-drawer__mobile-tip">
+                💡 On mobile (Android/iOS PWA), notifications vibrate your phone and play an audio chime when background service worker is registered.
+              </p>
             </div>
 
             {/* Today's Schedule & Reminder Timeline */}
