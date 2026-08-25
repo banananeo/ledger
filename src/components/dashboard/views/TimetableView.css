@@ -70,10 +70,6 @@
   color: var(--ink-soft);
 }
 
-.timetable__dots {
-  padding: 4px 0;
-}
-
 .timetable__list {
   list-style: none;
   margin: 0;

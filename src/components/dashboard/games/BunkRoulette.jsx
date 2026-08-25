@@ -343,9 +343,15 @@ export function BunkRoulette({ schedule = [], attendance = [], calendar }) {
     let currentPct = 86.6;
 
     if (record) {
-      attended = record.attendedHours ?? record.attended ?? 26;
-      total = record.totalHours ?? record.total ?? 30;
-      currentPct = record.attendancePercentage ?? ((attended / (total || 1)) * 100);
+      if (record.classesConducted != null && record.classesConducted > 0) {
+        total = Number(record.classesConducted) || 30;
+        const absent = Number(record.classesAbsent) || 0;
+        attended = Math.max(0, total - absent);
+      } else if (record.attendedHours != null || record.totalHours != null) {
+        attended = record.attendedHours ?? record.attended ?? 26;
+        total = record.totalHours ?? record.total ?? 30;
+      }
+      currentPct = Number(record.attendancePercentage) || ((attended / (total || 1)) * 100);
     }
 
     // After 1 bunk: attended remains same, total increases by 1 (or 2 if lab)

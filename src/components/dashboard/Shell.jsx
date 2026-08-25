@@ -140,7 +140,7 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error }) {
                 )}
 
                 {view === 'attendance' && (
-                  <AttendanceView attendance={attendance} />
+                  <AttendanceView attendance={attendance} schedule={schedule} />
                 )}
                 {view === 'games' && (
                   <GamesView schedule={schedule} attendance={attendance} calendar={calendar} />

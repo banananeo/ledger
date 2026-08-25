@@ -296,7 +296,8 @@ export async function generateTimetableCanvas(
   days.forEach((dayObj, rowIdx) => {
     const y = tableY + colHeaderHeight + rowIdx * rowHeight;
     const dayLabel = dayObj.dayLabel || `Day ${rowIdx + 1}`;
-    const dayNum = (dayLabel.match(/\d+/) || [rowIdx + 1])[0];
+    const dayMatch = dayLabel.match(/\d+/);
+    const dayText = dayMatch ? dayMatch[0] : String(rowIdx + 1);
 
     // Day label cell
     ctx.fillStyle = isDark ? '#181b24' : '#ffffff';
@@ -319,7 +320,7 @@ export async function generateTimetableCanvas(
     ctx.font = 'bold 22px "Space Grotesk", sans-serif';
     ctx.fillStyle = colors.ink;
     ctx.textAlign = 'center';
-    ctx.fillText(String(dayNum), badgeX + badgeSize / 2, badgeY + 32);
+    ctx.fillText(String(dayText), badgeX + badgeSize / 2, badgeY + 32);
 
     ctx.font = 'bold 12.5px "JetBrains Mono", monospace';
     ctx.fillStyle = colors.inkSoft;

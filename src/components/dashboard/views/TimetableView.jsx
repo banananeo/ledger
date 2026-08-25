@@ -1,36 +1,18 @@
 import React, { useMemo, useState } from 'react';
 import DayBadge from '../DayBadge.jsx';
-import { ChevronLeftIcon, ChevronRightIcon, DownloadIcon, ImageIcon } from '../Icons.jsx';
+import { ChevronLeftIcon, ChevronRightIcon, DownloadIcon } from '../Icons.jsx';
 import { todayISO, findEntryForDate } from '../../../utils/calendar.js';
 import TimetableExportModal from '../TimetableExportModal.jsx';
 import './TimetableView.css';
 
-function parseTimeMinutes(timeStr) {
-  if (!timeStr) return 0;
-  const match = String(timeStr).trim().match(/(\d+):(\d+)(?:\s*(AM|PM))?/i);
-  if (!match) return 0;
-  let hours = parseInt(match[1], 10);
-  const minutes = parseInt(match[2], 10);
-  const meridiem = match[3]?.toUpperCase();
-  if (meridiem === 'PM' && hours < 12) {
-    hours += 12;
-  } else if (meridiem === 'AM' && hours === 12) {
-    hours = 0;
-  } else if (!meridiem) {
-    if (hours >= 1 && hours <= 6) {
-      hours += 12;
-    }
-  }
-  return hours * 60 + minutes;
-}
-
 function dayNumber(dayLabel) {
   const match = String(dayLabel || '').match(/\d+/);
-  return match ? match[0] : dayLabel;
+  return match ? match[0] : String(dayLabel || '');
 }
 
 function TimetableView({ schedule = [], calendar, profile }) {
   const todayDayOrder = findEntryForDate(calendar, todayISO())?.dayOrder;
+
   const initialIndex = useMemo(() => {
     if (!todayDayOrder) return 0;
     const idx = schedule.findIndex((d) => dayNumber(d.dayLabel) === String(todayDayOrder));
@@ -40,7 +22,7 @@ function TimetableView({ schedule = [], calendar, profile }) {
   const [index, setIndex] = useState(initialIndex);
   const [showExportModal, setShowExportModal] = useState(false);
 
-  if (schedule.length === 0) {
+  if (!schedule || schedule.length === 0) {
     return (
       <div className="bcard timetable__empty-card">
         <p>No timetable data came back from Academia.</p>
@@ -57,10 +39,10 @@ function TimetableView({ schedule = [], calendar, profile }) {
 
   return (
     <div className="timetable">
-      {/* Top Banner & Download Button */}
+      {/* Top Bar & Download Button */}
       <div className="timetable__header-bar">
         <p className="timetable__note">
-          SRM runs on a rotating Day Order — check the academic calendar to see which Day today falls on.
+          Regular timetable for Day Orders 1–5.
         </p>
 
         <button
@@ -84,7 +66,11 @@ function TimetableView({ schedule = [], calendar, profile }) {
         </button>
 
         <div className="timetable__stepper-center">
-          <DayBadge day={dayNumber(day?.dayLabel)} size="lg" tone={isToday ? 'sky' : 'yellow'} />
+          <DayBadge
+            day={dayNumber(day?.dayLabel)}
+            size="lg"
+            tone={isToday ? 'sky' : 'yellow'}
+          />
           {isToday && <span className="bchip bchip--good timetable__today-tag">Today</span>}
           <span className="timetable__count num">
             {entries.length} class{entries.length === 1 ? '' : 'es'}
@@ -99,17 +85,6 @@ function TimetableView({ schedule = [], calendar, profile }) {
         >
           <ChevronRightIcon />
         </button>
-      </div>
-
-      <div className="bstepper__dots timetable__dots">
-        {schedule.map((d, i) => (
-          <button
-            key={d.dayLabel}
-            className={`bstepper__dot${i === safeIndex ? ' bstepper__dot--active' : ''}`}
-            onClick={() => goTo(i)}
-            aria-label={d.dayLabel}
-          />
-        ))}
       </div>
 
       {entries.length === 0 ? (
@@ -131,7 +106,7 @@ function TimetableView({ schedule = [], calendar, profile }) {
                   <strong className="timetable__period-room">{p.room}</strong> · {p.faculty}
                 </p>
               </div>
-              <span className={`bchip timetable__period-type${p.slotType === 'Practical' ? ' bchip--warning' : ''}`}>
+              <span className={`bchip timetable__period-type${p.slotType === 'Practical' ? ' bchip--warning' : p.slotType === 'Training' ? ' bchip--good' : ''}`}>
                 {p.slotType}
               </span>
             </li>
@@ -151,4 +126,5 @@ function TimetableView({ schedule = [], calendar, profile }) {
 }
 
 export default TimetableView;
+
 
