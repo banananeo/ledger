@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, MotionConfig } from 'motion/react';
 import Shell from './components/dashboard/Shell.jsx';
 import LoginForm from './components/LoginForm.jsx';
 import CaptchaModal from './components/CaptchaModal.jsx';
@@ -176,7 +176,7 @@ export function App() {
   };
 
   return (
-    <>
+    <MotionConfig reducedMotion="user">
       <AnimatePresence>
         {showSplash && <SplashScreen key="splash" />}
       </AnimatePresence>
@@ -187,7 +187,7 @@ export function App() {
             key="login"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.98 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
           >
             <LoginForm onSuccess={handleLoginSuccess} />
@@ -212,15 +212,18 @@ export function App() {
         )}
       </AnimatePresence>
 
-      {captchaChallenge && (
-        <CaptchaModal
-          challenge={captchaChallenge}
-          onSubmit={(code) => handleSync(code)}
-          onCancel={() => setCaptchaChallenge(null)}
-          loading={refreshing}
-        />
-      )}
-    </>
+      <AnimatePresence>
+        {captchaChallenge && (
+          <CaptchaModal
+            key="captcha"
+            challenge={captchaChallenge}
+            onSubmit={(code) => handleSync(code)}
+            onCancel={() => setCaptchaChallenge(null)}
+            loading={refreshing}
+          />
+        )}
+      </AnimatePresence>
+    </MotionConfig>
   );
 }
 

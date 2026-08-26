@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GamepadIcon, RefreshIcon, DiceIcon } from './Icons.jsx';
 import './AcademiaDownBanner.css';
@@ -6,17 +6,22 @@ import './AcademiaDownBanner.css';
 export function AcademiaDownBanner({ error, onRetry, onPlayGame }) {
   const [dismissed, setDismissed] = useState(false);
 
-  if (!error || dismissed) return null;
+  useEffect(() => {
+    if (error) setDismissed(false);
+  }, [error]);
+
+  const visible = Boolean(error) && !dismissed;
 
   return (
     <AnimatePresence>
-      <motion.div
-        className="academia-down-banner bcard"
-        initial={{ opacity: 0, y: -12, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: -10, scale: 0.98 }}
-        transition={{ type: 'spring', stiffness: 450, damping: 26 }}
-      >
+      {visible && (
+        <motion.div
+          className="academia-down-banner bcard"
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+        >
         <div className="academia-down-banner__left">
           <div className="academia-down-banner__icon-box">
             <span className="academia-down-banner__emoji">💤</span>
@@ -72,7 +77,8 @@ export function AcademiaDownBanner({ error, onRetry, onPlayGame }) {
             ✕
           </button>
         </div>
-      </motion.div>
+        </motion.div>
+      )}
     </AnimatePresence>
   );
 }

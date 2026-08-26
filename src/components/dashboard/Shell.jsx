@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import React, { useRef, useState } from 'react';
+import { motion, AnimatePresence, useMotionValue, useTransform, animate, useMotionValueEvent } from 'motion/react';
 import Sidebar from './Sidebar.jsx';
 import MobileTabBar from './MobileTabBar.jsx';
 import TopBar from './TopBar.jsx';
@@ -15,6 +15,8 @@ import CalendarView from './views/CalendarView.jsx';
 import GamesView from './views/GamesView.jsx';
 import './Shell.css';
 
+const PULL_MAX = 80;
+const PULL_TRIGGER = 60;
 
 const viewVariants = {
   initial: { opacity: 0, y: 12 },
@@ -40,34 +42,42 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error }) {
   const [view, setView] = useState('home');
   const { profile, attendance = [], schedule = [], marks = [], calendar } = data || {};
 
-  // Pull-to-refresh state
-  const [startY, setStartY] = useState(0);
-  const [pullDistance, setPullDistance] = useState(0);
+  const pullY = useMotionValue(0);
+  const pullOpacity = useTransform(pullY, [0, PULL_MAX], [0, 1]);
+  const startYRef = useRef(0);
+  const trackingRef = useRef(false);
+  const [pullArmed, setPullArmed] = useState(false);
+
+  useMotionValueEvent(pullY, 'change', (latest) => {
+    const next = latest > PULL_TRIGGER;
+    setPullArmed((prev) => (prev === next ? prev : next));
+  });
 
   const handleTouchStart = (e) => {
-    if (window.scrollY === 0) {
-      setStartY(e.touches[0].clientY);
+    if (window.scrollY <= 0) {
+      startYRef.current = e.touches[0].clientY;
+      trackingRef.current = true;
     }
   };
 
   const handleTouchMove = (e) => {
-    if (startY === 0) return;
-    const currentY = e.touches[0].clientY;
-    const distance = currentY - startY;
+    if (!trackingRef.current) return;
+    const distance = e.touches[0].clientY - startYRef.current;
 
     if (distance > 0 && window.scrollY <= 0) {
-      setPullDistance(Math.min(distance * 0.4, 80)); // Add friction
+      pullY.set(Math.min(distance * 0.4, PULL_MAX));
     } else {
-      setPullDistance(0);
+      pullY.set(0);
     }
   };
 
   const handleTouchEnd = () => {
-    if (pullDistance > 60 && !refreshing) {
+    trackingRef.current = false;
+    startYRef.current = 0;
+    if (pullY.get() > PULL_TRIGGER && !refreshing) {
       onRefresh();
     }
-    setStartY(0);
-    setPullDistance(0);
+    animate(pullY, 0, { type: 'spring', stiffness: 420, damping: 32 });
   };
 
   const navigate = (next) => {
@@ -77,8 +87,8 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error }) {
 
   return (
     <NotificationProvider schedule={schedule} calendar={calendar}>
-      <div 
-        className="shell" 
+      <div
+        className="shell"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -90,11 +100,10 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error }) {
           refreshing={refreshing}
           onLogout={onLogout}
         />
-        <div className="shell__main" style={{ transform: `translateY(${pullDistance}px)`, transition: pullDistance === 0 ? 'transform 0.2s ease-out' : 'none' }}>
-          {/* Pull Indicator */}
-          <div className="shell__pull-indicator" style={{ height: pullDistance > 0 ? 60 : 0, opacity: pullDistance / 80 }}>
-            {refreshing ? 'Syncing...' : pullDistance > 60 ? 'Release to refresh' : 'Pull down to refresh'}
-          </div>
+        <motion.div className="shell__main" style={{ y: pullY }}>
+          <motion.div className="shell__pull-indicator" style={{ opacity: pullOpacity }}>
+            {refreshing ? 'Syncing...' : pullArmed ? 'Release to refresh' : 'Pull down to refresh'}
+          </motion.div>
           <TopBar
             view={view}
             onBack={() => navigate('home')}
@@ -103,15 +112,13 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error }) {
             profile={profile}
             onLogout={onLogout}
           />
-          {error && (
-            <AcademiaDownBanner
-              error={error}
-              onRetry={onRefresh}
-              onPlayGame={(gameType) => {
-                navigate('games');
-              }}
-            />
-          )}
+          <AcademiaDownBanner
+            error={error}
+            onRetry={onRefresh}
+            onPlayGame={() => {
+              navigate('games');
+            }}
+          />
           <div className="shell__content">
             <ClassReminderBanner onNavigate={navigate} />
 
@@ -154,7 +161,7 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error }) {
               </motion.div>
             </AnimatePresence>
           </div>
-        </div>
+        </motion.div>
         <MobileTabBar view={view} onNavigate={navigate} />
         <NotificationDrawer onNavigate={navigate} />
       </div>
@@ -163,4 +170,3 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error }) {
 }
 
 export default Shell;
-

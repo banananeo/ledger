@@ -73,17 +73,23 @@ function TimetableExportModal({ isOpen, onClose, schedule = [], profile }) {
   };
 
 
-  if (!isOpen) return null;
-
   return (
     <AnimatePresence>
-      <div className="timetable-modal-overlay" onClick={onClose}>
+      {isOpen && (
+      <motion.div
+        className="timetable-modal-overlay"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        onClick={onClose}
+      >
         <motion.div
           className="bcard timetable-modal"
-          initial={{ opacity: 0, scale: 0.94, y: 16 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.94, y: 16 }}
-          transition={{ type: 'spring', stiffness: 450, damping: 28 }}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 16 }}
+          transition={{ type: 'spring', stiffness: 420, damping: 32 }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -175,7 +181,8 @@ function TimetableExportModal({ isOpen, onClose, schedule = [], profile }) {
             </button>
           </div>
         </motion.div>
-      </div>
+      </motion.div>
+      )}
     </AnimatePresence>
   );
 }

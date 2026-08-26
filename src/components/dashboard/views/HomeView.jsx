@@ -192,7 +192,7 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
     <motion.div
       className="home"
       variants={homeContainerVariants}
-      initial="hidden"
+      initial={false}
       animate="visible"
     >
       <motion.section className="bcard bcard--yellow home__hero" variants={homeItemVariants}>

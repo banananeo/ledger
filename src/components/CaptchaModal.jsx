@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import './CaptchaModal.css';
 
 function CaptchaModal({ challenge, onSubmit, onCancel, loading }) {
@@ -11,8 +12,20 @@ function CaptchaModal({ challenge, onSubmit, onCancel, loading }) {
   };
 
   return (
-    <div className="captcha-modal-overlay">
-      <div className="captcha-modal-card bcard">
+    <motion.div
+      className="captcha-modal-overlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+    >
+      <motion.div
+        className="captcha-modal-card bcard"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 12 }}
+        transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+      >
         <div className="captcha-modal-header">
           <h3 className="captcha-modal-title">Verification Required</h3>
           <p className="captcha-modal-desc">
@@ -54,8 +67,8 @@ function CaptchaModal({ challenge, onSubmit, onCancel, loading }) {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 

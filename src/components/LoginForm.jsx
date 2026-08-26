@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { login, ApiError } from '../api';
 import { useTheme } from '../context/ThemeContext.tsx';
 import { SunIcon, MoonIcon } from './dashboard/Icons.jsx';
@@ -115,16 +115,19 @@ function LoginForm({ onSuccess }) {
         </motion.div>
 
 
-        {error && (
-          <motion.div
-            className="login-error-banner"
-            initial={{ opacity: 0, height: 0, y: -6 }}
-            animate={{ opacity: 1, height: 'auto', y: 0 }}
-            transition={{ duration: 0.25 }}
-          >
-            {error}
-          </motion.div>
-        )}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              className="login-error-banner"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            >
+              {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <form className="login-form" onSubmit={handleSubmit}>
           <motion.div className="form-group" variants={itemVariants}>
@@ -174,9 +177,9 @@ function LoginForm({ onSuccess }) {
           {captchaChallenge && (
             <motion.div
               className="captcha-box"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3 }}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             >
               <label className="form-label" htmlFor="captcha-input">
                 Security Code (Captcha)

@@ -14,24 +14,23 @@ function ClassReminderBanner({ onNavigate }) {
     notificationsEnabled,
   } = useNotifications();
 
-  if (!notificationsEnabled) return null;
-
-  const currentReminder = testReminder || (activeReminders.length > 0 ? activeReminders[0] : null);
-
-  if (!currentReminder) return null;
+  const currentReminder = notificationsEnabled
+    ? testReminder || (activeReminders.length > 0 ? activeReminders[0] : null)
+    : null;
 
   const isTest = Boolean(testReminder);
-  const remainingSecs = currentReminder.startsInSeconds;
+  const remainingSecs = currentReminder?.startsInSeconds;
   const countdownStr = formatCountdown(remainingSecs);
 
   return (
     <AnimatePresence>
+      {currentReminder && (
       <motion.div
         key={currentReminder.id}
-        initial={{ opacity: 0, y: -16, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: -12, scale: 0.98 }}
-        transition={{ type: 'spring', stiffness: 450, damping: 28 }}
+        initial={{ opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -12 }}
+        transition={{ type: 'spring', stiffness: 420, damping: 32 }}
         className="reminder-banner-wrapper"
       >
         <div className="bcard reminder-banner">
@@ -97,6 +96,7 @@ function ClassReminderBanner({ onNavigate }) {
           </div>
         </div>
       </motion.div>
+      )}
     </AnimatePresence>
   );
 }

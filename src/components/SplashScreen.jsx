@@ -53,9 +53,10 @@ export function SplashScreen() {
         <div className="splash-loader-bar">
           <motion.div
             className="splash-loader-progress"
-            initial={{ width: '0%' }}
-            animate={{ width: '100%' }}
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
             transition={{ duration: 0.85, ease: 'easeInOut' }}
+            style={{ transformOrigin: '0% 50%' }}
           />
         </div>
       </motion.div>

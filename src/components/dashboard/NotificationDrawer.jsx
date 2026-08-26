@@ -31,17 +31,23 @@ function NotificationDrawer({ onNavigate }) {
     setIsDrawerOpen,
   } = useNotifications();
 
-  if (!isDrawerOpen) return null;
-
   return (
     <AnimatePresence>
-      <div className="notif-drawer-overlay" onClick={() => setIsDrawerOpen(false)}>
+      {isDrawerOpen && (
+      <motion.div
+        className="notif-drawer-overlay"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        onClick={() => setIsDrawerOpen(false)}
+      >
         <motion.div
           className="bcard notif-drawer"
-          initial={{ opacity: 0, x: 28, scale: 0.96 }}
-          animate={{ opacity: 1, x: 0, scale: 1 }}
-          exit={{ opacity: 0, x: 28, scale: 0.96 }}
-          transition={{ type: 'spring', stiffness: 420, damping: 28 }}
+          initial={{ opacity: 0, x: 32 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 32 }}
+          transition={{ type: 'spring', stiffness: 420, damping: 32 }}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="notif-drawer__head">
@@ -202,7 +208,8 @@ function NotificationDrawer({ onNavigate }) {
             </div>
           </div>
         </motion.div>
-      </div>
+      </motion.div>
+      )}
     </AnimatePresence>
   );
 }
