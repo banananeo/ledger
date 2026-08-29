@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { GamepadIcon, SparklesIcon, DiceIcon } from '../Icons.jsx';
 import BunkRoulette from './BunkRoulette.jsx';
-import TurboDrift from './TurboDrift.jsx';
+import CampusRush from './CampusRush.jsx';
 import './GamesSection.css';
 
 export function GamesSection({ schedule = [], attendance = [], calendar, defaultGame = 'roulette' }) {
-  const [activeGame, setActiveGame] = useState(defaultGame); // 'roulette' | 'turbo'
+  const [activeGame, setActiveGame] = useState(defaultGame); // 'roulette' | 'rush'
 
   return (
     <section className="bcard games-section" id="arcade-games">
@@ -32,10 +32,10 @@ export function GamesSection({ schedule = [], attendance = [], calendar, default
           </button>
 
           <button
-            className={`bbtn ${activeGame === 'turbo' ? 'bbtn--good' : 'bbtn--outline'} games-section__tab-btn`}
-            onClick={() => setActiveGame('turbo')}
+            className={`bbtn ${activeGame === 'rush' ? 'bbtn--good' : 'bbtn--outline'} games-section__tab-btn`}
+            onClick={() => setActiveGame('rush')}
           >
-            <span>🚗 Turbo Drift</span>
+            <span>🏃‍♂️ Campus Rush</span>
           </button>
         </div>
       </div>
@@ -44,7 +44,7 @@ export function GamesSection({ schedule = [], attendance = [], calendar, default
         {activeGame === 'roulette' ? (
           <BunkRoulette schedule={schedule} attendance={attendance} calendar={calendar} />
         ) : (
-          <TurboDrift />
+          <CampusRush />
         )}
       </div>
     </section>

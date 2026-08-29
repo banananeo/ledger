@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { login, ApiError } from '../api';
-import { useTheme } from '../context/ThemeContext.tsx';
-import { SunIcon, MoonIcon } from './dashboard/Icons.jsx';
 import './LoginForm.css';
 
 const containerVariants = {
@@ -40,7 +38,6 @@ function LoginForm({ onSuccess }) {
   const [captchaChallenge, setCaptchaChallenge] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { theme, toggleTheme } = useTheme();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -99,15 +96,6 @@ function LoginForm({ onSuccess }) {
             <div className="login-header__brand">
               Ledger<span className="login-header__brand-dot">.</span>
             </div>
-            <button
-              type="button"
-              className="bbtn bbtn--outline bbtn--icon login-theme-toggle"
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
-              title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
-            >
-              {theme === 'dark' ? <SunIcon width={17} height={17} /> : <MoonIcon width={17} height={17} />}
-            </button>
           </div>
           <p className="login-header__subtitle">
             Sign in with your official SRM Academia credentials to access your attendance, timetable, and records.

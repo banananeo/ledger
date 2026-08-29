@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeftIcon, RefreshIcon, UserIcon, LogoutIcon, SunIcon, MoonIcon, BellIcon, BellOffIcon } from './Icons.jsx';
-import { useTheme } from '../../context/ThemeContext.tsx';
+import { ArrowLeftIcon, RefreshIcon, UserIcon, LogoutIcon, BellIcon, BellOffIcon } from './Icons.jsx';
 import { useNotifications } from '../../context/NotificationContext.tsx';
 import './TopBar.css';
 
@@ -24,7 +23,6 @@ function TopBar({ view, onBack, onRefresh, refreshing, profile, onLogout }) {
   const isHome = view === 'home';
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
-  const { theme, toggleTheme } = useTheme();
   const { notificationsEnabled, activeReminders, testReminder, setIsDrawerOpen } = useNotifications();
 
   const profileName = profile?.name;
@@ -80,29 +78,6 @@ function TopBar({ view, onBack, onRefresh, refreshing, profile, onLogout }) {
           )}
         </motion.button>
 
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.92 }}
-          className="bbtn bbtn--outline bbtn--icon topbar__theme"
-          onClick={toggleTheme}
-          aria-label="Toggle theme"
-          title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
-        >
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.span
-              key={theme}
-              initial={{ rotate: -90, scale: 0.5, opacity: 0 }}
-              animate={{ rotate: 0, scale: 1, opacity: 1 }}
-              exit={{ rotate: 90, scale: 0.5, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-              {theme === 'dark' ? <SunIcon width={17} height={17} /> : <MoonIcon width={17} height={17} />}
-            </motion.span>
-          </AnimatePresence>
-        </motion.button>
-
-
         <button
           className="bbtn bbtn--outline bbtn--icon topbar__sync"
           onClick={onRefresh}
@@ -140,15 +115,6 @@ function TopBar({ view, onBack, onRefresh, refreshing, profile, onLogout }) {
               {regNo && <div className="topbar__dropdown-reg">{regNo}</div>}
             </div>
             <div className="topbar__dropdown-divider" />
-            <button
-              className="topbar__dropdown-item"
-              onClick={() => {
-                toggleTheme();
-              }}
-            >
-              {theme === 'dark' ? <SunIcon width={16} height={16} /> : <MoonIcon width={16} height={16} />}
-              <span>{theme === 'dark' ? 'Light Theme' : 'Dark Theme'}</span>
-            </button>
             <button
               className="topbar__dropdown-item topbar__dropdown-item--danger"
               onClick={() => {

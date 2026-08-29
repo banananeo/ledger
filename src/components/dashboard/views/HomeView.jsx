@@ -31,7 +31,7 @@ const homeItemVariants = {
 const NAV_CARDS = [
   { id: 'timetable', label: 'Timetable', Icon: ClockIcon, tone: 'sky', blurb: 'Classes by Day Order' },
   { id: 'attendance', label: 'Attendance', Icon: CheckRingIcon, tone: 'pink', blurb: 'Per-course % and margin' },
-  { id: 'games', label: 'Campus Games', Icon: GamepadIcon, tone: 'mint', blurb: 'Bunk Roulette & Snake' },
+  { id: 'games', label: 'Campus Games', Icon: GamepadIcon, tone: 'mint', blurb: 'Bunk Roulette & Campus Rush' },
   { id: 'calendar', label: 'Calendar', Icon: CalendarIcon, tone: 'lavender', blurb: 'Academic day orders' },
   { id: 'marks', label: 'Marks', Icon: AwardIcon, tone: 'yellow', blurb: 'Internal tests & cycles' },
 ];
@@ -307,11 +307,11 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
             <div className="home__games-banner-icon">
               <GamepadIcon width={24} height={24} />
             </div>
-            <div>
+            <div className="home__games-banner-content">
               <p className="eyebrow">Student Arcade & Simulator</p>
-              <h3 className="home__games-banner-title">Bunk Roulette & Retro Snake</h3>
+              <h3 className="home__games-banner-title">Bunk Roulette & Campus Rush</h3>
               <p className="home__games-banner-desc">
-                Calculate live attendance margin risk per day order, or play classic Retro Snake during free periods.
+                Simulate attendance bunking risks or sprint past strict proctors and grab Java Chai in Campus Rush!
               </p>
             </div>
           </div>

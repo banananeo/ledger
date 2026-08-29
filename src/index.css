@@ -1,59 +1,6 @@
 @import "tailwindcss";
 
 :root {
-  /* ---- palette: paper + ink, one moss accent, functional warning/danger ---- */
-  --paper: #f7f7f5;
-  --surface: #ffffff;
-  --ink: #1c1c1e;
-  --ink-soft: #4a4a4d;
-  --mute: #8a8a8e;
-  --line: #e2e2df;
-  --line-strong: #cfcfcb;
-  --accent: #4b5d46;
-  --accent-soft: rgba(75, 93, 70, 0.09);
-  --warning: #a6790a;
-  --warning-soft: rgba(166, 121, 10, 0.1);
-  --danger: #9a3b2b;
-  --danger-soft: rgba(154, 59, 43, 0.09);
-  --shadow-soft: 0 1px 2px rgba(28, 28, 30, 0.04), 0 8px 24px rgba(28, 28, 30, 0.04);
-
-  --display: 'Space Grotesk', system-ui, sans-serif;
-  --sans: 'Inter', system-ui, sans-serif;
-  --mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
-
-  /* ---- dashboard shell: neo-brutalist palette layered on top ---- */
-  --dash-bg: #faf1de;
-  --sidebar-bg: #bfe3c6;
-  --yellow: #f6c445;
-  --yellow-soft: #fdecbc;
-  --pink: #f2c6ec;
-  --pink-soft: #fbe7f8;
-  --sky: #92d3f2;
-  --sky-soft: #ddf2fb;
-  --peach: #f8cca3;
-  --peach-soft: #fce6cf;
-  --mint: #b8e3c4;
-  --mint-soft: #e2f5e7;
-
-  --stroke: 2px;
-  --shadow-hard: 5px 5px 0 var(--ink);
-  --shadow-hard-sm: 3px 3px 0 var(--ink);
-  --radius-card: 16px;
-  --radius-chip: 999px;
-  --radius-btn: 10px;
-
-  font: 16px/1.5 var(--sans);
-  color-scheme: light;
-  color: var(--ink-soft);
-  background: var(--paper);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-:root.dark,
-[data-theme="dark"] {
   /* ---- dark palette: deep graphite paper + crisp off-white ink, luminescent accents ---- */
   --paper: #131418;
   --surface: #1a1c23;
@@ -70,11 +17,18 @@
   --danger-soft: rgba(248, 113, 113, 0.15);
   --shadow-soft: 0 2px 10px rgba(0, 0, 0, 0.45);
 
+  --display: 'Space Grotesk', system-ui, sans-serif;
+  --sans: 'Inter', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+
   /* ---- dashboard shell: dark neo-brutalist tactile palette ---- */
   --dash-bg: #0c0d10;
   --sidebar-bg: #141715;
   --yellow: #fbbf24;
   --yellow-soft: #231b0e;
+  --teal: #2dd4bf;
+  --teal-soft: #0d2824;
+  --teal-glow: 0 0 16px rgba(45, 212, 191, 0.4), 0 0 32px rgba(45, 212, 191, 0.2);
   --pink: #f472b6;
   --pink-soft: #251322;
   --sky: #38bdf8;
@@ -84,9 +38,26 @@
   --mint: #34d399;
   --mint-soft: #0e2419;
 
+  --stroke: 2px;
   --shadow-hard: 5px 5px 0 #000000;
   --shadow-hard-sm: 3px 3px 0 #000000;
+  --radius-card: 16px;
+  --radius-chip: 999px;
+  --radius-btn: 10px;
 
+  font: 16px/1.5 var(--sans);
+  color-scheme: dark;
+  color: var(--ink-soft);
+  background: var(--dash-bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:root.dark,
+[data-theme="dark"] {
+  /* Retained for backward-compatibility selectors */
   color-scheme: dark;
   color: var(--ink-soft);
   background: var(--dash-bg);

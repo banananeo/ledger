@@ -215,9 +215,8 @@ export function App() {
       <AnimatePresence>
         {captchaChallenge && (
           <CaptchaModal
-            key="captcha"
             challenge={captchaChallenge}
-            onSubmit={(code) => handleSync(code)}
+            onSubmit={(code: string) => handleSync(code)}
             onCancel={() => setCaptchaChallenge(null)}
             loading={refreshing}
           />

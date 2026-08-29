@@ -2,26 +2,31 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .timetable__header-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .timetable__note {
   font-size: 13px;
   color: var(--ink-soft);
-  max-width: 54ch;
   margin: 0;
+  line-height: 1.4;
 }
 
 .timetable__download-trigger-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 8px 16px;
   font-size: 13px;
@@ -33,24 +38,94 @@
   cursor: pointer;
   border-radius: var(--radius-btn);
   transition: transform 0.12s ease;
+  white-space: nowrap;
 }
 
 .timetable__download-trigger-btn:hover {
   transform: translate(-1px, -1px);
 }
 
-.timetable__period-room {
-  color: var(--ink);
-  font-weight: 700;
+/* Quick Day Tabs Bar */
+.timetable__day-tabs-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
 }
 
-.timetable__stepper {
+.timetable__day-tabs {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  min-width: min-content;
+}
 
+.timetable__day-tab {
+  flex: 1;
+  min-width: 60px;
+  padding: 8px 12px;
+  border-radius: var(--radius-btn, 8px);
+  border: var(--stroke) solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+  position: relative;
+  user-select: none;
+}
+
+.timetable__day-tab:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+  transform: translateY(-1px);
+}
+
+.timetable__day-tab--active {
+  background: var(--yellow);
+  color: #121317 !important;
+  border-color: var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.timetable__day-tab--today:not(.timetable__day-tab--active) {
+  border-color: var(--sky);
+  background: var(--sky-soft, #f0f9ff);
+  color: var(--ink);
+}
+
+.timetable__tab-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--ink);
+}
+
+/* Stepper Card */
+.timetable__stepper {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 18px 20px;
+  gap: 12px;
+  padding: 16px 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.timetable__nav-btn {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
 }
 
 .timetable__stepper-center {
@@ -59,10 +134,25 @@
   align-items: center;
   gap: 8px;
   flex: 1;
+  min-width: 0;
+  text-align: center;
 }
 
-.timetable__today-tag {
-  margin-top: -2px;
+.timetable__stepper-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.timetable__status-chip {
+  font-size: 11.5px;
+  padding: 3px 10px;
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.3;
 }
 
 .timetable__count {
@@ -70,6 +160,7 @@
   color: var(--ink-soft);
 }
 
+/* Class Cards List */
 .timetable__list {
   list-style: none;
   margin: 0;
@@ -77,58 +168,142 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  width: 100%;
 }
 
 .timetable__period {
   display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 14px 18px;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  transition: transform 0.12s ease, border-color 0.15s ease;
 }
 
-.timetable__period-time {
+.timetable__period:hover {
+  transform: translateY(-1px);
+}
+
+.timetable__period-header-row {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 2px;
-  font-size: 12.5px;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.timetable__period-time-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--surface-sunken, #f1f5f9);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  font-family: var(--mono);
+  font-weight: 600;
   color: var(--ink);
-  min-width: 62px;
-  flex-shrink: 0;
 }
 
 .timetable__period-time-sep {
-  width: 1px;
-  height: 10px;
-  background: var(--line-strong);
+  color: var(--mute);
 }
 
-.timetable__period-main {
-  flex: 1;
+.timetable__period-type {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  flex-shrink: 0;
+}
+
+.timetable__period-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
   min-width: 0;
 }
 
 .timetable__period-title {
   font-family: var(--display);
-  font-weight: 600;
-  font-size: 15px;
+  font-weight: 700;
+  font-size: 15.5px;
   color: var(--ink);
+  margin: 0;
+  line-height: 1.35;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
-.timetable__period-sub {
+.timetable__period-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
   font-size: 12.5px;
   color: var(--ink-soft);
-  margin-top: 2px;
 }
 
-.timetable__period-type {
-  flex-shrink: 0;
+.timetable__period-room-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  background: var(--yellow-soft, #fef3c7);
+  color: var(--ink);
+  font-weight: 700;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+.timetable__period-faculty {
+  color: var(--ink-soft);
+  word-break: break-word;
+}
+
+.timetable__period-slot {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--mute);
+  padding-left: 2px;
 }
 
 .timetable__empty-card {
   padding: 28px 20px;
   text-align: center;
   color: var(--ink-soft);
+}
+
+/* =========================================================================
+   Responsive Breakpoints for Tall & Narrow Mobile Devices
+   ========================================================================= */
+
+@media (max-width: 640px) {
+  .timetable__header-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .timetable__download-trigger-btn {
+    width: 100%;
+  }
+
+  .timetable__stepper {
+    padding: 14px 12px;
+  }
+
+  .timetable__period {
+    padding: 12px 14px;
+  }
+
+  .timetable__period-title {
+    font-size: 14.5px;
+  }
 }
 
 /* =========================================================================
@@ -146,6 +321,25 @@
   color: #0c0d10;
   border-color: rgba(251, 191, 36, 0.5);
   box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="dark"] .timetable__period-time-badge,
+.dark .timetable__period-time-badge {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .timetable__period-room-tag,
+.dark .timetable__period-room-tag {
+  background: rgba(251, 191, 36, 0.2);
+  color: #fde68a;
+  border-color: rgba(251, 191, 36, 0.4);
+}
+
+[data-theme="dark"] .timetable__day-tab--today:not(.timetable__day-tab--active),
+.dark .timetable__day-tab--today:not(.timetable__day-tab--active) {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: var(--sky);
 }
 
 [data-theme="dark"] .timetable__period-room,

@@ -274,6 +274,45 @@ export function PauseIcon(props) {
   );
 }
 
+export function InfoIcon(props) {
+  return (
+    <svg {...base} {...props}>
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="16" x2="12" y2="12" />
+      <line x1="12" y1="8" x2="12.01" y2="8" />
+    </svg>
+  );
+}
+
+export function BookOpenIcon(props) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+    </svg>
+  );
+}
+
+export function XIcon(props) {
+  return (
+    <svg {...base} {...props}>
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
+
+export function LedgerLogoIcon(props) {
+  return (
+    <svg {...base} {...props} viewBox="0 0 24 24">
+      <rect x="2.5" y="2.5" width="19" height="19" rx="5" fill="currentColor" fillOpacity="0.08" stroke="currentColor" strokeWidth="2" />
+      <path d="M8 7.5v8.5h6.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="17.2" cy="16" r="1.5" fill="#f87171" stroke="none" />
+    </svg>
+  );
+}
+
+
 
 
 

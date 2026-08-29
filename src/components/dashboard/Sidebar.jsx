@@ -1,6 +1,5 @@
 import React from 'react';
-import { HomeIcon, ClockIcon, CheckRingIcon, CalendarIcon, AwardIcon, GamepadIcon, RefreshIcon, LogoutIcon, SunIcon, MoonIcon, BellIcon } from './Icons.jsx';
-import { useTheme } from '../../context/ThemeContext.tsx';
+import { HomeIcon, ClockIcon, CheckRingIcon, CalendarIcon, AwardIcon, GamepadIcon, RefreshIcon, LogoutIcon, BellIcon } from './Icons.jsx';
 import { useNotifications } from '../../context/NotificationContext.tsx';
 import './Sidebar.css';
 
@@ -8,13 +7,12 @@ export const NAV_ITEMS = [
   { id: 'home', label: 'Home', Icon: HomeIcon },
   { id: 'timetable', label: 'Timetable', Icon: ClockIcon },
   { id: 'attendance', label: 'Attendance', Icon: CheckRingIcon },
-  { id: 'games', label: 'Games', Icon: GamepadIcon },
   { id: 'calendar', label: 'Calendar', Icon: CalendarIcon },
   { id: 'marks', label: 'Marks', Icon: AwardIcon },
+  { id: 'games', label: 'Games', Icon: GamepadIcon },
 ];
 
 function Sidebar({ view, onNavigate, onRefresh, refreshing, onLogout }) {
-  const { theme, toggleTheme } = useTheme();
   const { activeReminders, testReminder, setIsDrawerOpen } = useNotifications();
   const hasActiveAlert = activeReminders.length > 0 || Boolean(testReminder);
 
@@ -47,10 +45,6 @@ function Sidebar({ view, onNavigate, onRefresh, refreshing, onLogout }) {
           {hasActiveAlert && (
             <span className="sidebar__notif-dot" />
           )}
-        </button>
-        <button className="sidebar__item" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}>
-          {theme === 'dark' ? <SunIcon width={18} height={18} /> : <MoonIcon width={18} height={18} />}
-          <span>{theme === 'dark' ? 'Light Theme' : 'Dark Theme'}</span>
         </button>
         <button className="sidebar__item" onClick={onRefresh} disabled={refreshing}>
           <RefreshIcon width={18} height={18} className={refreshing ? 'sidebar__spin' : ''} />
