@@ -11,14 +11,14 @@ function MobileTabBar({ view, onNavigate }) {
       <div className="mtab-glass">
         {/* Specular Edge Lens Highlight */}
         <div className="mtab-glass__rim-light" />
-        
+
         {MOBILE_NAV_ITEMS.map(({ id, label, Icon }) => {
           const isActive = view === id;
           return (
             <motion.button
               key={id}
               className={`mtab-btn${isActive ? ' mtab-btn--active' : ''}`}
-              onClick={() => onNavigate(id)}
+              onClick={(e) => onNavigate(id, e)}
               whileTap={{ scale: 0.88 }}
               transition={{ type: 'spring', stiffness: 500, damping: 28 }}
             >
@@ -37,11 +37,11 @@ function MobileTabBar({ view, onNavigate }) {
                   <span className="mtab-indicator__glow" />
                 </motion.div>
               )}
-              <motion.span 
+              <motion.span
                 className="mtab-btn__icon-wrapper"
-                animate={{ 
-                  scale: isActive ? 1.12 : 1, 
-                  y: isActive ? -1 : 0 
+                animate={{
+                  scale: isActive ? 1.12 : 1,
+                  y: isActive ? -1 : 0
                 }}
                 transition={{ type: 'spring', stiffness: 420, damping: 26 }}
               >

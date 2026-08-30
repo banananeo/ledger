@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Sidebar from './Sidebar.jsx';
 import MobileRadialMenu from './MobileRadialMenu.jsx';
 import TopBar from './TopBar.jsx';
@@ -17,6 +17,8 @@ import './Shell.css';
 
 function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error }) {
   const [view, setView] = useState('home');
+  const [transitionOrigin, setTransitionOrigin] = useState({ x: 50, y: 50 });
+  const stageRef = useRef(null);
   const { profile, attendance = [], schedule = [], marks = [], calendar } = data || {};
 
   // Pull-to-refresh state
@@ -49,14 +51,23 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error }) {
     setPullDistance(0);
   };
 
-  const navigate = (next) => {
+  const navigate = (next, event) => {
+    if (event && stageRef.current) {
+      const rect = stageRef.current.getBoundingClientRect();
+      const target = event.currentTarget?.getBoundingClientRect();
+      const clientX = event.clientX || (target ? target.left + target.width / 2 : rect.left + rect.width / 2);
+      const clientY = event.clientY || (target ? target.top + target.height / 2 : rect.top + rect.height / 2);
+      const x = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+      const y = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
+      setTransitionOrigin({ x, y });
+    }
     setView(next);
   };
 
   return (
     <NotificationProvider schedule={schedule} calendar={calendar}>
-      <div 
-        className="shell" 
+      <div
+        className="shell"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -93,7 +104,7 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error }) {
           <div className="shell__content">
             <ClassReminderBanner onNavigate={navigate} />
 
-            <CurtainsScopeTransition activeView={view}>
+            <CurtainsScopeTransition activeView={view} origin={transitionOrigin}>
               {(currentActiveView) => (
                 <div className="shell__view-wrapper">
                   {currentActiveView === 'home' && (

@@ -26,7 +26,7 @@ function Sidebar({ view, onNavigate, onRefresh, refreshing, onLogout }) {
           <button
             key={id}
             className={`sidebar__item${view === id ? ' sidebar__item--active' : ''}`}
-            onClick={() => onNavigate(id)}
+            onClick={(e) => onNavigate(id, e)}
           >
             <Icon width={18} height={18} />
             <span>{label}</span>

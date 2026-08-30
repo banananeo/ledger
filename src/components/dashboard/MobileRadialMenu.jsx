@@ -57,8 +57,8 @@ export function MobileRadialMenu({ view, onNavigate }) {
     };
   }, [isOpen]);
 
-  const handleSelect = (id) => {
-    onNavigate(id);
+  const handleSelect = (id, event) => {
+    onNavigate(id, event);
     setIsOpen(false);
     setHoveredItem(null);
   };
@@ -135,10 +135,9 @@ export function MobileRadialMenu({ view, onNavigate }) {
                     }}
                   >
                     <motion.button
-                      className={`radial-option-btn${isActive ? ' radial-option-btn--active' : ''}${
-                        isHomeButton ? ' radial-option-btn--home' : ''
-                      }`}
-                      onClick={() => handleSelect(item.id)}
+                      className={`radial-option-btn${isActive ? ' radial-option-btn--active' : ''}${isHomeButton ? ' radial-option-btn--home' : ''
+                        }`}
+                      onClick={(e) => handleSelect(item.id, e)}
                       onMouseEnter={() => setHoveredItem(item)}
                       onMouseLeave={() => setHoveredItem(null)}
                       onFocus={() => setHoveredItem(item)}
@@ -172,9 +171,8 @@ export function MobileRadialMenu({ view, onNavigate }) {
           transition={{ type: 'spring', stiffness: 340, damping: 24 }}
         >
           <button
-            className={`radial-trigger-btn${isOpen ? ' radial-trigger-btn--open' : ''}${
-              isHomeView && !isOpen ? ' radial-trigger-btn--home-view' : ''
-            }`}
+            className={`radial-trigger-btn${isOpen ? ' radial-trigger-btn--open' : ''}${isHomeView && !isOpen ? ' radial-trigger-btn--home-view' : ''
+              }`}
             onClick={() => {
               setIsOpen((prev) => !prev);
               setHoveredItem(null);

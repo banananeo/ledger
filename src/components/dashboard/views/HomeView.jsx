@@ -240,7 +240,7 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
               <h4 className="home__next-class-title">
                 {nextClassInfo.entry.courseTitle || nextClassInfo.entry.courseCode}
               </h4>
-              
+
               <div className="home__next-class-meta-grid">
                 <div className="home__next-class-meta-item">
                   <span className="home__next-class-meta-label">Course Code</span>
@@ -288,7 +288,7 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
           <motion.button
             key={id}
             className={`bcard bcard--${tone} home__nav-card`}
-            onClick={() => onNavigate(id)}
+            onClick={(e) => onNavigate(id, e)}
             whileHover={{ y: -3 }}
             whileTap={{ scale: 0.98 }}
             transition={{ type: 'spring', stiffness: 450, damping: 25 }}
@@ -317,7 +317,7 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
           </div>
           <button className="bbtn bbtn--good home__games-banner-btn" onClick={(e) => {
             e.stopPropagation();
-            onNavigate('games');
+            onNavigate('games', e);
           }}>
             <span>Launch Games →</span>
           </button>
