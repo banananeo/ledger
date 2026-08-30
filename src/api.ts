@@ -184,3 +184,86 @@ export async function refreshSession(payload: RefreshPayload): Promise<AppData> 
   return data as AppData;
 }
 
+export interface AIChatPayload {
+  message: string;
+  context?: Partial<AppData>;
+  model?: string;
+  stream?: boolean;
+}
+
+export async function aiChat(payload: AIChatPayload): Promise<string> {
+  const res = await fetch("/api/ai/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await parseJsonResponse(res);
+  if (!res.ok) {
+    throw new ApiError(typeof data?.detail === "string" ? data.detail : data?.detail?.message || "AI request failed", res.status);
+  }
+  return data.reply as string;
+}
+
+export async function aiChatStream(
+  payload: AIChatPayload,
+  onChunk: (chunk: string) => void
+): Promise<string> {
+  const res = await fetch("/api/ai/chat?stream=1", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...payload, stream: true }),
+  });
+  if (!res.ok) {
+    const data = await parseJsonResponse(res);
+    throw new ApiError(typeof data?.detail === "string" ? data.detail : "AI streaming failed", res.status);
+  }
+  if (!res.body) {
+    const data = await parseJsonResponse(res);
+    return data.reply || data.full || "";
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let full = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith("data:")) continue;
+      const jsonStr = trimmed.slice(5).trim();
+      if (!jsonStr) continue;
+      try {
+        const obj = JSON.parse(jsonStr);
+        if (obj.chunk) {
+          full += obj.chunk;
+          onChunk(obj.chunk);
+        }
+        if (obj.done && obj.full) full = obj.full;
+        if (obj.error) throw new Error(obj.error);
+      } catch {}
+    }
+  }
+  return full;
+}
+
+export async function aiHealth(): Promise<{ configured: boolean; model: string }> {
+  const res = await fetch("/api/ai/health");
+  const data = await parseJsonResponse(res);
+  return data;
+}
+
+export async function aiSummary(context?: Partial<AppData>): Promise<string> {
+  const res = await fetch("/api/ai/summary", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ context }),
+  });
+  const data = await parseJsonResponse(res);
+  if (!res.ok) throw new ApiError(typeof data?.detail === "string" ? data.detail : "AI summary failed", res.status);
+  return data.reply as string;
+}
+

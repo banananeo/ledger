@@ -19,7 +19,7 @@ function initials(name) {
   return (parts[0]?.[0] || '') + (parts[1]?.[0] || '');
 }
 
-function TopBar({ view, onBack, onRefresh, refreshing, profile, onLogout }) {
+function TopBar({ view, onBack, onRefresh, refreshing, profile, onLogout, onOpenAI }) {
   const isHome = view === 'home';
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
@@ -62,6 +62,16 @@ function TopBar({ view, onBack, onRefresh, refreshing, profile, onLogout }) {
         )}
       </div>
       <div className="topbar__right" ref={menuRef}>
+
+        <button
+          className="bbtn bbtn--outline bbtn--icon"
+          onClick={onOpenAI}
+          aria-label="Ledger AI"
+          title="Ledger AI Assistant"
+          style={{ position: 'relative' }}
+        >
+          <span style={{fontSize:14}}>✨</span>
+        </button>
 
         <motion.button
           whileHover={{ scale: 1.05 }}

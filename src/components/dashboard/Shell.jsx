@@ -13,11 +13,14 @@ import AttendanceView from './views/AttendanceView.jsx';
 import MarksView from './views/MarksView.jsx';
 import CalendarView from './views/CalendarView.jsx';
 import GamesView from './views/GamesView.jsx';
+import AIAssistantDrawer from './AIAssistant/AIAssistantDrawer.jsx';
+import AIFab from './AIAssistant/AIFab.jsx';
 import './Shell.css';
 
 function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error }) {
   const [view, setView] = useState('home');
   const [transitionOrigin, setTransitionOrigin] = useState({ x: 50, y: 50 });
+  const [aiOpen, setAiOpen] = useState(false);
   const stageRef = useRef(null);
   const { profile, attendance = [], schedule = [], marks = [], calendar } = data || {};
 
@@ -91,6 +94,7 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error }) {
             refreshing={refreshing}
             profile={profile}
             onLogout={onLogout}
+            onOpenAI={() => setAiOpen(true)}
           />
           {error && (
             <AcademiaDownBanner
@@ -141,6 +145,8 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error }) {
         </div>
         <MobileRadialMenu view={view} onNavigate={navigate} />
         <NotificationDrawer onNavigate={navigate} />
+        <AIFab onClick={() => setAiOpen(true)} />
+        <AIAssistantDrawer data={data} isOpen={aiOpen} onClose={() => setAiOpen(false)} />
       </div>
     </NotificationProvider>
   );

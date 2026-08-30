@@ -4,6 +4,8 @@ import { AttendanceParser } from "./parsers/attendance-parser.js";
 import { MarksParser } from "./parsers/marks-parser.js";
 import { HttpError } from "./shared/errors.js";
 import { getDemoData } from "./shared/demo-data.js";
+import { generateAIResponse, isGeminiConfigured } from "./ai/gemini.js";
+import { checkRateLimit, rateLimitKey } from "./ai/rateLimit.js";
 
 export function createApp(): Express {
   const app = express();
@@ -198,6 +200,101 @@ export function createApp(): Express {
         return res.status(err.statusCode).json({ detail: err.detail });
       }
       return res.status(500).json({ detail: err?.message || "Failed to fetch calendar" });
+    }
+  });
+
+  // AI health
+  router.get("/ai/health", (_req: Request, res: Response) => {
+    res.json({ configured: isGeminiConfigured(), model: process.env.GEMINI_MODEL || "gemini-2.0-flash" });
+  });
+
+  // AI Chat handler (supports streaming via SSE if ?stream=1)
+  router.post("/ai/chat", async (req: Request, res: Response) => {
+    const key = rateLimitKey(req);
+    const rl = checkRateLimit(key);
+    if (!rl.allowed) {
+      return res.status(429).json({ detail: `Rate limited. Try again in ${Math.ceil((rl.retryAfterMs || 60000) / 1000)}s.` });
+    }
+    if (!isGeminiConfigured()) {
+      return res.status(503).json({ detail: "AI not configured. Set GEMINI_API_KEY on server." });
+    }
+    try {
+      const { message, context, model } = req.body || {};
+      if (!message || typeof message !== "string" || message.trim().length === 0) {
+        return res.status(400).json({ detail: "message is required" });
+      }
+      if (message.length > 2000) {
+        return res.status(400).json({ detail: "message too long (max 2000 chars)" });
+      }
+      // Sanitize context: only allow known shape, drop cookies/passwords if any
+      const safeContext: any = {};
+      if (context && typeof context === "object") {
+        if (context.profile) safeContext.profile = context.profile;
+        if (Array.isArray(context.attendance)) safeContext.attendance = context.attendance.slice(0, 20);
+        if (Array.isArray(context.marks)) safeContext.marks = context.marks.slice(0, 20);
+        if (Array.isArray(context.schedule)) safeContext.schedule = context.schedule.slice(0, 6);
+        if (context.calendar) safeContext.calendar = context.calendar;
+      }
+
+      const wantsStream = req.query.stream === "1" || req.body?.stream === true;
+      if (wantsStream) {
+        res.writeHead(200, {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
+          "Access-Control-Allow-Origin": "*",
+        });
+        let full = "";
+        try {
+          full = await generateAIResponse({
+            message,
+            context: safeContext,
+            model,
+            stream: true,
+            onChunk: (chunk) => {
+              res.write(`data: ${JSON.stringify({ chunk })}\n\n`);
+            },
+          });
+        } catch (e: any) {
+          res.write(`data: ${JSON.stringify({ error: e?.message || "AI error" })}\n\n`);
+          res.end();
+          return;
+        }
+        res.write(`data: ${JSON.stringify({ done: true, full })}\n\n`);
+        res.end();
+        return;
+      }
+
+      const reply = await generateAIResponse({ message, context: safeContext, model });
+      return res.json({ success: true, reply });
+    } catch (err: any) {
+      return res.status(500).json({ detail: err?.message || "AI request failed" });
+    }
+  });
+
+  // AI quick summary
+  router.post("/ai/summary", async (req: Request, res: Response) => {
+    const key = rateLimitKey(req);
+    const rl = checkRateLimit(key);
+    if (!rl.allowed) return res.status(429).json({ detail: "Rate limited" });
+    if (!isGeminiConfigured()) return res.status(503).json({ detail: "AI not configured" });
+    try {
+      const { context } = req.body || {};
+      const safeContext: any = {};
+      if (context && typeof context === "object") {
+        if (context.profile) safeContext.profile = context.profile;
+        if (Array.isArray(context.attendance)) safeContext.attendance = context.attendance.slice(0, 20);
+        if (Array.isArray(context.marks)) safeContext.marks = context.marks.slice(0, 20);
+        if (Array.isArray(context.schedule)) safeContext.schedule = context.schedule.slice(0, 6);
+        if (context.calendar) safeContext.calendar = context.calendar;
+      }
+      const reply = await generateAIResponse({
+        message: "Give me a concise health summary: overall attendance, at-risk courses, marks highlights, and 3 next actions. Be brief.",
+        context: safeContext,
+      });
+      return res.json({ success: true, reply });
+    } catch (err: any) {
+      return res.status(500).json({ detail: err?.message || "AI summary failed" });
     }
   });
 
