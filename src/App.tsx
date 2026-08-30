@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, MotionConfig } from 'motion/react';
 import Shell from './components/dashboard/Shell.jsx';
 import LoginForm from './components/LoginForm.jsx';
@@ -17,6 +17,24 @@ import {
 import type { AppData } from './types';
 import './App.css';
 
+function mergeAppData(prev: AppData | null, fresh: AppData): AppData {
+  return {
+    ...(prev || {}),
+    ...fresh,
+    profile: fresh.profile || prev?.profile,
+    attendance: fresh.attendance || prev?.attendance,
+    marks: fresh.marks || prev?.marks,
+    courses: fresh.courses || prev?.courses,
+    schedule: fresh.schedule || prev?.schedule,
+    calendar: fresh.calendar || prev?.calendar,
+    session: fresh.session || prev?.session,
+    metadata: {
+      ...(prev?.metadata || {}),
+      ...(fresh?.metadata || {}),
+    },
+  };
+}
+
 export function App() {
   const [data, setData] = useState<AppData | null>(null);
   const [authed, setAuthed] = useState<boolean>(false);
@@ -25,13 +43,24 @@ export function App() {
   const [error, setError] = useState<string>('');
   const [captchaChallenge, setCaptchaChallenge] = useState<CaptchaChallenge | null>(null);
   const [showSplash, setShowSplash] = useState<boolean>(true);
+  const [splashProgress, setSplashProgress] = useState<number>(15);
 
-  // Brief initial splash on app mount
+  const lastSyncTimeRef = useRef<number>(Date.now());
+  const splashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Brief initial splash progress increment on app mount
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 750);
-    return () => clearTimeout(timer);
+    const minTimer = setTimeout(() => setSplashProgress((p) => Math.max(p, 60)), 350);
+    return () => clearTimeout(minTimer);
+  }, []);
+
+  // Cleanup any lingering splash hide timers on unmount
+  useEffect(() => {
+    return () => {
+      if (splashTimerRef.current) {
+        clearTimeout(splashTimerRef.current);
+      }
+    };
   }, []);
 
   // Attempt auto-restoring session from stored cookies or credentials on mount
@@ -44,6 +73,7 @@ export function App() {
       setData(savedData);
       setAuthed(true);
       setLastSynced(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      setSplashProgress((p) => Math.max(p, 45));
     }
 
     if ((savedCookies && Object.keys(savedCookies).length > 0) || savedCreds) {
@@ -55,19 +85,13 @@ export function App() {
       })
         .then((freshData) => {
           setData((prev) => {
-            const merged = {
-              ...(prev || {}),
-              ...freshData,
-              profile: prev?.profile || freshData.profile,
-              courses: freshData.courses || prev?.courses,
-              schedule: freshData.schedule || prev?.schedule,
-              calendar: freshData.calendar || prev?.calendar,
-            } as AppData;
+            const merged = mergeAppData(prev, freshData);
             saveStoredData(merged);
             return merged;
           });
           setAuthed(true);
           setLastSynced(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+          lastSyncTimeRef.current = Date.now();
           setError('');
         })
         .catch((err: any) => {
@@ -89,7 +113,13 @@ export function App() {
         })
         .finally(() => {
           setRefreshing(false);
+          setSplashProgress(100);
+          splashTimerRef.current = setTimeout(() => setShowSplash(false), 200);
         });
+    } else {
+      // No stored session to restore — nothing to wait on
+      setSplashProgress(100);
+      splashTimerRef.current = setTimeout(() => setShowSplash(false), 350);
     }
   }, []);
 
@@ -98,6 +128,7 @@ export function App() {
     saveStoredData(loginData);
     setAuthed(true);
     setLastSynced(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    lastSyncTimeRef.current = Date.now();
     setError('');
   };
 
@@ -117,20 +148,14 @@ export function App() {
         username: savedCreds?.username,
         password: savedCreds?.password,
         captcha: captchaText,
-        cdigest: captchaChallenge?.cdigest,
+        cdigest: captchaText ? captchaChallenge?.cdigest : undefined,
         isDemo: data?.metadata?.loginBy === 'demo',
       });
-      const mergedData: AppData = {
-        ...data,
-        ...fresh,
-        profile: data?.profile || fresh.profile,
-        courses: fresh.courses || data?.courses,
-        schedule: fresh.schedule || data?.schedule,
-        calendar: fresh.calendar || data?.calendar,
-      };
+      const mergedData = mergeAppData(data, fresh);
       setData(mergedData);
       saveStoredData(mergedData);
       setLastSynced(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      lastSyncTimeRef.current = Date.now();
       setError('');
       setCaptchaChallenge(null);
     } catch (err: any) {
@@ -147,19 +172,18 @@ export function App() {
   }, [data, refreshing, captchaChallenge]);
 
   useEffect(() => {
-    let lastSyncTime = Date.now();
     const onFocus = () => {
       const now = Date.now();
       // Auto-sync at most once every 3 minutes on window focus/network recovery
-      if (authed && data && now - lastSyncTime > 180000 && !refreshing) {
-        lastSyncTime = now;
+      if (authed && data && now - lastSyncTimeRef.current > 180000 && !refreshing) {
+        lastSyncTimeRef.current = now;
         handleSync();
       }
     };
-    
+
     window.addEventListener('focus', onFocus);
     window.addEventListener('online', onFocus);
-    
+
     return () => {
       window.removeEventListener('focus', onFocus);
       window.removeEventListener('online', onFocus);
@@ -178,7 +202,7 @@ export function App() {
   return (
     <MotionConfig reducedMotion="user">
       <AnimatePresence>
-        {showSplash && <SplashScreen key="splash" />}
+        {showSplash && <SplashScreen key="splash" progress={splashProgress} />}
       </AnimatePresence>
 
       <AnimatePresence mode="wait">
@@ -227,4 +251,5 @@ export function App() {
 }
 
 export default App;
+
 
