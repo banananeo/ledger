@@ -81,3 +81,7 @@
   border-radius: 999px;
 }
 
+.splash-brand span {
+  display: inline-block;
+  white-space: pre;
+}

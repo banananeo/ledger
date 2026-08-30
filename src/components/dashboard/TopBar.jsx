@@ -48,9 +48,9 @@ function TopBar({ view, onBack, onRefresh, refreshing, profile, onLogout }) {
       <div className="topbar__left">
         {isHome ? (
           <div className="topbar__logo">
-            <div className="topbar__logo-icon-box">
+            <motion.div layoutId="ledger-logo" className="topbar__logo-icon-box">
               <img src="/icon.svg" alt="Ledger" className="topbar__logo-img" />
-            </div>
+            </motion.div>
             <span className="topbar__logo-text">
               Ledger<span className="topbar__logo-dot">.</span>
             </span>
