@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 import { buildSystemPrompt, buildUserMessage, type AIContext } from "./prompts.js";
 
 function getApiKey(): string | null {
@@ -20,7 +20,7 @@ export async function generateAIResponse(opts: {
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY not configured on server. Set GEMINI_API_KEY in .env or Vercel env.");
   }
-  const model = opts.model || process.env.GEMINI_MODEL || "gemini-2.0-flash";
+  const model = opts.model || process.env.GEMINI_MODEL || "gemini-3.6-flash";
   const ai = new GoogleGenAI({ apiKey });
 
   const systemInstruction = buildSystemPrompt(opts.context);
@@ -34,7 +34,10 @@ export async function generateAIResponse(opts: {
       config: {
         systemInstruction,
         temperature: 0.7,
-        maxOutputTokens: 800,
+        maxOutputTokens: 2048,
+        thinkingConfig: {
+          thinkingLevel: ThinkingLevel.LOW,
+        },
       },
     });
     let full = "";
@@ -54,7 +57,10 @@ export async function generateAIResponse(opts: {
     config: {
       systemInstruction,
       temperature: 0.7,
-      maxOutputTokens: 800,
+      maxOutputTokens: 2048,
+      thinkingConfig: {
+        thinkingLevel: ThinkingLevel.LOW,
+      },
     },
   });
 
