@@ -21,7 +21,6 @@ export function SplashScreen({ progress = 100 }) {
       >
         {/* Logo assembly: box drops in, then the icon settles with a spring */}
         <motion.div
-          layoutId="ledger-logo"
           className="splash-logo-box"
           initial={{ rotate: -8, scale: 0.85 }}
           animate={{ rotate: 0, scale: 1 }}

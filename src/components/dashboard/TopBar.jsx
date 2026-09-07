@@ -48,9 +48,9 @@ function TopBar({ view, onBack, onRefresh, refreshing, profile, onLogout, onOpen
       <div className="topbar__left">
         {isHome ? (
           <div className="topbar__logo">
-            <motion.div layoutId="ledger-logo" className="topbar__logo-icon-box">
+            <div className="topbar__logo-icon-box">
               <img src="/icon.svg" alt="Ledger" className="topbar__logo-img" />
-            </motion.div>
+            </div>
             <span className="topbar__logo-text">
               Ledger<span className="topbar__logo-dot">.</span>
             </span>
@@ -70,7 +70,7 @@ function TopBar({ view, onBack, onRefresh, refreshing, profile, onLogout, onOpen
           title="Ledger AI Assistant"
           style={{ position: 'relative' }}
         >
-          <span style={{fontSize:14}}>✨</span>
+          <span style={{ fontSize: 14 }}>✨</span>
         </button>
 
         <motion.button

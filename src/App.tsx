@@ -201,12 +201,10 @@ export function App() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <AnimatePresence>
-        {showSplash && <SplashScreen key="splash" progress={splashProgress} />}
-      </AnimatePresence>
-
       <AnimatePresence mode="wait">
-        {!authed || !data ? (
+        {showSplash ? (
+          <SplashScreen key="splash" progress={splashProgress} />
+        ) : !authed || !data ? (
           <motion.div
             key="login"
             initial={{ opacity: 0, y: 10 }}
@@ -234,9 +232,7 @@ export function App() {
             />
           </motion.div>
         )}
-      </AnimatePresence>
-
-      <AnimatePresence>
+      </AnimatePresence>  <AnimatePresence>
         {captchaChallenge && (
           <CaptchaModal
             challenge={captchaChallenge}
