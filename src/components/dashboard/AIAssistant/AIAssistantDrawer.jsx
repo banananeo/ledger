@@ -100,7 +100,7 @@ export default function AIAssistantDrawer({ data, isOpen, onClose }) {
               <div>
                 <p className="eyebrow">Ledger AI · Gemini</p>
                 <h3 className="ai-drawer__title">Study Assistant</h3>
-                <p className="ai-drawer__sub">{health?.configured ? `Model: ${health.model} · Context-aware` : 'AI not configured — set GEMINI_API_KEY'}</p>
+                <p className="ai-drawer__sub">{health?.configured ? `Model: ${health.model} · Academia-aware + General` : 'AI not configured — set GEMINI_API_KEY'}</p>
               </div>
               <div style={{display:'flex',gap:8}}>
                 <button className="bbtn bbtn--outline bbtn--xs" onClick={clearThread} title="Clear chat">Clear</button>
@@ -130,8 +130,10 @@ export default function AIAssistantDrawer({ data, isOpen, onClose }) {
                     <li>“Which attendance is risky?”</li>
                     <li>“Make a study plan for my weakest subjects”</li>
                     <li>“Which Day Order can I bunk safely?”</li>
+                    <li>“Explain photosynthesis simply”</li>
+                    <li>“Write Python code for quicksort”</li>
                   </ul>
-                  <p className="ai-drawer__empty-note">AI uses sanitized profile/attendance/marks/timetable only — no passwords or cookies sent.</p>
+                  <p className="ai-drawer__empty-note">Ask anything — general knowledge, coding, writing + academia. Academia answers use sanitized profile/attendance/marks/timetable only — no passwords or cookies sent.</p>
                 </div>
               )}
               {messages.map((m, i) => (
@@ -152,7 +154,7 @@ export default function AIAssistantDrawer({ data, isOpen, onClose }) {
               <textarea
                 ref={inputRef}
                 className="ai-drawer__input"
-                placeholder="Ask about attendance, marks, timetable…"
+                placeholder="Ask anything — attendance, coding, explanations…"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -164,7 +166,7 @@ export default function AIAssistantDrawer({ data, isOpen, onClose }) {
                 {loading ? '…' : 'Send'}
               </button>
             </div>
-            <p className="ai-drawer__hint">Enter to send · Shift+Enter for newline · Context from your Academia sync is included securely server-side.</p>
+            <p className="ai-drawer__hint">Enter to send · Shift+Enter for newline · Academia context is included when relevant; general questions answered from AI knowledge.</p>
           </motion.div>
         </>
       )}

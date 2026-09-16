@@ -34,7 +34,7 @@ export async function generateAIResponse(opts: {
       config: {
         systemInstruction,
         temperature: 0.7,
-        maxOutputTokens: 2048,
+        maxOutputTokens: 4096,
         thinkingConfig: {
           thinkingLevel: ThinkingLevel.LOW,
         },
@@ -57,7 +57,7 @@ export async function generateAIResponse(opts: {
     config: {
       systemInstruction,
       temperature: 0.7,
-      maxOutputTokens: 2048,
+      maxOutputTokens: 4096,
       thinkingConfig: {
         thinkingLevel: ThinkingLevel.LOW,
       },
