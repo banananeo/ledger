@@ -43,25 +43,24 @@ export function App() {
   const [error, setError] = useState<string>('');
   const [captchaChallenge, setCaptchaChallenge] = useState<CaptchaChallenge | null>(null);
   const [showSplash, setShowSplash] = useState<boolean>(true);
-  const [splashProgress, setSplashProgress] = useState<number>(15);
 
   const lastSyncTimeRef = useRef<number>(Date.now());
   const splashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Brief initial splash progress increment on app mount
-  useEffect(() => {
-    const minTimer = setTimeout(() => setSplashProgress((p) => Math.max(p, 60)), 350);
-    return () => clearTimeout(minTimer);
+  const handleSplashDone = useCallback(() => {
+    setShowSplash(false);
   }, []);
 
-  // Cleanup any lingering splash hide timers on unmount
+  // Safety timeout: never trap the user on splash even if animation stalls
   useEffect(() => {
+    if (!showSplash) return;
+    splashTimerRef.current = setTimeout(() => setShowSplash(false), 4000);
     return () => {
       if (splashTimerRef.current) {
         clearTimeout(splashTimerRef.current);
       }
     };
-  }, []);
+  }, [showSplash]);
 
   // Attempt auto-restoring session from stored cookies or credentials on mount
   useEffect(() => {
@@ -73,7 +72,6 @@ export function App() {
       setData(savedData);
       setAuthed(true);
       setLastSynced(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-      setSplashProgress((p) => Math.max(p, 45));
     }
 
     if ((savedCookies && Object.keys(savedCookies).length > 0) || savedCreds) {
@@ -112,14 +110,9 @@ export function App() {
           }
         })
         .finally(() => {
+          // Splash is self-timed now — never block dismissal on network
           setRefreshing(false);
-          setSplashProgress(100);
-          splashTimerRef.current = setTimeout(() => setShowSplash(false), 200);
         });
-    } else {
-      // No stored session to restore — nothing to wait on
-      setSplashProgress(100);
-      splashTimerRef.current = setTimeout(() => setShowSplash(false), 350);
     }
   }, []);
 
@@ -203,7 +196,7 @@ export function App() {
     <MotionConfig reducedMotion="user">
       <AnimatePresence mode="wait">
         {showSplash ? (
-          <SplashScreen key="splash" progress={splashProgress} />
+          <SplashScreen key="splash" onDone={handleSplashDone} />
         ) : !authed || !data ? (
           <motion.div
             key="login"
