@@ -1,31 +1,26 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import './CurtainsScopeTransition.css';
 
 export function CurtainsScopeTransition({ activeView, children, origin = { x: 50, y: 50 }, className = '' }) {
   const [displayedView, setDisplayedView] = useState(activeView);
-  const lockedOrigin = useRef(origin);
 
-  if (activeView !== displayedView) {
-    lockedOrigin.current = origin;
-  }
+  void origin;
 
   useEffect(() => {
     setDisplayedView(activeView);
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [activeView]);
 
-  const { x, y } = lockedOrigin.current;
-
   return (
     <div className={`curtains-scope-stage ${className}`}>
-      <AnimatePresence initial={false}>
+      <AnimatePresence initial={false} mode="sync">
         <motion.div
           key={displayedView}
-          initial={{ clipPath: `circle(0% at ${x}% ${y}%)` }}
-          animate={{ clipPath: `circle(150% at ${x}% ${y}%)` }}
-          exit={{ opacity: 1 }}
-          transition={{ duration: 0.55, ease: [0.65, 0, 0.35, 1] }}
+          initial={{ opacity: 0, scale: 0.985, y: 8, filter: 'blur(8px)' }}
+          animate={{ opacity: 1, scale: 1, y: 0, filter: 'blur(0px)' }}
+          exit={{ opacity: 0, scale: 0.99, filter: 'blur(6px)' }}
+          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
           className="curtains-scope-stage__content"
         >
           {children(displayedView)}

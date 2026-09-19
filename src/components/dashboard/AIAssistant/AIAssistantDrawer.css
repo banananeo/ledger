@@ -227,7 +227,7 @@
 @media(max-width:880px) {
     .ai-fab {
         right: 16px;
-        bottom: calc(25px + env(safe-area-inset-bottom));
+        bottom: calc(100px + env(safe-area-inset-bottom));
         padding: 10px 14px;
     }
 }

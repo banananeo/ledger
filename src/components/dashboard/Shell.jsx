@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import Sidebar from './Sidebar.jsx';
-import MobileRadialMenu from './MobileRadialMenu.jsx';
+import MobileTabBar from './MobileTabBar.jsx';
 import TopBar from './TopBar.jsx';
 import ClassReminderBanner from './ClassReminderBanner.jsx';
 import NotificationDrawer from './NotificationDrawer.jsx';
@@ -143,7 +143,7 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error }) {
             </CurtainsScopeTransition>
           </div>
         </div>
-        <MobileRadialMenu view={view} onNavigate={navigate} />
+        <MobileTabBar view={view} onNavigate={navigate} />
         <NotificationDrawer onNavigate={navigate} />
         <AIFab onClick={() => setAiOpen(true)} />
         <AIAssistantDrawer data={data} isOpen={aiOpen} onClose={() => setAiOpen(false)} />

@@ -1,416 +1,204 @@
-/* Signature boot splash — compressed PRINT → PLAY → RACE → DRAW → DOCK (~2.4s) */
-.splash-screen.sig-boot {
+/* Logo-only super-modern splash — matches Ledger dark neo-brutalist theme */
+.splash-screen.splash-logo-only {
   position: fixed;
   inset: 0;
   z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #0c0d10;
-  color: #f5f1e8;
+  background: var(--dash-bg, #0c0d10);
+  color: var(--ink, #f7f7f9);
   overflow: hidden;
   user-select: none;
   cursor: pointer;
   font-family: var(--sans, 'Inter', system-ui, sans-serif);
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* ---------- backdrop: halftone storm + vignette + grain ---------- */
-.sig-halftone {
+/* ambient */
+.slo-glow {
   position: absolute;
-  inset: -20%;
-  background-image: radial-gradient(rgba(245, 241, 232, 0.22) 1.2px, transparent 1.6px);
-  background-size: 14px 14px;
-  animation: sig-storm 0.6s linear infinite, sig-halftone-out 0.3s ease 0.55s forwards;
+  width: min(560px, 120vw);
+  height: min(560px, 120vw);
+  border-radius: 50%;
+  background:
+    radial-gradient(closest-side, rgba(45, 212, 191, 0.16), transparent 70%),
+    radial-gradient(closest-side at 70% 65%, rgba(251, 191, 36, 0.1), transparent 70%);
+  filter: blur(10px);
+  animation: slo-breathe 2.4s ease-in-out both;
   pointer-events: none;
 }
-@keyframes sig-storm {
-  from { transform: translate(0, 0) rotate(0.001deg); }
-  to { transform: translate(-14px, 10px) rotate(0.001deg); }
+@keyframes slo-breathe {
+  0% { opacity: 0; transform: scale(0.92); }
+  25% { opacity: 1; transform: scale(1); }
+  80% { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 0.85; transform: scale(1.03); }
 }
-@keyframes sig-halftone-out {
-  to { opacity: 0; visibility: hidden; }
+.slo-grid {
+  position: absolute;
+  inset: -10%;
+  background-image:
+    linear-gradient(rgba(247, 247, 249, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(247, 247, 249, 0.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(60% 55% at 50% 48%, #000 20%, transparent 100%);
+  -webkit-mask-image: radial-gradient(60% 55% at 50% 48%, #000 20%, transparent 100%);
+  opacity: 0.7;
+  pointer-events: none;
 }
-.sig-vignette {
+.slo-vignette {
   position: absolute;
   inset: 0;
-  background: radial-gradient(120% 90% at 50% 45%, transparent 40%, rgba(0, 0, 0, 0.55) 100%);
-  pointer-events: none;
-}
-.sig-race-beat ~ .sig-vignette,
-.sig-boot:has(.sig-race-beat) .sig-vignette {
-  animation: sig-depth-charge 0.22s ease 1.15s 2;
-}
-@keyframes sig-depth-charge {
-  0%, 100% { transform: scale(1); filter: brightness(1); }
-  50% { transform: scale(1.04); filter: brightness(1.6); }
-}
-.sig-grain {
-  position: absolute;
-  inset: 0;
-  opacity: 0.08;
-  background-image: repeating-linear-gradient(0deg, #fff 0 1px, transparent 1px 3px);
+  background: radial-gradient(120% 90% at 50% 45%, transparent 45%, rgba(0, 0, 0, 0.5) 100%);
   pointer-events: none;
 }
 
-/* ---------- 0: FLASH! masthead + counter ---------- */
-.sig-flash-beat {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  animation: sig-flash-hold 0.62s ease forwards;
-}
-@keyframes sig-flash-hold {
-  0% { opacity: 0; }
-  8% { opacity: 1; }
-  78% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(1.12); visibility: hidden; }
-}
-.sig-masthead {
-  font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
-  font-weight: 700;
-  font-style: italic;
-  font-size: clamp(56px, 16vw, 110px);
-  letter-spacing: -0.05em;
-  line-height: 0.9;
-  color: #ffd400;
-  -webkit-text-stroke: 2px #0c0d10;
-  text-shadow: 4px 4px 0 #f5f1e8, -2px -2px 0 #0c0d10, 0 0 32px rgba(255, 212, 0, 0.45);
-  animation: sig-masthead-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-@keyframes sig-masthead-in {
-  0% { transform: scale(2.6) skewX(-14deg); opacity: 0; }
-  60% { transform: scale(0.96) skewX(2deg); opacity: 1; }
-  100% { transform: scale(1) skewX(-4deg); opacity: 1; }
-}
-.sig-counter {
-  font-family: 'IBM Plex Mono', ui-monospace, monospace;
-  font-size: 15px;
-  letter-spacing: 0.3em;
-  color: #f5f1e8;
-  opacity: 0.9;
-}
-.sig-flash-sub {
-  font-size: 10px;
-  letter-spacing: 0.32em;
-  color: rgba(245, 241, 232, 0.6);
-  font-weight: 600;
-}
-
-/* ---------- 1: newspaper slam ---------- */
-.sig-print-beat {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  animation: sig-print-window 0.55s ease 0.35s forwards;
-}
-@keyframes sig-print-window {
-  0% { opacity: 0; }
-  10% { opacity: 1; }
-  82% { opacity: 1; }
-  100% { opacity: 0; visibility: hidden; }
-}
-.sig-print-type {
-  position: absolute;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-weight: 900;
-  font-size: clamp(64px, 18vw, 130px);
-  letter-spacing: -0.04em;
-  color: #f5f1e8;
-  animation: sig-type-slam 0.28s cubic-bezier(0.2, 1.4, 0.3, 1) 0.55s both;
-}
-@keyframes sig-type-slam {
-  0% { transform: scale(1.7); opacity: 0; filter: blur(6px); }
-  100% { transform: scale(1); opacity: 1; filter: blur(0); }
-}
-.sig-paper {
-  width: min(200px, 52vw);
-  height: 150px;
-  background: #f5f1e8;
-  border-radius: 3px;
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
-  padding: 12px;
-  transform-origin: 50% 0%;
-  animation: sig-paper-through 0.5s cubic-bezier(0.3, 0.9, 0.3, 1) 0.38s both;
-}
-@keyframes sig-paper-through {
-  0% { transform: translateY(-120%) rotate(-7deg) scale(1.1); opacity: 0; }
-  35% { transform: translateY(0) rotate(2deg) scale(1.35); opacity: 1; }
-  60% { transform: translateY(6%) rotate(0deg) scale(1); opacity: 1; }
-  100% { transform: translateY(130%) rotate(5deg) scale(0.94); opacity: 0; }
-}
-.sig-paper-head {
-  height: 14px;
-  border-radius: 2px;
-  background: #0c0d10;
-  margin-bottom: 8px;
-}
-.sig-paper-lines {
-  height: 96px;
-  border-radius: 2px;
-  background: repeating-linear-gradient(0deg, rgba(12, 13, 16, 0.75) 0 3px, transparent 3px 9px);
-}
-
-/* ---------- 2: balls burst ---------- */
-.sig-play-beat {
-  position: absolute;
-  width: 220px;
-  height: 160px;
-  opacity: 0;
-  animation: sig-play-window 0.6s ease 0.75s forwards;
-}
-@keyframes sig-play-window {
-  0% { opacity: 0; }
-  8% { opacity: 1; }
-  80% { opacity: 1; }
-  100% { opacity: 0; visibility: hidden; }
-}
-.sig-ball {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 30px;
-  height: 30px;
-  margin: -15px;
-  border-radius: 50%;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), inset -4px -5px 0 rgba(0, 0, 0, 0.25);
-}
-.sig-ball--a { background: #e10600; animation: sig-ball-a 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.78s both; }
-.sig-ball--b { background: #ffd400; animation: sig-ball-b 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.78s both; }
-.sig-ball--c { background: #14b8a6; animation: sig-ball-c 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.78s both; }
-@keyframes sig-ball-a {
-  0% { transform: translate(0, 0) scale(0.4); }
-  100% { transform: translate(-74px, -34px) scale(1); }
-}
-@keyframes sig-ball-b {
-  0% { transform: translate(0, 0) scale(0.4); }
-  100% { transform: translate(72px, -28px) scale(1); }
-}
-@keyframes sig-ball-c {
-  0% { transform: translate(0, 0) scale(0.4); }
-  100% { transform: translate(2px, 52px) scale(1.1); }
-}
-.sig-burst {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 12px;
-  height: 12px;
-  margin: -6px;
-  border-radius: 50%;
-  border: 3px solid #f5f1e8;
-  animation: sig-burst 0.4s ease-out 0.78s both;
-}
-@keyframes sig-burst {
-  0% { transform: scale(0.4); opacity: 1; }
-  100% { transform: scale(7); opacity: 0; }
-}
-.sig-score {
-  position: absolute;
-  left: 50%;
-  top: 8%;
-  transform: translateX(-50%);
-  font-family: 'Space Grotesk', sans-serif;
-  font-weight: 700;
-  font-size: 26px;
-  color: #ffd400;
-  text-shadow: 2px 2px 0 #0c0d10;
-  opacity: 0;
-  animation: sig-score-pop 0.35s cubic-bezier(0.2, 1.6, 0.3, 1) 1.02s both;
-}
-@keyframes sig-score-pop {
-  0% { transform: translateX(-50%) scale(0.4); opacity: 0; }
-  100% { transform: translateX(-50%) scale(1.15); opacity: 1; }
-}
-
-/* ---------- 3: F1 fly-past ---------- */
-.sig-race-beat {
-  position: absolute;
-  width: min(560px, 130vw);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  animation: sig-race-window 0.65s ease 1.12s forwards;
-}
-@keyframes sig-race-window {
-  0% { opacity: 0; }
-  8% { opacity: 1; }
-  85% { opacity: 1; }
-  100% { opacity: 0; visibility: hidden; }
-}
-.sig-track {
-  position: absolute;
-  left: -10%;
-  right: -10%;
-  top: 50%;
-  height: 2px;
-  background: rgba(245, 241, 232, 0.5);
-  box-shadow: 0 14px 0 rgba(245, 241, 232, 0.12), 0 -14px 0 rgba(245, 241, 232, 0.12);
-}
-.sig-speedlines {
-  position: absolute;
-  inset: -30px -60px;
-  background: repeating-linear-gradient(90deg, transparent 0 26px, rgba(255, 212, 0, 0.35) 26px 30px);
-  filter: blur(0.4px);
-  animation: sig-speed 0.3s linear infinite;
-}
-@keyframes sig-speed {
-  to { transform: translateX(-30px); }
-}
-.sig-f1 {
-  width: min(300px, 66vw);
-  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.55));
-  animation: sig-fly-past 0.52s cubic-bezier(0.3, 0.7, 0.3, 1) 1.22s both;
-}
-@keyframes sig-fly-past {
-  0% { transform: translateX(-120%) skewX(8deg); }
-  100% { transform: translateX(120%) skewX(-8deg); }
-}
-.sig-race-word {
-  position: absolute;
-  bottom: -38px;
-  font-family: 'Space Grotesk', sans-serif;
-  font-weight: 700;
-  font-style: italic;
-  letter-spacing: 0.42em;
-  font-size: 13px;
-  color: #e10600;
-}
-
-/* ---------- 4: F! monogram draw ---------- */
-.sig-draw-beat {
+/* stack */
+.slo-stack {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  opacity: 0;
-  transform: translateY(14px) scale(0.96);
-  animation: sig-draw-in 0.3s ease 1.62s forwards;
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.28s ease;
+  gap: 18px;
+  animation: slo-stack-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
-@keyframes sig-draw-in {
-  to { opacity: 1; transform: translateY(0) scale(1); }
+@keyframes slo-stack-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to { opacity: 1; transform: none; }
 }
-.sig-monogram {
-  width: 108px;
-  height: 108px;
-  overflow: visible;
-}
-.sig-f-outline,
-.sig-f-fill {
-  stroke-dasharray: 320;
-  stroke-dashoffset: 320;
-}
-.sig-f-outline {
-  animation: sig-stroke-draw 0.42s ease-out 1.68s forwards;
-}
-.sig-f-fill {
-  animation: sig-stroke-draw 0.42s ease-out 1.7s forwards, sig-fill-snap 0.09s ease 2.08s forwards;
-}
-@keyframes sig-stroke-draw {
-  to { stroke-dashoffset: 0; }
-}
-@keyframes sig-fill-snap {
-  0% { opacity: 0.2; }
-  100% { opacity: 1; }
-}
-.sig-bang-bar {
-  opacity: 0;
-  transform-origin: 97px 52px;
-  animation: sig-bang-in 0.18s cubic-bezier(0.2, 1.6, 0.3, 1) 2.02s both;
-}
-.sig-bang-dot {
-  opacity: 0;
-  transform-origin: 97px 92px;
-  animation: sig-dot-pop 0.28s cubic-bezier(0.2, 1.8, 0.3, 1) 2.12s both;
-}
-@keyframes sig-bang-in {
-  0% { opacity: 0; transform: scaleY(0.2); }
-  100% { opacity: 1; transform: scaleY(1); }
-}
-@keyframes sig-dot-pop {
-  0% { opacity: 0; transform: scale(0.2); }
-  100% { opacity: 1; transform: scale(1.25); }
-}
-.sig-brand {
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 40px;
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  line-height: 1;
-  opacity: 0;
-  transform: translateY(10px);
-  animation: sig-rise 0.28s ease 2.08s forwards;
-}
-.sig-brand-dot { color: #ffd400; }
-.sig-tagline {
+.slo-eyebrow {
+  font-family: var(--mono, ui-monospace, monospace);
   font-size: 11px;
   letter-spacing: 0.34em;
-  font-weight: 700;
-  color: rgba(245, 241, 232, 0.75);
+  text-transform: uppercase;
+  color: var(--ink-soft, #9fa6b5);
   opacity: 0;
-  transform: translateY(8px);
-  animation: sig-rise 0.28s ease 2.16s forwards;
-}
-@keyframes sig-rise {
-  to { opacity: 1; transform: translateY(0); }
+  animation: slo-fade-up 0.45s ease 0.15s forwards;
 }
 
-/* ---------- 5: dock hold → flight up (carried by App exit) ---------- */
-.sig-docking .sig-draw-beat {
-  transform: translateY(-46px) scale(0.72);
-  opacity: 0.95;
+/* logo card */
+.slo-logo-card {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  border-radius: 28px;
+  background: var(--surface, #1a1c23);
+  border: var(--stroke, 2px) solid var(--ink, #f7f7f9);
+  box-shadow: var(--shadow-hard, 5px 5px 0 #000), var(--teal-glow, 0 0 16px rgba(45, 212, 191, 0.4));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: var(--ink, #f7f7f9);
+  animation: slo-card-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform;
+  backface-visibility: hidden;
 }
-.sig-docking .sig-skip {
+@keyframes slo-card-in {
+  0% { opacity: 0; transform: translateY(16px) scale(0.9) rotate(-4deg); }
+  100% { opacity: 1; transform: none; }
+}
+.slo-mark {
+  width: 76px;
+  height: 76px;
+  overflow: visible;
+}
+.slo-l-draw {
+  stroke-dasharray: 320;
+  stroke-dashoffset: 320;
+  animation: slo-l-draw 0.7s cubic-bezier(0.4, 0, 0.2, 1) 0.25s forwards;
+}
+@keyframes slo-l-draw {
+  to { stroke-dashoffset: 0; }
+}
+.slo-dot {
+  fill: var(--yellow, #fbbf24);
   opacity: 0;
+  transform-origin: 96px 96px;
+  animation: slo-dot-pop 0.4s cubic-bezier(0.2, 1.8, 0.3, 1) 0.85s both;
 }
-.sig-skip {
+@keyframes slo-dot-pop {
+  0% { opacity: 0; transform: scale(0.2); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.slo-shimmer {
   position: absolute;
-  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
-  font-size: 10px;
-  letter-spacing: 0.3em;
-  font-weight: 600;
-  color: rgba(245, 241, 232, 0.45);
-  animation: sig-skip-blink 1s ease-in-out infinite;
+  inset: -40%;
+  background: linear-gradient(105deg, transparent 42%, rgba(255, 255, 255, 0.22) 50%, transparent 58%);
+  transform: translateX(-70%);
+  animation: slo-shimmer 0.9s ease 1s both;
+  pointer-events: none;
 }
-@keyframes sig-skip-blink {
-  0%, 100% { opacity: 0.35; }
-  50% { opacity: 0.8; }
+@keyframes slo-shimmer {
+  to { transform: translateX(70%); }
 }
 
-/* ---------- reduced motion: static card ---------- */
+/* wordmark */
+.slo-brand {
+  font-family: var(--display, 'Space Grotesk', system-ui, sans-serif);
+  font-size: 42px;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  display: inline-flex;
+  align-items: baseline;
+}
+.slo-letter {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: slo-letter-rise 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes slo-letter-rise {
+  to { opacity: 1; transform: none; }
+}
+.slo-letter-dot { color: var(--yellow, #fbbf24); }
+
+/* hairline loader */
+.slo-loader {
+  width: 132px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--line, #272a35);
+  overflow: hidden;
+  opacity: 0;
+  animation: slo-fade-up 0.4s ease 0.3s forwards;
+}
+.slo-loader-fill {
+  height: 100%;
+  width: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--teal, #2dd4bf), var(--accent, #5eead4));
+  transform-origin: 0% 50%;
+  transform: scaleX(0);
+  animation: slo-loader-fill 2s cubic-bezier(0.3, 0.7, 0.3, 1) 0.3s forwards;
+}
+@keyframes slo-loader-fill {
+  to { transform: scaleX(1); }
+}
+@keyframes slo-fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* dock handled by App exit; no extra docking class needed */
+
 @media (prefers-reduced-motion: reduce) {
-  .sig-halftone,
-  .sig-grain,
-  .sig-flash-beat,
-  .sig-print-beat,
-  .sig-play-beat,
-  .sig-race-beat,
-  .sig-skip {
+  .slo-glow,
+  .slo-shimmer {
     display: none !important;
   }
-  .sig-draw-beat {
+  .slo-stack,
+  .slo-logo-card,
+  .slo-eyebrow,
+  .slo-letter,
+  .slo-loader {
     opacity: 1 !important;
     transform: none !important;
     animation: none !important;
   }
-  .sig-f-outline,
-  .sig-f-fill,
-  .sig-bang-bar,
-  .sig-bang-dot,
-  .sig-brand,
-  .sig-tagline {
-    opacity: 1 !important;
-    transform: none !important;
-    animation: none !important;
-    stroke-dashoffset: 0 !important;
-  }
-  .splash-screen.sig-boot {
-    cursor: default;
-  }
+  .slo-l-draw { stroke-dashoffset: 0 !important; animation: none !important; }
+  .slo-dot { opacity: 1 !important; transform: none !important; animation: none !important; }
+  .slo-loader-fill { transform: scaleX(1) !important; animation: none !important; }
+  .splash-screen.splash-logo-only { cursor: default; }
 }

@@ -194,26 +194,26 @@ export function App() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="sync">
         {showSplash ? (
           <SplashScreen key="splash" onDone={handleSplashDone} />
         ) : !authed || !data ? (
           <motion.div
             key="login"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0, y: 12, scale: 0.99, filter: 'blur(8px)' }}
+            animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, scale: 0.98, filter: 'blur(8px)' }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
           >
             <LoginForm onSuccess={handleLoginSuccess} />
           </motion.div>
         ) : (
           <motion.div
             key="dashboard"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0, scale: 0.985, filter: 'blur(10px)' }}
+            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, scale: 0.98, filter: 'blur(8px)' }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
             <Shell
               data={data}

@@ -7,11 +7,13 @@
   grid-area: 1 / 1;
   width: 100%;
   min-width: 0;
+  will-change: opacity, transform, filter;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .curtains-scope-stage__content {
     clip-path: none !important;
     transition: none !important;
+    filter: none !important;
   }
 }
