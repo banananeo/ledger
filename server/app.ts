@@ -6,7 +6,16 @@ import { HttpError } from "./shared/errors.js";
 import { getDemoData } from "./shared/demo-data.js";
 import { generateAIResponse, isGeminiConfigured } from "./ai/gemini.js";
 import { checkRateLimit, rateLimitKey } from "./ai/rateLimit.js";
-
+import { StudentPortalClient } from "./shared/student-portal-client.js";
+import { StudentPortalAttendanceParser } from "./parsers/student-portal-attendance-parser.js";
+import { randomUUID } from "crypto";
+const studentPortalSessions = new Map<
+  string,
+  {
+    client: StudentPortalClient;
+    captchaImage: Buffer;
+  }
+>();
 export function createApp(): Express {
   const app = express();
 
@@ -127,29 +136,171 @@ export function createApp(): Express {
       return res.status(500).json({ detail: message });
     }
   });
+  router.get("/student-portal/captcha", async (_req: Request, res: Response) => {
+    try {
+      const client = new StudentPortalClient();
+
+      const captchaImage = await client.getCaptchaImage();
+
+      const challengeId = randomUUID();
+
+      studentPortalSessions.set(challengeId, {
+        client,
+        captchaImage,
+      });
+
+      return res.json({
+        success: true,
+        challengeId,
+        imageUrl: `/api/student-portal/captcha-image/${challengeId}`,
+      });
+    } catch (err: any) {
+      console.error("[Student Portal CAPTCHA]", err);
+
+      return res.status(500).json({
+        detail:
+          err?.message ||
+          "Failed to fetch Student Portal CAPTCHA",
+      });
+    }
+  });
+  router.get(
+    "/student-portal/captcha-image/:challengeId",
+    async (req: Request, res: Response) => {
+      try {
+        const session = studentPortalSessions.get(
+          req.params.challengeId
+        );
+
+        if (!session) {
+          return res.status(404).json({
+            detail:
+              "CAPTCHA session not found or expired",
+          });
+        }
+
+        res.setHeader("Content-Type", "image/png");
+
+        return res.send(session.captchaImage);
+      } catch (err: any) {
+        console.error(
+          "[Student Portal CAPTCHA Image]",
+          err
+        );
+
+        return res.status(500).json({
+          detail:
+            err?.message ||
+            "Failed to return CAPTCHA image",
+        });
+      }
+    }
+  );
 
   // Attendance handler
+  // Student Portal attendance handler
   router.post("/attendance", async (req: Request, res: Response) => {
+    console.log("[StudentPortal] ATTENDANCE ROUTE HIT");
     try {
-      const { cookies } = req.body || {};
-      if (cookies?.JSESSIONID === "DEMO_SESSION_ID_XYZ") {
+      const {
+        username,
+        password,
+        captcha,
+        telemetryPayload,
+        challengeId,
+        isDemo,
+      } = req.body || {};
+
+      if (isDemo) {
         return res.json({
           success: true,
           attendance: getDemoData().attendance,
         });
       }
-      const result = await loadAttendanceHtml(req.body);
+
+      if (!username || !password) {
+        return res.status(400).json({
+          detail:
+            "Student Portal username and password are required",
+        });
+      }
+
+      if (!captcha) {
+        return res.status(400).json({
+          detail:
+            "Student Portal CAPTCHA is required",
+        });
+      }
+
+      if (!challengeId) {
+        return res.status(400).json({
+          detail:
+            "Student Portal CAPTCHA session is required",
+        });
+      }
+
+      const session =
+        studentPortalSessions.get(challengeId);
+
+      if (!session) {
+        return res.status(400).json({
+          detail:
+            "Student Portal CAPTCHA session expired. Please request a new CAPTCHA.",
+        });
+      }
+
+      const { client } = session;
+
+      const authenticated = await client.login(
+        username,
+        password,
+        captcha,
+        telemetryPayload || "",
+      );
+
+      /*
+       * CAPTCHA sessions are single-use.
+       */
+      studentPortalSessions.delete(challengeId);
+
+      if (!authenticated) {
+        return res.status(401).json({
+          detail:
+            "Student Portal login failed. Check your NetID, password and CAPTCHA.",
+        });
+      }
+
+      const attendanceHtml =
+        await client.fetchAttendance();
+
+
+      const attendance =
+        StudentPortalAttendanceParser.extract(
+          attendanceHtml
+        );
+
+      if (attendance.length === 0) {
+        return res.status(502).json({
+          detail:
+            "Student Portal returned no attendance records. The portal response format may have changed.",
+        });
+      }
+
       return res.json({
         success: true,
-        attendance: AttendanceParser.extract(result.attendanceHtml),
-        session: { cookies: result.client.sessionManager.getCookieObject() },
-        metadata: result.metadata,
+        attendance,
       });
     } catch (err: any) {
-      if (err instanceof HttpError) {
-        return res.status(err.statusCode).json({ detail: err.detail });
-      }
-      return res.status(500).json({ detail: err?.message || "Failed to fetch attendance" });
+      console.error(
+        "[Student Portal Attendance]",
+        err
+      );
+
+      return res.status(500).json({
+        detail:
+          err?.message ||
+          "Failed to fetch attendance from SRM Student Portal",
+      });
     }
   });
 
