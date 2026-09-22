@@ -196,8 +196,7 @@ export function createApp(): Express {
       }
     }
   );
-
-  // Attendance handler
+  // attendance handler
   // Student Portal attendance handler
   router.post("/attendance", async (req: Request, res: Response) => {
     console.log("[StudentPortal] ATTENDANCE ROUTE HIT");

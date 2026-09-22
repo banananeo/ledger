@@ -34,11 +34,26 @@ export interface CaptchaChallenge {
   image: string;
 }
 
+export interface StudentPortalCaptcha {
+  success: boolean;
+  challengeId: string;
+  imageUrl: string;
+}
+
+export interface StudentPortalAttendanceResponse {
+  success: boolean;
+  attendance: AppData["attendance"];
+}
+
 export class ApiError extends Error {
   captchaChallenge?: CaptchaChallenge;
   statusCode?: number;
 
-  constructor(message: string, statusCode?: number, challenge?: CaptchaChallenge) {
+  constructor(
+    message: string,
+    statusCode?: number,
+    challenge?: CaptchaChallenge
+  ) {
     super(message);
     this.statusCode = statusCode;
     this.captchaChallenge = challenge;
@@ -54,37 +69,71 @@ export function getStoredCookies(): Record<string, string> | null {
   }
 }
 
-export function saveStoredCookies(cookies: Record<string, string>) {
+export function saveStoredCookies(
+  cookies: Record<string, string>
+) {
   try {
-    localStorage.setItem(COOKIE_STORAGE_KEY, JSON.stringify(cookies));
+    localStorage.setItem(
+      COOKIE_STORAGE_KEY,
+      JSON.stringify(cookies)
+    );
   } catch (err) {
-    console.error("Failed to save cookies to localStorage:", err);
+    console.error(
+      "Failed to save cookies to localStorage:",
+      err
+    );
   }
 }
 
 export function getStoredCredentials(): StoredCredentials | null {
   try {
-    const raw = localStorage.getItem(CREDS_STORAGE_KEY);
+    const raw =
+      localStorage.getItem(CREDS_STORAGE_KEY);
+
     if (!raw) return null;
-    return JSON.parse(decodeURIComponent(escape(atob(raw))));
+
+    return JSON.parse(
+      decodeURIComponent(
+        escape(atob(raw))
+      )
+    );
   } catch {
     return null;
   }
 }
 
-export function saveStoredCredentials(creds: StoredCredentials) {
+export function saveStoredCredentials(
+  creds: StoredCredentials
+) {
   try {
     if (!creds.username) return;
-    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(creds))));
-    localStorage.setItem(CREDS_STORAGE_KEY, encoded);
+
+    const encoded = btoa(
+      unescape(
+        encodeURIComponent(
+          JSON.stringify(creds)
+        )
+      )
+    );
+
+    localStorage.setItem(
+      CREDS_STORAGE_KEY,
+      encoded
+    );
   } catch (err) {
-    console.error("Failed to save credentials to localStorage:", err);
+    console.error(
+      "Failed to save credentials to localStorage:",
+      err
+    );
   }
 }
 
 export function getStoredData(): AppData | null {
   try {
-    const raw = localStorage.getItem('eduwars_dashboard_data');
+    const raw = localStorage.getItem(
+      "eduwars_dashboard_data"
+    );
+
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -93,63 +142,142 @@ export function getStoredData(): AppData | null {
 
 export function saveStoredData(data: AppData) {
   try {
-    localStorage.setItem('eduwars_dashboard_data', JSON.stringify(data));
+    localStorage.setItem(
+      "eduwars_dashboard_data",
+      JSON.stringify(data)
+    );
   } catch (err) {
-    console.error("Failed to save data to localStorage:", err);
+    console.error(
+      "Failed to save data to localStorage:",
+      err
+    );
   }
 }
 
 export function clearStoredSession() {
   try {
-    localStorage.removeItem(COOKIE_STORAGE_KEY);
-    localStorage.removeItem(PROFILE_STORAGE_KEY);
-    localStorage.removeItem(METADATA_STORAGE_KEY);
-    localStorage.removeItem('eduwars_dashboard_data');
-    localStorage.removeItem(CREDS_STORAGE_KEY);
+    localStorage.removeItem(
+      COOKIE_STORAGE_KEY
+    );
+
+    localStorage.removeItem(
+      PROFILE_STORAGE_KEY
+    );
+
+    localStorage.removeItem(
+      METADATA_STORAGE_KEY
+    );
+
+    localStorage.removeItem(
+      "eduwars_dashboard_data"
+    );
+
+    localStorage.removeItem(
+      CREDS_STORAGE_KEY
+    );
   } catch (err) {
-    console.error("Failed to clear session:", err);
+    console.error(
+      "Failed to clear session:",
+      err
+    );
   }
 }
 
-async function parseJsonResponse(response: Response): Promise<any> {
+async function parseJsonResponse(
+  response: Response
+): Promise<any> {
   const text = await response.text();
+
   try {
-    return text ? JSON.parse(text) : {};
+    return text
+      ? JSON.parse(text)
+      : {};
   } catch {
     if (!response.ok) {
-      const snippet = text.replace(/<[^>]*>/g, '').trim();
+      const snippet = text
+        .replace(/<[^>]*>/g, "")
+        .trim();
+
       throw new ApiError(
-        snippet ? `Server error (${response.status}): ${snippet.slice(0, 120)}` : `Server error (${response.status}: ${response.statusText})`,
+        snippet
+          ? `Server error (${response.status}): ${snippet.slice(
+            0,
+            120
+          )}`
+          : `Server error (${response.status}: ${response.statusText})`,
         response.status
       );
     }
-    throw new ApiError(`Invalid server response format (${response.status})`, response.status);
+
+    throw new ApiError(
+      `Invalid server response format (${response.status})`,
+      response.status
+    );
   }
 }
 
-export async function login(payload: LoginPayload): Promise<AppData> {
-  const response = await fetch("/api/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+/* =========================================================
+   ACADEMIA LOGIN
+   ========================================================= */
 
-  const data = await parseJsonResponse(response);
+export async function login(
+  payload: LoginPayload
+): Promise<AppData> {
+  const response = await fetch(
+    "/api/login",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type":
+          "application/json",
+      },
+      body: JSON.stringify(payload),
+    }
+  );
+
+  const data =
+    await parseJsonResponse(response);
 
   if (!response.ok) {
     const detail = data?.detail;
-    if (detail && typeof detail === "object" && detail.type === "CAPTCHA_REQUIRED") {
-      throw new ApiError(detail.message || "CAPTCHA verification required", response.status, detail);
+
+    if (
+      detail &&
+      typeof detail === "object" &&
+      detail.type ===
+      "CAPTCHA_REQUIRED"
+    ) {
+      throw new ApiError(
+        detail.message ||
+        "CAPTCHA verification required",
+        response.status,
+        detail
+      );
     }
-    const message = typeof detail === "string" ? detail : (detail?.message || "Failed to log in to Academia");
-    throw new ApiError(message, response.status);
+
+    const message =
+      typeof detail === "string"
+        ? detail
+        : detail?.message ||
+        "Failed to log in to Academia";
+
+    throw new ApiError(
+      message,
+      response.status
+    );
   }
 
   if (data?.session?.cookies) {
-    saveStoredCookies(data.session.cookies);
+    saveStoredCookies(
+      data.session.cookies
+    );
   }
 
-  if (payload.username && payload.password && !payload.isDemo) {
+  if (
+    payload.username &&
+    payload.password &&
+    !payload.isDemo
+  ) {
     saveStoredCredentials({
       username: payload.username,
       password: payload.password,
@@ -159,30 +287,152 @@ export async function login(payload: LoginPayload): Promise<AppData> {
   return data as AppData;
 }
 
-export async function refreshSession(payload: RefreshPayload): Promise<AppData> {
-  const response = await fetch("/api/refresh", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+/* =========================================================
+   SRM STUDENT PORTAL
+   ========================================================= */
 
-  const data = await parseJsonResponse(response);
+/**
+ * Request a new SRM Student Portal CAPTCHA.
+ *
+ * The backend creates the Student Portal session and
+ * returns a challengeId. That challengeId must be reused
+ * when submitting the login.
+ */
+export async function getStudentPortalCaptcha(): Promise<StudentPortalCaptcha> {
+  const response = await fetch(
+    "/api/student-portal/captcha",
+    {
+      method: "GET",
+    }
+  );
+
+  const data =
+    await parseJsonResponse(response);
 
   if (!response.ok) {
     const detail = data?.detail;
-    if (detail && typeof detail === "object" && detail.type === "CAPTCHA_REQUIRED") {
-      throw new ApiError(detail.message || "CAPTCHA verification required", response.status, detail);
+
+    throw new ApiError(
+      typeof detail === "string"
+        ? detail
+        : "Failed to load Student Portal CAPTCHA.",
+      response.status
+    );
+  }
+
+  return data as StudentPortalCaptcha;
+}
+
+/**
+ * Authenticate against the SRM Student Portal
+ * and fetch attendance.
+ *
+ * challengeId belongs to the CAPTCHA session created
+ * by getStudentPortalCaptcha().
+ */
+export async function loginStudentPortal(
+  username: string,
+  password: string,
+  captcha: string,
+  challengeId: string
+): Promise<StudentPortalAttendanceResponse> {
+  const response = await fetch(
+    "/api/attendance",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type":
+          "application/json",
+      },
+      body: JSON.stringify({
+        username,
+        password,
+        captcha,
+        challengeId,
+      }),
     }
-    const message = typeof detail === "string" ? detail : (detail?.message || "Failed to refresh data");
-    throw new ApiError(message, response.status);
+  );
+
+  const data =
+    await parseJsonResponse(response);
+
+  if (!response.ok) {
+    const detail = data?.detail;
+
+    throw new ApiError(
+      typeof detail === "string"
+        ? detail
+        : "Failed to authenticate with the SRM Student Portal.",
+      response.status
+    );
+  }
+
+  return data as StudentPortalAttendanceResponse;
+}
+
+/* =========================================================
+   SESSION REFRESH
+   ========================================================= */
+
+export async function refreshSession(
+  payload: RefreshPayload
+): Promise<AppData> {
+  const response = await fetch(
+    "/api/refresh",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type":
+          "application/json",
+      },
+      body: JSON.stringify(payload),
+    }
+  );
+
+  const data =
+    await parseJsonResponse(response);
+
+  if (!response.ok) {
+    const detail = data?.detail;
+
+    if (
+      detail &&
+      typeof detail === "object" &&
+      detail.type ===
+      "CAPTCHA_REQUIRED"
+    ) {
+      throw new ApiError(
+        detail.message ||
+        "CAPTCHA verification required",
+        response.status,
+        detail
+      );
+    }
+
+    const message =
+      typeof detail === "string"
+        ? detail
+        : detail?.message ||
+        "Failed to refresh data";
+
+    throw new ApiError(
+      message,
+      response.status
+    );
   }
 
   if (data?.session?.cookies) {
-    saveStoredCookies(data.session.cookies);
+    saveStoredCookies(
+      data.session.cookies
+    );
   }
 
   return data as AppData;
 }
+
+/* =========================================================
+   AI
+   ========================================================= */
 
 export interface AIChatPayload {
   message: string;
@@ -191,16 +441,35 @@ export interface AIChatPayload {
   stream?: boolean;
 }
 
-export async function aiChat(payload: AIChatPayload): Promise<string> {
-  const res = await fetch("/api/ai/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  const data = await parseJsonResponse(res);
+export async function aiChat(
+  payload: AIChatPayload
+): Promise<string> {
+  const res = await fetch(
+    "/api/ai/chat",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type":
+          "application/json",
+      },
+      body: JSON.stringify(payload),
+    }
+  );
+
+  const data =
+    await parseJsonResponse(res);
+
   if (!res.ok) {
-    throw new ApiError(typeof data?.detail === "string" ? data.detail : data?.detail?.message || "AI request failed", res.status);
+    throw new ApiError(
+      typeof data?.detail ===
+        "string"
+        ? data.detail
+        : data?.detail?.message ||
+        "AI request failed",
+      res.status
+    );
   }
+
   return data.reply as string;
 }
 
@@ -208,62 +477,169 @@ export async function aiChatStream(
   payload: AIChatPayload,
   onChunk: (chunk: string) => void
 ): Promise<string> {
-  const res = await fetch("/api/ai/chat?stream=1", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ...payload, stream: true }),
-  });
+  const res = await fetch(
+    "/api/ai/chat?stream=1",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type":
+          "application/json",
+      },
+      body: JSON.stringify({
+        ...payload,
+        stream: true,
+      }),
+    }
+  );
+
   if (!res.ok) {
-    const data = await parseJsonResponse(res);
-    throw new ApiError(typeof data?.detail === "string" ? data.detail : "AI streaming failed", res.status);
+    const data =
+      await parseJsonResponse(res);
+
+    throw new ApiError(
+      typeof data?.detail ===
+        "string"
+        ? data.detail
+        : "AI streaming failed",
+      res.status
+    );
   }
+
   if (!res.body) {
-    const data = await parseJsonResponse(res);
-    return data.reply || data.full || "";
+    const data =
+      await parseJsonResponse(res);
+
+    return (
+      data.reply ||
+      data.full ||
+      ""
+    );
   }
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
+
+  const reader =
+    res.body.getReader();
+
+  const decoder =
+    new TextDecoder();
+
   let buffer = "";
   let full = "";
+
   while (true) {
-    const { done, value } = await reader.read();
+    const {
+      done,
+      value,
+    } = await reader.read();
+
     if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop() || "";
+
+    buffer += decoder.decode(
+      value,
+      { stream: true }
+    );
+
+    const lines =
+      buffer.split("\n");
+
+    buffer =
+      lines.pop() || "";
+
     for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed.startsWith("data:")) continue;
-      const jsonStr = trimmed.slice(5).trim();
+      const trimmed =
+        line.trim();
+
+      if (
+        !trimmed.startsWith(
+          "data:"
+        )
+      ) {
+        continue;
+      }
+
+      const jsonStr =
+        trimmed
+          .slice(5)
+          .trim();
+
       if (!jsonStr) continue;
+
       try {
-        const obj = JSON.parse(jsonStr);
+        const obj =
+          JSON.parse(
+            jsonStr
+          );
+
         if (obj.chunk) {
           full += obj.chunk;
-          onChunk(obj.chunk);
+          onChunk(
+            obj.chunk
+          );
         }
-        if (obj.done && obj.full) full = obj.full;
-        if (obj.error) throw new Error(obj.error);
-      } catch {}
+
+        if (
+          obj.done &&
+          obj.full
+        ) {
+          full = obj.full;
+        }
+
+        if (obj.error) {
+          throw new Error(
+            obj.error
+          );
+        }
+      } catch {
+        // Ignore malformed stream chunks.
+      }
     }
   }
+
   return full;
 }
 
-export async function aiHealth(): Promise<{ configured: boolean; model: string }> {
-  const res = await fetch("/api/ai/health");
-  const data = await parseJsonResponse(res);
+export async function aiHealth(): Promise<{
+  configured: boolean;
+  model: string;
+}> {
+  const res = await fetch(
+    "/api/ai/health"
+  );
+
+  const data =
+    await parseJsonResponse(res);
+
   return data;
 }
 
-export async function aiSummary(context?: Partial<AppData>): Promise<string> {
-  const res = await fetch("/api/ai/summary", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ context }),
-  });
-  const data = await parseJsonResponse(res);
-  if (!res.ok) throw new ApiError(typeof data?.detail === "string" ? data.detail : "AI summary failed", res.status);
+export async function aiSummary(
+  context?: Partial<AppData>
+): Promise<string> {
+  const res = await fetch(
+    "/api/ai/summary",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type":
+          "application/json",
+      },
+      body: JSON.stringify({
+        context,
+      }),
+    }
+  );
+
+  const data =
+    await parseJsonResponse(res);
+
+  if (!res.ok) {
+    throw new ApiError(
+      typeof data?.detail ===
+        "string"
+        ? data.detail
+        : "AI summary failed",
+      res.status
+    );
+  }
+
   return data.reply as string;
 }
-

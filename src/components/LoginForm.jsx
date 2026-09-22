@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { login, ApiError } from '../api';
+import {
+  getStudentPortalCaptcha,
+  loginStudentPortal,
+  ApiError,
+} from '../api';
 import './LoginForm.css';
 
 const containerVariants = {
@@ -34,15 +38,76 @@ function LoginForm({ onSuccess }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+
   const [captcha, setCaptcha] = useState('');
   const [captchaChallenge, setCaptchaChallenge] = useState(null);
+
   const [loading, setLoading] = useState(false);
+  const [captchaLoading, setCaptchaLoading] = useState(false);
   const [error, setError] = useState('');
+
+  /*
+   * Load a CAPTCHA from the SRM Student Portal.
+   */
+  const loadCaptcha = async () => {
+    setCaptchaLoading(true);
+    setError('');
+
+    try {
+      const challenge =
+        await getStudentPortalCaptcha();
+
+      setCaptchaChallenge({
+        challengeId: challenge.challengeId,
+        imageUrl: challenge.imageUrl,
+      });
+
+      setCaptcha('');
+    } catch (err) {
+      console.error(
+        '[StudentPortal] CAPTCHA failed:',
+        err
+      );
+
+      setError(
+        err?.message ||
+        'Failed to load the SRM Student Portal CAPTCHA.'
+      );
+    } finally {
+      setCaptchaLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!username.trim() || !password.trim()) {
-      setError('Please enter your SRM Net ID / Reg No and password.');
+
+    if (!username.trim()) {
+      setError(
+        'Please enter your SRM Net ID.'
+      );
+      return;
+    }
+
+    if (!password) {
+      setError(
+        'Please enter your SRM password.'
+      );
+      return;
+    }
+
+    /*
+     * First submission:
+     * obtain a CAPTCHA session.
+     */
+    if (!captchaChallenge) {
+      await loadCaptcha();
+      return;
+    }
+
+    if (!captcha.trim()) {
+      setError(
+        'Please enter the CAPTCHA shown above.'
+      );
       return;
     }
 
@@ -50,34 +115,51 @@ function LoginForm({ onSuccess }) {
     setError('');
 
     try {
-      const data = await login({
-        username: username.trim(),
-        password,
-        captcha: captchaChallenge ? captcha.trim() : undefined,
-        cdigest: captchaChallenge?.cdigest,
-      });
-      onSuccess(data);
-    } catch (err) {
-      if (err instanceof ApiError && err.captchaChallenge) {
-        setCaptchaChallenge(err.captchaChallenge);
-        setCaptcha('');
-        setError(err.message || 'Please complete the CAPTCHA image verification.');
-      } else {
-        setError(err?.message || 'Failed to authenticate with SRM Academia. Please verify credentials.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+      const data =
+        await loginStudentPortal(
+          username.trim(),
+          password,
+          captcha.trim(),
+          captchaChallenge.challengeId
+        );
 
-  const handleDemoLogin = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const data = await login({ isDemo: true });
+      console.log(
+        '[StudentPortal] Attendance:',
+        data.attendance
+      );
+
+      /*
+       * For now we pass the attendance response
+       * upward. The next step will merge this with
+       * Ledger's existing AppData.
+       */
       onSuccess(data);
     } catch (err) {
-      setError(err?.message || 'Failed to load demo student profile.');
+      console.error(
+        '[StudentPortal] Login failed:',
+        err
+      );
+
+      if (
+        err instanceof ApiError
+      ) {
+        setError(
+          err.message ||
+          'Student Portal login failed.'
+        );
+      } else {
+        setError(
+          err?.message ||
+          'Student Portal login failed.'
+        );
+      }
+
+      /*
+       * CAPTCHA sessions should not be reused after
+       * a failed authentication attempt.
+       */
+      setCaptchaChallenge(null);
+      setCaptcha('');
     } finally {
       setLoading(false);
     }
@@ -91,73 +173,132 @@ function LoginForm({ onSuccess }) {
         initial="hidden"
         animate="visible"
       >
-        <motion.div className="login-header" variants={itemVariants}>
+        <motion.div
+          className="login-header"
+          variants={itemVariants}
+        >
           <div className="login-header__top-row">
             <div className="login-header__brand">
-              Ledger<span className="login-header__brand-dot">.</span>
+              Ledger
+              <span className="login-header__brand-dot">
+                .
+              </span>
             </div>
           </div>
+
           <p className="login-header__subtitle">
-            Sign in with your official SRM Academia credentials to access your attendance, timetable, and records.
+            Sign in with your official SRM
+            credentials to access Ledger.
           </p>
         </motion.div>
-
 
         <AnimatePresence>
           {error && (
             <motion.div
               className="login-error-banner"
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              initial={{
+                opacity: 0,
+                y: -8,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              exit={{
+                opacity: 0,
+                y: -6,
+              }}
+              transition={{
+                duration: 0.22,
+                ease: [0.16, 1, 0.3, 1],
+              }}
             >
               {error}
             </motion.div>
           )}
         </AnimatePresence>
 
-        <form className="login-form" onSubmit={handleSubmit}>
-          <motion.div className="form-group" variants={itemVariants}>
-            <label className="form-label" htmlFor="netid-input">
+        <form
+          className="login-form"
+          onSubmit={handleSubmit}
+        >
+          <motion.div
+            className="form-group"
+            variants={itemVariants}
+          >
+            <label
+              className="form-label"
+              htmlFor="netid-input"
+            >
               Net ID
             </label>
+
             <input
               id="netid-input"
               type="text"
               className="form-input"
-              placeholder="e.g. ab1234@srmist.edu.in"
+              placeholder="Enter your SRM Net ID"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              disabled={loading}
+              onChange={(e) =>
+                setUsername(e.target.value)
+              }
+              disabled={
+                loading ||
+                captchaLoading
+              }
               autoComplete="username"
               required
             />
           </motion.div>
 
-          <motion.div className="form-group" variants={itemVariants}>
-            <label className="form-label" htmlFor="password-input">
+          <motion.div
+            className="form-group"
+            variants={itemVariants}
+          >
+            <label
+              className="form-label"
+              htmlFor="password-input"
+            >
               Password
             </label>
+
             <div className="form-input-wrapper">
               <input
                 id="password-input"
-                type={showPassword ? 'text' : 'password'}
+                type={
+                  showPassword
+                    ? 'text'
+                    : 'password'
+                }
                 className="form-input"
-                placeholder="Enter your Academia Password"
+                placeholder="Enter your SRM Password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
+                onChange={(e) =>
+                  setPassword(
+                    e.target.value
+                  )
+                }
+                disabled={
+                  loading ||
+                  captchaLoading
+                }
                 autoComplete="current-password"
                 required
               />
+
               <button
                 type="button"
                 className="form-toggle-btn"
-                onClick={() => setShowPassword(!showPassword)}
+                onClick={() =>
+                  setShowPassword(
+                    !showPassword
+                  )
+                }
                 tabIndex={-1}
               >
-                {showPassword ? 'HIDE' : 'SHOW'}
+                {showPassword
+                  ? 'HIDE'
+                  : 'SHOW'}
               </button>
             </div>
           </motion.div>
@@ -165,27 +306,47 @@ function LoginForm({ onSuccess }) {
           {captchaChallenge && (
             <motion.div
               className="captcha-box"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              initial={{
+                opacity: 0,
+                y: 8,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              transition={{
+                duration: 0.25,
+                ease: [0.16, 1, 0.3, 1],
+              }}
             >
-              <label className="form-label" htmlFor="captcha-input">
-                Security Code (Captcha)
+              <label
+                className="form-label"
+                htmlFor="captcha-input"
+              >
+                Security Code (CAPTCHA)
               </label>
+
               <div className="captcha-image-container">
                 <img
-                  src={captchaChallenge.image}
-                  alt="Academia Captcha"
+                  src={
+                    `/api/student-portal/captcha-image/${captchaChallenge.challengeId}`
+                  }
+                  alt="SRM CAPTCHA"
                   className="captcha-image"
                 />
               </div>
+
               <input
                 id="captcha-input"
                 type="text"
                 className="form-input"
                 placeholder="Type characters from image above"
                 value={captcha}
-                onChange={(e) => setCaptcha(e.target.value)}
+                onChange={(e) =>
+                  setCaptcha(
+                    e.target.value
+                  )
+                }
                 disabled={loading}
                 required
                 autoFocus
@@ -193,30 +354,37 @@ function LoginForm({ onSuccess }) {
             </motion.div>
           )}
 
-          <motion.div className="login-actions" variants={itemVariants}>
+          <motion.div
+            className="login-actions"
+            variants={itemVariants}
+          >
             <button
               type="submit"
               className="btn-primary"
-              disabled={loading}
+              disabled={
+                loading ||
+                captchaLoading
+              }
             >
-              {loading ? 'Authenticating with Academia…' : 'Sign in to Ledger'}
-            </button>
-
-            <div className="login-divider">or explore</div>
-
-            <button
-              type="button"
-              className="btn-demo"
-              onClick={handleDemoLogin}
-              disabled={loading}
-            >
-              ✨ Try Instant Demo Mode
+              {captchaLoading
+                ? 'Loading CAPTCHA…'
+                : loading
+                  ? 'Signing in to SRM…'
+                  : captchaChallenge
+                    ? 'Sign in to Ledger'
+                    : 'Continue'}
             </button>
           </motion.div>
         </form>
 
-        <motion.div className="login-footer-tip" variants={itemVariants}>
-          🔒 <strong>Direct Integration</strong>: Your credentials are encrypted and sent directly to the local backend gateway to establish an active session with SRM's ZohoCreator portal. No passwords are ever stored.
+        <motion.div
+          className="login-footer-tip"
+          variants={itemVariants}
+        >
+          🔒 <strong>Direct Integration</strong>:
+          Your credentials are sent securely to
+          the local backend to establish your SRM
+          session. No passwords are stored.
         </motion.div>
       </motion.div>
     </div>
