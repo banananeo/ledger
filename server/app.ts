@@ -6,14 +6,13 @@ import { HttpError } from "./shared/errors.js";
 import { getDemoData } from "./shared/demo-data.js";
 import { generateAIResponse, isGeminiConfigured } from "./ai/gemini.js";
 import { checkRateLimit, rateLimitKey } from "./ai/rateLimit.js";
-import { StudentPortalClient } from "./shared/student-portal-client.js";
-import { StudentPortalAttendanceParser } from "./parsers/student-portal-attendance-parser.js";
+import { getJaawCaptcha, loginWithJaaw, refreshJaawSession } from "./shared/client.js";
 import { randomUUID } from "crypto";
 const studentPortalSessions = new Map<
   string,
   {
-    client: StudentPortalClient;
-    captchaImage: Buffer;
+    cdigest: string;
+    image: string;
   }
 >();
 export function createApp(): Express {
@@ -86,7 +85,21 @@ export function createApp(): Express {
   // Refresh handler
   router.post("/refresh", async (req: Request, res: Response) => {
     try {
-      const { cookies, isDemo } = req.body || {};
+      const { cookies, isDemo, source } = req.body || {};
+
+      if (source === "student-portal") {
+        if (!cookies || typeof cookies !== "object" || Object.keys(cookies).length === 0) {
+          return res.status(401).json({ detail: "No Student Portal session cookies provided" });
+        }
+        const refreshed = await refreshJaawSession(cookies);
+        return res.json({
+          success: true,
+          attendance: refreshed.attendance,
+          marks: refreshed.marks,
+          session: { cookies: refreshed.cookies },
+          metadata: { loginBy: "student-portal", source: "student-portal" },
+        });
+      }
 
       if (isDemo || cookies?.JSESSIONID === "DEMO_SESSION_ID_XYZ") {
         const demo = getDemoData();
@@ -128,7 +141,9 @@ export function createApp(): Express {
       if (err instanceof TypeError) {
         // Network-level failure reaching Academia — not an auth problem
         return res.status(503).json({
-          detail: "Academia server is unreachable or timed out. Please try again.",
+          detail: req.body?.source === "student-portal"
+            ? "Student Portal session service is unreachable or timed out. Please try again."
+            : "Academia server is unreachable or timed out. Please try again.",
         });
       }
       // Parsing errors, unexpected page structure, etc. — not an auth problem
@@ -138,21 +153,21 @@ export function createApp(): Express {
   });
   router.get("/student-portal/captcha", async (_req: Request, res: Response) => {
     try {
-      const client = new StudentPortalClient();
-
-      const captchaImage = await client.getCaptchaImage();
+      const captcha = await getJaawCaptcha();
 
       const challengeId = randomUUID();
 
       studentPortalSessions.set(challengeId, {
-        client,
-        captchaImage,
+        cdigest: captcha.cdigest,
+        image: captcha.image,
       });
 
       return res.json({
         success: true,
         challengeId,
-        imageUrl: `/api/student-portal/captcha-image/${challengeId}`,
+        imageUrl: captcha.image.startsWith("data:") || captcha.image.startsWith("http")
+          ? captcha.image
+          : `data:image/png;base64,${captcha.image}`,
       });
     } catch (err: any) {
       console.error("[Student Portal CAPTCHA]", err);
@@ -179,9 +194,11 @@ export function createApp(): Express {
           });
         }
 
+        if (session.image.startsWith("data:") || session.image.startsWith("http")) {
+          return res.redirect(session.image);
+        }
         res.setHeader("Content-Type", "image/png");
-
-        return res.send(session.captchaImage);
+        return res.send(Buffer.from(session.image, "base64"));
       } catch (err: any) {
         console.error(
           "[Student Portal CAPTCHA Image]",
@@ -205,7 +222,6 @@ export function createApp(): Express {
         username,
         password,
         captcha,
-        telemetryPayload,
         challengeId,
         isDemo,
       } = req.body || {};
@@ -248,46 +264,18 @@ export function createApp(): Express {
         });
       }
 
-      const { client } = session;
-
-      const authenticated = await client.login(
-        username,
-        password,
-        captcha,
-        telemetryPayload || "",
-      );
-
       /*
        * CAPTCHA sessions are single-use.
        */
       studentPortalSessions.delete(challengeId);
-
-      if (!authenticated) {
-        return res.status(401).json({
-          detail:
-            "Student Portal login failed. Check your NetID, password and CAPTCHA.",
-        });
-      }
-
-      const attendanceHtml =
-        await client.fetchAttendance();
-
-
-      const attendance =
-        StudentPortalAttendanceParser.extract(
-          attendanceHtml
-        );
-
-      if (attendance.length === 0) {
-        return res.status(502).json({
-          detail:
-            "Student Portal returned no attendance records. The portal response format may have changed.",
-        });
-      }
+      const data = await loginWithJaaw(username, password, captcha, session.cdigest);
 
       return res.json({
         success: true,
-        attendance,
+        attendance: data.attendance,
+        marks: data.marks,
+        session: { cookies: data.cookies },
+        metadata: { loginBy: "student-portal", source: "student-portal" },
       });
     } catch (err: any) {
       console.error(
@@ -295,7 +283,7 @@ export function createApp(): Express {
         err
       );
 
-      return res.status(500).json({
+      return res.status(/invalid|credential|captcha|auth/i.test(err?.message || "") ? 401 : 500).json({
         detail:
           err?.message ||
           "Failed to fetch attendance from SRM Student Portal",

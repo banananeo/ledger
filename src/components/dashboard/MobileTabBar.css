@@ -4,97 +4,72 @@
 
 @media (max-width: 880px) {
   .mtab-wrapper {
+    position: fixed;
+    inset: auto 0 calc(10px + env(safe-area-inset-bottom));
+    z-index: 100;
     display: flex;
     justify-content: center;
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 50;
+    padding: 0 12px;
     pointer-events: none;
-    padding: 0 16px calc(14px + env(safe-area-inset-bottom));
   }
 
   .mtab-glass {
     position: relative;
-    pointer-events: auto;
-    width: 100%;
-    max-width: 392px;
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: space-between;
     gap: 4px;
-    padding: 6px;
-    border-radius: 9999px;
-    
-    /* Apple Liquid Glass Optical Surface */
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.76) 0%,
-      rgba(255, 255, 255, 0.54) 45%,
-      rgba(255, 255, 255, 0.68) 100%
-    );
-    backdrop-filter: blur(32px) saturate(220%) brightness(1.03);
-    -webkit-backdrop-filter: blur(32px) saturate(220%) brightness(1.03);
-    
-    /* Dual Specular Edge Rim & Floating Physics Shadow */
-    border: 1px solid rgba(255, 255, 255, 0.85);
-    box-shadow:
-      0 20px 48px -10px rgba(0, 0, 0, 0.18),
-      0 8px 20px -4px rgba(0, 0, 0, 0.08),
-      inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.95),
-      inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.04);
+    width: min(100%, 460px);
+    min-height: 66px;
+    padding: 5px;
     overflow: hidden;
-  }
-
-  /* Top Crescent Glare Lens */
-  .mtab-glass__rim-light {
-    position: absolute;
-    top: 0;
-    left: 12%;
-    right: 12%;
-    height: 1px;
-    background: linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, 0.95) 50%,
-      rgba(255, 255, 255, 0) 100%
-    );
-    pointer-events: none;
-    z-index: 2;
+    pointer-events: auto;
+    border: 1px solid rgba(0, 0, 0, 0.16);
+    border-radius: 22px;
+    background: color-mix(in srgb, #f8fafc 94%, transparent);
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    backdrop-filter: blur(18px) saturate(150%);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.24), inset 0 1px rgba(255, 255, 255, 0.07);
   }
 
   .mtab-btn {
     position: relative;
-    flex: 1;
+    z-index: 1;
     display: flex;
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 54px;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 3px;
-    padding: 8px 4px;
-    border: none;
+    padding: 5px 2px;
+    border: 0;
+    border-radius: 16px;
     background: transparent;
-    color: rgba(28, 28, 30, 0.65);
+    color: #000;
     font-family: var(--sans);
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 550;
-    letter-spacing: -0.01em;
+    line-height: 1;
     cursor: pointer;
-    border-radius: 9999px;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
-    transition: color 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    z-index: 1;
+    transition: color 160ms ease, background-color 160ms ease;
   }
 
   .mtab-btn:hover {
-    color: rgba(28, 28, 30, 0.9);
+    color: #000;
+  }
+
+  .mtab-btn:focus-visible {
+    outline: 2px solid var(--warning);
+    outline-offset: -2px;
   }
 
   .mtab-btn--active {
-    color: var(--ink);
-    font-weight: 650;
+    color: #000;
+    font-weight: 700;
   }
 
   .mtab-btn__icon-wrapper {
@@ -102,158 +77,34 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    min-height: 22px;
   }
 
   .mtab-btn__icon {
     display: block;
-    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   .mtab-btn__label {
-    line-height: 1;
-    font-size: 10.5px;
-    transition: font-weight 0.15s ease;
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: clip;
+    white-space: nowrap;
+    font-size: clamp(9px, 2.7vw, 10px);
   }
 
-  /* Apple Liquid Glass sliding capsule */
   .mtab-indicator {
     position: absolute;
-    inset: 0;
-    border-radius: 9999px;
-    background: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.98) 0%,
-      rgba(246, 248, 252, 0.92) 100%
-    );
-    border: 0.5px solid rgba(255, 255, 255, 0.95);
-    box-shadow:
-      0 6px 20px -2px rgba(0, 0, 0, 0.12),
-      0 2px 6px rgba(0, 0, 0, 0.05),
-      inset 0 1.2px 1px rgba(255, 255, 255, 1),
-      inset 0 -1.2px 2px rgba(0, 0, 0, 0.03);
+    inset: 1px;
     z-index: -1;
-    overflow: hidden;
-  }
-
-  .mtab-indicator__sheen {
-    position: absolute;
-    top: 0;
-    left: 8%;
-    right: 8%;
-    height: 48%;
-    border-radius: 9999px;
-    background: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.85) 0%,
-      rgba(255, 255, 255, 0) 100%
-    );
-    pointer-events: none;
-  }
-
-  .mtab-indicator__glow {
-    position: absolute;
-    bottom: -2px;
-    left: 20%;
-    right: 20%;
-    height: 12px;
-    border-radius: 9999px;
-    background: radial-gradient(
-      ellipse at bottom,
-      rgba(255, 255, 255, 0.6) 0%,
-      rgba(255, 255, 255, 0) 70%
-    );
-    pointer-events: none;
+    border-radius: 15px;
+    background: var(--warning);
+    box-shadow: 0 3px 12px color-mix(in srgb, var(--warning) 38%, transparent);
   }
 }
 
-@media (max-width: 360px) {
-  .mtab-btn__label {
-    display: none;
-  }
+@media (prefers-reduced-motion: reduce) {
   .mtab-btn {
-    padding: 10px 4px;
+    transition: none;
   }
 }
-
-/* =========================================================================
-   Mobile Tab Bar Dark Theme Overrides (Apple Dark Liquid Glass)
-   ========================================================================= */
-
-[data-theme="dark"] .mtab-glass,
-.dark .mtab-glass {
-  background: linear-gradient(
-    135deg,
-    rgba(34, 38, 48, 0.86) 0%,
-    rgba(22, 25, 32, 0.82) 50%,
-    rgba(30, 34, 44, 0.86) 100%
-  );
-  backdrop-filter: blur(32px) saturate(220%) brightness(1.1);
-  -webkit-backdrop-filter: blur(32px) saturate(220%) brightness(1.1);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow:
-    0 22px 52px -8px rgba(0, 0, 0, 0.75),
-    0 6px 16px rgba(0, 0, 0, 0.5),
-    inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.22),
-    inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.4);
-}
-
-[data-theme="dark"] .mtab-glass__rim-light,
-.dark .mtab-glass__rim-light {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.4) 50%,
-    rgba(255, 255, 255, 0) 100%
-  );
-}
-
-[data-theme="dark"] .mtab-btn,
-.dark .mtab-btn {
-  color: rgba(244, 244, 247, 0.62);
-}
-
-[data-theme="dark"] .mtab-btn:hover,
-.dark .mtab-btn:hover {
-  color: rgba(244, 244, 247, 0.92);
-}
-
-[data-theme="dark"] .mtab-btn--active,
-.dark .mtab-btn--active {
-  color: #ffffff;
-}
-
-[data-theme="dark"] .mtab-indicator,
-.dark .mtab-indicator {
-  background: linear-gradient(
-    180deg,
-    rgba(65, 72, 88, 0.95) 0%,
-    rgba(46, 52, 66, 0.92) 100%
-  );
-  border: 0.5px solid rgba(255, 255, 255, 0.32);
-  box-shadow:
-    0 6px 20px -2px rgba(0, 0, 0, 0.6),
-    0 2px 8px rgba(0, 0, 0, 0.45),
-    inset 0 1.2px 1px rgba(255, 255, 255, 0.35),
-    inset 0 -1.2px 2px rgba(0, 0, 0, 0.4);
-}
-
-[data-theme="dark"] .mtab-indicator__sheen,
-.dark .mtab-indicator__sheen {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.22) 0%,
-    rgba(255, 255, 255, 0) 100%
-  );
-}
-
-[data-theme="dark"] .mtab-indicator__glow,
-.dark .mtab-indicator__glow {
-  background: radial-gradient(
-    ellipse at bottom,
-    rgba(56, 189, 248, 0.35) 0%,
-    rgba(56, 189, 248, 0) 70%
-  );
-}
-
-
-

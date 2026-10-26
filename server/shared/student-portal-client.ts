@@ -270,9 +270,8 @@ export class StudentPortalClient {
 
             body: payload,
 
-            redirect: "follow",
+            redirect: "manual",
         });
-
         const text = await response.text();
 
         console.log(
@@ -280,6 +279,11 @@ export class StudentPortalClient {
             response.status,
             response.url,
         );
+        console.log("[StudentPortal] Redirect diagnostics:", {
+            redirected: response.redirected,
+            finalUrl: response.url,
+            contentType: response.headers.get("content-type"),
+        });
 
         /*
          * LoginServlet can return HTTP 200 even when authentication
@@ -386,6 +390,28 @@ export class StudentPortalClient {
 
         const $ =
             cheerio.load(loginPage);
+        console.log(
+            "[StudentPortal] Login form diagnostics:",
+            JSON.stringify({
+                formAction: $('input[name="password"]')
+                    .first()
+                    .closest("form")
+                    .attr("action"),
+                fingerprintFields: $("input[name]")
+                    .filter((_, el) => {
+                        const name = $(el).attr("name") ?? "";
+                        return name === "fpPayload" || name === "fpToken";
+                    })
+                    .map((_, el) => ({
+                        name: $(el).attr("name"),
+                        hasValue: Boolean($(el).attr("value")),
+                    }))
+                    .get(),
+                scriptSources: $("script[src]")
+                    .map((_, el) => $(el).attr("src"))
+                    .get(),
+            }, null, 2)
+        );
 
         const captchaSrc =
             $("#secure_captcha").attr(

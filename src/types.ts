@@ -103,10 +103,15 @@ export interface AppData {
   courses?: CourseCatalogEntry[];
   calendar?: AcademicCalendar;
   session?: {
+    academiaCookies?: Record<string, string>;
+    studentPortalCookies?: Record<string, string>;
+    /** Legacy single-provider cookie shape; retained for stored-data migration. */
     cookies?: Record<string, string>;
   };
   metadata?: {
-    loginBy?: "credentials" | "cookies" | "demo";
+    loginBy?: "credentials" | "cookies" | "demo" | "student-portal";
+    source?: "student-portal";
+    studentPortalSkipped?: boolean;
     academiaResponseTime?: Record<string, number>;
   };
 }

@@ -17,7 +17,7 @@ import AIAssistantDrawer from './AIAssistant/AIAssistantDrawer.jsx';
 import AIFab from './AIAssistant/AIFab.jsx';
 import './Shell.css';
 
-function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error }) {
+function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onReconnectAcademia, onConnectStudentPortal, academiaIssue, studentPortalIssue, studentPortalError }) {
   const [view, setView] = useState('home');
   const [transitionOrigin, setTransitionOrigin] = useState({ x: 50, y: 50 });
   const [aiOpen, setAiOpen] = useState(false);
@@ -81,6 +81,10 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error }) {
           onRefresh={onRefresh}
           refreshing={refreshing}
           onLogout={onLogout}
+          onReconnectAcademia={onReconnectAcademia}
+          onConnectStudentPortal={onConnectStudentPortal}
+          academiaIssue={academiaIssue}
+          studentPortalIssue={studentPortalIssue}
         />
         <div className="shell__main" style={{ transform: `translateY(${pullDistance}px)`, transition: pullDistance === 0 ? 'transform 0.2s ease-out' : 'none' }}>
           {/* Pull Indicator */}
@@ -100,10 +104,17 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error }) {
             <AcademiaDownBanner
               error={error}
               onRetry={onRefresh}
+              onReconnectAcademia={onReconnectAcademia}
               onPlayGame={(gameType) => {
                 navigate('games');
               }}
             />
+          )}
+          {studentPortalError && (
+            <div className="student-portal-notice" role="status">
+              <span>{studentPortalError}</span>
+              <button type="button" onClick={onConnectStudentPortal}>Connect Student Portal</button>
+            </div>
           )}
           <div className="shell__content">
             <ClassReminderBanner onNavigate={navigate} />

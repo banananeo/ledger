@@ -59,9 +59,35 @@
   color: var(--ink);
 }
 
+.student-portal-notice {
+  max-width: 1040px;
+  width: calc(100% - 48px);
+  margin: 16px auto 0;
+  padding: 10px 14px;
+  border: var(--stroke) solid var(--ink);
+  border-radius: var(--radius-btn);
+  background: var(--yellow-soft);
+  color: var(--ink);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.student-portal-notice button {
+  padding: 6px 10px;
+  border: var(--stroke) solid var(--ink);
+  border-radius: var(--radius-btn);
+  color: var(--paper);
+  background: var(--ink);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
 @media (max-width: 880px) {
   .shell__content {
-    padding: 18px 16px 96px;
+    padding: 18px 16px calc(112px + env(safe-area-inset-bottom));
   }
 
   .shell__error {

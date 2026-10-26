@@ -12,7 +12,7 @@ export const NAV_ITEMS = [
   { id: 'games', label: 'Games', Icon: GamepadIcon },
 ];
 
-function Sidebar({ view, onNavigate, onRefresh, refreshing, onLogout }) {
+function Sidebar({ view, onNavigate, onRefresh, refreshing, onLogout, onReconnectAcademia, onConnectStudentPortal, academiaIssue, studentPortalIssue }) {
   const { activeReminders, testReminder, setIsDrawerOpen } = useNotifications();
   const hasActiveAlert = activeReminders.length > 0 || Boolean(testReminder);
 
@@ -50,6 +50,18 @@ function Sidebar({ view, onNavigate, onRefresh, refreshing, onLogout }) {
           <RefreshIcon width={18} height={18} className={refreshing ? 'sidebar__spin' : ''} />
           <span>{refreshing ? 'Syncing…' : 'Sync'}</span>
         </button>
+        {academiaIssue && (
+          <button className="sidebar__item" onClick={onReconnectAcademia}>
+            <span aria-hidden="true">↗</span>
+            <span>Reconnect Academia</span>
+          </button>
+        )}
+        {studentPortalIssue && (
+          <button className="sidebar__item" onClick={onConnectStudentPortal}>
+            <span aria-hidden="true">↗</span>
+            <span>Connect Student Portal</span>
+          </button>
+        )}
         <button className="sidebar__item" onClick={onLogout}>
           <LogoutIcon width={18} height={18} />
           <span>Log out</span>

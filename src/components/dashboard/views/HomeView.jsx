@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { ClockIcon, CheckRingIcon, CalendarIcon, AwardIcon, BellIcon, GamepadIcon } from '../Icons.jsx';
+import { ClockIcon, CalendarIcon, BellIcon, GamepadIcon } from '../Icons.jsx';
 import { todayISO, findEntryForDate, allEntries } from '../../../utils/calendar.js';
 import { useNotifications } from '../../../context/NotificationContext.tsx';
 import './HomeView.css';
@@ -28,15 +28,6 @@ const homeItemVariants = {
   },
 };
 
-const NAV_CARDS = [
-  { id: 'timetable', label: 'Timetable', Icon: ClockIcon, tone: 'sky', blurb: 'Classes by Day Order' },
-  { id: 'attendance', label: 'Attendance', Icon: CheckRingIcon, tone: 'pink', blurb: 'Per-course % and margin' },
-  { id: 'games', label: 'Campus Games', Icon: GamepadIcon, tone: 'mint', blurb: 'Bunk Roulette & Campus Rush' },
-  { id: 'calendar', label: 'Calendar', Icon: CalendarIcon, tone: 'lavender', blurb: 'Academic day orders' },
-  { id: 'marks', label: 'Marks', Icon: AwardIcon, tone: 'yellow', blurb: 'Internal tests & cycles' },
-];
-
-
 function parseTimeMinutes(timeStr) {
   if (!timeStr) return null;
   const match = String(timeStr).trim().match(/(\d+):(\d+)(?:\s*(AM|PM))?/i);
@@ -60,6 +51,26 @@ function parseTimeMinutes(timeStr) {
 function dayNumber(dayLabel) {
   const match = String(dayLabel || '').match(/\d+/);
   return match ? match[0] : String(dayLabel || '');
+}
+
+function getTodayOverview(schedule = [], calendar) {
+  const today = todayISO();
+  const calendarEntry = findEntryForDate(calendar, today);
+  const dayOrder = calendarEntry?.dayOrder;
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const todaySchedule = dayOrder
+    ? schedule.find((day) => dayNumber(day.dayLabel) === String(dayOrder))
+    : null;
+  const classes = [...(todaySchedule?.entries || [])]
+    .map((entry) => ({ ...entry, startMinutes: parseTimeMinutes(entry.startTime), endMinutes: parseTimeMinutes(entry.endTime) }))
+    .filter((entry) => entry.endMinutes == null || entry.endMinutes >= currentMinutes)
+    .sort((a, b) => (a.startMinutes ?? 0) - (b.startMinutes ?? 0));
+  const events = ['event', 'holiday'].includes(calendarEntry?.category) && calendarEntry.title
+    ? [calendarEntry.title]
+    : [];
+
+  return { classes, events, dayOrder, currentMinutes, dateLabel: new Date(`${today}T00:00:00`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }) };
 }
 
 function getNextClassInfo(schedule = [], calendar) {
@@ -185,6 +196,7 @@ function getDailyAffirmation(dateStr) {
 
 function HomeView({ profile, attendance = [], schedule = [], marks = [], calendar, lastSynced, onNavigate }) {
   const nextClassInfo = getNextClassInfo(schedule, calendar);
+  const todayOverview = getTodayOverview(schedule, calendar);
   const positiveMessage = getDailyAffirmation(todayISO());
   const { notificationsEnabled, leadMinutes, setIsDrawerOpen } = useNotifications();
 
@@ -282,22 +294,46 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
       </motion.section>
 
 
-      {/* Navigation Shortcuts */}
-      <motion.section className="home__nav-grid" variants={homeItemVariants}>
-        {NAV_CARDS.map(({ id, label, Icon, tone, blurb }) => (
-          <motion.button
-            key={id}
-            className={`bcard bcard--${tone} home__nav-card`}
-            onClick={(e) => onNavigate(id, e)}
-            whileHover={{ y: -3 }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ type: 'spring', stiffness: 450, damping: 25 }}
-          >
-            <Icon width={22} height={22} />
-            <span className="home__nav-card-label">{label}</span>
-            <span className="home__nav-card-blurb">{blurb}</span>
-          </motion.button>
-        ))}
+      <motion.section className="bcard home__today-card" variants={homeItemVariants} aria-label="Today at a glance">
+        <div className="home__today-head">
+          <div>
+            <p className="eyebrow">Today at a glance</p>
+            <h3 className="home__today-date">{todayOverview.dateLabel}</h3>
+          </div>
+          {todayOverview.dayOrder && <span className="bchip num">Day {todayOverview.dayOrder}</span>}
+        </div>
+
+        {todayOverview.classes.length || todayOverview.events.length ? (
+          <div className="home__today-content">
+            {todayOverview.classes.length > 0 && (
+              <div className="home__today-section">
+                <h4 className="home__today-section-title"><ClockIcon width={16} height={16} /> Remaining classes</h4>
+                <ul className="home__today-list">
+                  {todayOverview.classes.map((entry, index) => {
+                    const isOngoing = entry.startMinutes != null && entry.startMinutes <= todayOverview.currentMinutes && (entry.endMinutes == null || entry.endMinutes >= todayOverview.currentMinutes);
+                    return (
+                      <li className="home__today-row" key={`${entry.courseCode}-${entry.slotCode}-${index}`}>
+                        <span className="home__today-time num">{entry.startTime}{entry.endTime ? ` – ${entry.endTime}` : ''}</span>
+                        <span className="home__today-class-name">{entry.courseTitle || entry.courseCode}</span>
+                        <span className="home__today-room">{isOngoing ? 'Ongoing' : (entry.room || 'Room TBA')}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+            {todayOverview.events.length > 0 && (
+              <div className="home__today-section">
+                <h4 className="home__today-section-title"><CalendarIcon width={16} height={16} /> Calendar events</h4>
+                <ul className="home__today-list">
+                  {todayOverview.events.map((event) => <li className="home__today-event" key={event}>{event}</li>)}
+                </ul>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="home__today-empty">No remaining classes or calendar events scheduled today.</p>
+        )}
       </motion.section>
 
       {/* Quick Launch Games Card */}

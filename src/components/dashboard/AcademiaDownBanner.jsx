@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { GamepadIcon, RefreshIcon, DiceIcon } from './Icons.jsx';
 import './AcademiaDownBanner.css';
 
-export function AcademiaDownBanner({ error, onRetry, onPlayGame }) {
+export function AcademiaDownBanner({ error, onRetry, onPlayGame, onReconnectAcademia }) {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
@@ -66,6 +66,15 @@ export function AcademiaDownBanner({ error, onRetry, onPlayGame }) {
             >
               <RefreshIcon width={15} height={15} />
               <span>Retry</span>
+            </button>
+          )}
+
+          {onReconnectAcademia && (
+            <button
+              className="bbtn bbtn--outline academia-down-banner__btn"
+              onClick={onReconnectAcademia}
+            >
+              <span>Reconnect Academia</span>
             </button>
           )}
 

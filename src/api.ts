@@ -1,6 +1,8 @@
 import type { AppData } from "./types";
 
-const COOKIE_STORAGE_KEY = "eduwars_session_cookies";
+const LEGACY_COOKIE_STORAGE_KEY = "eduwars_session_cookies";
+const ACADEMIA_COOKIE_STORAGE_KEY = "eduwars_academia_cookies";
+const STUDENT_PORTAL_COOKIE_STORAGE_KEY = "eduwars_student_portal_cookies";
 const PROFILE_STORAGE_KEY = "eduwars_student_profile";
 const METADATA_STORAGE_KEY = "eduwars_last_sync";
 const CREDS_STORAGE_KEY = "eduwars_user_creds";
@@ -20,6 +22,7 @@ export interface LoginPayload {
 
 export interface RefreshPayload {
   cookies?: Record<string, string>;
+  source?: "student-portal";
   username?: string;
   password?: string;
   captcha?: string;
@@ -43,6 +46,9 @@ export interface StudentPortalCaptcha {
 export interface StudentPortalAttendanceResponse {
   success: boolean;
   attendance: AppData["attendance"];
+  marks: AppData["marks"];
+  session: AppData["session"];
+  metadata: AppData["metadata"];
 }
 
 export class ApiError extends Error {
@@ -61,8 +67,12 @@ export class ApiError extends Error {
 }
 
 export function getStoredCookies(): Record<string, string> | null {
+  return getAcademiaCookies();
+}
+
+function readCookies(key: string): Record<string, string> | null {
   try {
-    const raw = localStorage.getItem(COOKIE_STORAGE_KEY);
+    const raw = localStorage.getItem(key);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -72,17 +82,56 @@ export function getStoredCookies(): Record<string, string> | null {
 export function saveStoredCookies(
   cookies: Record<string, string>
 ) {
+  saveAcademiaCookies(cookies);
+}
+
+function saveCookies(key: string, cookies: Record<string, string>) {
   try {
-    localStorage.setItem(
-      COOKIE_STORAGE_KEY,
-      JSON.stringify(cookies)
-    );
+    localStorage.setItem(key, JSON.stringify(cookies));
   } catch (err) {
     console.error(
       "Failed to save cookies to localStorage:",
       err
     );
   }
+}
+
+function getLegacyCookies(): Record<string, string> | null {
+  return readCookies(LEGACY_COOKIE_STORAGE_KEY);
+}
+
+export function getAcademiaCookies(): Record<string, string> | null {
+  const cookies = readCookies(ACADEMIA_COOKIE_STORAGE_KEY);
+  if (cookies) return cookies;
+  const legacy = getLegacyCookies();
+  const data = getStoredData();
+  if (legacy && data?.metadata?.source !== "student-portal") {
+    saveAcademiaCookies(legacy);
+    return legacy;
+  }
+  return null;
+}
+
+export function saveAcademiaCookies(cookies: Record<string, string>) {
+  saveCookies(ACADEMIA_COOKIE_STORAGE_KEY, cookies);
+  try { localStorage.removeItem(LEGACY_COOKIE_STORAGE_KEY); } catch { /* ignore */ }
+}
+
+export function getStudentPortalCookies(): Record<string, string> | null {
+  const cookies = readCookies(STUDENT_PORTAL_COOKIE_STORAGE_KEY);
+  if (cookies) return cookies;
+  const legacy = getLegacyCookies();
+  const data = getStoredData();
+  if (legacy && data?.metadata?.source === "student-portal") {
+    saveStudentPortalCookies(legacy);
+    return legacy;
+  }
+  return null;
+}
+
+export function saveStudentPortalCookies(cookies: Record<string, string>) {
+  saveCookies(STUDENT_PORTAL_COOKIE_STORAGE_KEY, cookies);
+  try { localStorage.removeItem(LEGACY_COOKIE_STORAGE_KEY); } catch { /* ignore */ }
 }
 
 export function getStoredCredentials(): StoredCredentials | null {
@@ -156,9 +205,9 @@ export function saveStoredData(data: AppData) {
 
 export function clearStoredSession() {
   try {
-    localStorage.removeItem(
-      COOKIE_STORAGE_KEY
-    );
+    localStorage.removeItem(LEGACY_COOKIE_STORAGE_KEY);
+    localStorage.removeItem(ACADEMIA_COOKIE_STORAGE_KEY);
+    localStorage.removeItem(STUDENT_PORTAL_COOKIE_STORAGE_KEY);
 
     localStorage.removeItem(
       PROFILE_STORAGE_KEY
@@ -268,7 +317,7 @@ export async function login(
   }
 
   if (data?.session?.cookies) {
-    saveStoredCookies(
+    saveAcademiaCookies(
       data.session.cookies
     );
   }
@@ -422,9 +471,11 @@ export async function refreshSession(
   }
 
   if (data?.session?.cookies) {
-    saveStoredCookies(
-      data.session.cookies
-    );
+    if (payload.source === "student-portal") {
+      saveStudentPortalCookies(data.session.cookies);
+    } else {
+      saveAcademiaCookies(data.session.cookies);
+    }
   }
 
   return data as AppData;

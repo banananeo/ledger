@@ -34,7 +34,7 @@ const itemVariants = {
   },
 };
 
-function LoginForm({ onSuccess }) {
+function LoginForm({ onSuccess, onSkip, overlay = false }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -129,9 +129,8 @@ function LoginForm({ onSuccess }) {
       );
 
       /*
-       * For now we pass the attendance response
-       * upward. The next step will merge this with
-       * Ledger's existing AppData.
+       * Pass the Student Portal data through Ledger's normal
+       * dashboard/session storage flow.
        */
       onSuccess(data);
     } catch (err) {
@@ -166,7 +165,7 @@ function LoginForm({ onSuccess }) {
   };
 
   return (
-    <div className="login-wrapper">
+    <div className={`login-wrapper${overlay ? ' login-wrapper--overlay' : ''}`}>
       <motion.div
         className="login-card"
         variants={containerVariants}
@@ -187,8 +186,7 @@ function LoginForm({ onSuccess }) {
           </div>
 
           <p className="login-header__subtitle">
-            Sign in with your official SRM
-            credentials to access Ledger.
+            Connect the SRM Student Portal to add attendance and marks to your Ledger dashboard.
           </p>
         </motion.div>
 
@@ -328,9 +326,7 @@ function LoginForm({ onSuccess }) {
 
               <div className="captcha-image-container">
                 <img
-                  src={
-                    `/api/student-portal/captcha-image/${captchaChallenge.challengeId}`
-                  }
+                  src={captchaChallenge.imageUrl}
                   alt="SRM CAPTCHA"
                   className="captcha-image"
                 />
@@ -369,11 +365,16 @@ function LoginForm({ onSuccess }) {
               {captchaLoading
                 ? 'Loading CAPTCHA…'
                 : loading
-                  ? 'Signing in to SRM…'
+                  ? 'Signing in to Student Portal…'
                   : captchaChallenge
-                    ? 'Sign in to Ledger'
+                    ? 'Connect Student Portal'
                     : 'Continue'}
             </button>
+            {onSkip && (
+              <button type="button" className="btn-secondary" onClick={onSkip} disabled={loading || captchaLoading}>
+                Skip for now
+              </button>
+            )}
           </motion.div>
         </form>
 

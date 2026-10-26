@@ -7,17 +7,16 @@ const MOBILE_NAV_ITEMS = NAV_ITEMS.filter((item) => item.id !== 'games');
 
 function MobileTabBar({ view, onNavigate }) {
   return (
-    <nav className="mtab-wrapper" aria-label="Main Navigation">
+    <nav className="mtab-wrapper" aria-label="Main navigation">
       <div className="mtab-glass">
-        {/* Specular Edge Lens Highlight */}
-        <div className="mtab-glass__rim-light" />
-
         {MOBILE_NAV_ITEMS.map(({ id, label, Icon }) => {
           const isActive = view === id;
           return (
             <motion.button
               key={id}
+              type="button"
               className={`mtab-btn${isActive ? ' mtab-btn--active' : ''}`}
+              aria-current={isActive ? 'page' : undefined}
               onClick={(e) => onNavigate(id, e)}
               whileTap={{ scale: 0.88 }}
               transition={{ type: 'spring', stiffness: 500, damping: 28 }}
@@ -33,8 +32,6 @@ function MobileTabBar({ view, onNavigate }) {
                     mass: 0.75,
                   }}
                 >
-                  <span className="mtab-indicator__sheen" />
-                  <span className="mtab-indicator__glow" />
                 </motion.div>
               )}
               <motion.span
