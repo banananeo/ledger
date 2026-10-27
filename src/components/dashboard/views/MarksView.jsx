@@ -1,7 +1,7 @@
 import React from 'react';
 import './MarksView.css';
 
-function MarksView({ marks = [] }) {
+function MarksView({ marks = [], courses = [], schedule = [], attendance = [] }) {
   if (marks.length === 0) {
     return (
       <div className="bcard marks__empty-card">
@@ -9,6 +9,18 @@ function MarksView({ marks = [] }) {
       </div>
     );
   }
+
+  const courseNames = new Map();
+  const addCourseNames = (records = []) => {
+    records.forEach((course) => {
+      const code = String(course.courseCode || '').trim().toUpperCase();
+      const title = String(course.courseTitle || '').trim();
+      if (code && title && !courseNames.has(code)) courseNames.set(code, title);
+    });
+  };
+  addCourseNames(courses);
+  addCourseNames(schedule.flatMap((day) => day.entries || []));
+  addCourseNames(attendance);
 
   return (
     <div className="marks">
@@ -28,7 +40,11 @@ function MarksView({ marks = [] }) {
             <li key={record.courseCode} className="bcard marks__card">
               <div className="marks__card-head">
                 <div>
-                  <h3 className="marks__card-title">{record.courseCode}</h3>
+                  <h3 className="marks__card-title">{
+                    (typeof record.courseTitle === 'string' && record.courseTitle.trim()) ||
+                    courseNames.get(String(record.courseCode || '').trim().toUpperCase()) ||
+                    record.courseCode
+                  }</h3>
                   <span className="marks__card-type">{record.courseType}</span>
                 </div>
                 <div className="marks__card-head-right">
