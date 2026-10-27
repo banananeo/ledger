@@ -11,6 +11,10 @@ export function initMobileServiceWorker() {
       .register('/sw.js')
       .then((reg) => {
         swRegistration = reg;
+        return navigator.serviceWorker.ready;
+      })
+      .then((reg) => {
+        swRegistration = reg;
       })
       .catch((err) => {
         console.warn('Service worker registration failed:', err);
@@ -121,17 +125,27 @@ export async function sendMobileClassNotification({
   // 2. Play chime
   playNotificationChime();
 
+  if (typeof window === 'undefined' || !('Notification' in window) || Notification.permission !== 'granted') {
+    return false;
+  }
+
+  const notificationData = {
+    ...(data || {}),
+    url: data?.url || '/?view=timetable',
+    view: data?.view || 'timetable',
+  };
+
   // 3. Try ServiceWorker showNotification first (essential on Android & iOS PWA)
   if ('serviceWorker' in navigator) {
     try {
-      const reg = swRegistration || (await navigator.serviceWorker.getRegistration());
+      const reg = swRegistration || (await navigator.serviceWorker.ready);
       if (reg && 'showNotification' in reg) {
         await reg.showNotification(title, {
           body,
           tag: tag || 'class-reminder',
           icon: '/icon.svg',
           badge: '/icon.svg',
-          data,
+          data: notificationData,
           requireInteraction: true,
           silent: false,
         } as NotificationOptions);
@@ -149,6 +163,7 @@ export async function sendMobileClassNotification({
         body,
         tag: tag || 'class-reminder',
         icon: '/icon.svg',
+        data: notificationData,
       });
       return true;
     } catch (err) {

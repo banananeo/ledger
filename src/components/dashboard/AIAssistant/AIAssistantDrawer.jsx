@@ -5,16 +5,68 @@ import './AIAssistantDrawer.css';
 
 const QUICK_CHIPS = [
   { label: 'Academic Brief', prompt: 'Create my academic brief with Now, Attendance, Marks, and This week sections.' },
-  { label: 'Attendance Risk', prompt: 'Analyze my attendance risks. Which courses can I safely bunk and which need immediate attendance?' },
-  { label: 'Safest Bunk', prompt: 'Given my timetable, which Day Order is safest to bunk for maximum free hours with minimal risk?' },
-  { label: 'Study Plan', prompt: 'Create a 7-day study plan prioritizing my weakest subjects based on marks and attendance, using my timetable and calendar.' },
-  { label: 'Marks Review', prompt: 'Review my internal marks. Which subjects need improvement and how can I recover?' },
+  { label: 'Today Focus', prompt: 'What should I focus on today based on my timetable, attendance, and marks?' },
+  { label: 'Attendance Plan', prompt: 'Analyze my attendance. Which courses must I attend and where do I still have a skip margin?' },
+  { label: 'Marks Recovery', prompt: 'Which subject needs the most marks recovery and what should I do next?' },
+  { label: 'Week Plan', prompt: 'Create a practical seven-day study plan around my timetable and calendar.' },
 ];
 
 function buildContext(data) {
   if (!data) return {};
   const { profile, attendance, marks, schedule, calendar } = data;
   return { profile, attendance, marks, schedule, calendar };
+}
+
+function formatInline(text) {
+  return String(text).split(/(\*\*[^*]+\*\*)/g).map((part, index) => (
+    part.startsWith('**') && part.endsWith('**')
+      ? <strong key={index}>{part.slice(2, -2)}</strong>
+      : part
+  ));
+}
+
+function MessageContent({ text }) {
+  const nodes = [];
+  let list = [];
+  let codeLines = [];
+  let inCode = false;
+
+  const flushList = () => {
+    if (!list.length) return;
+    nodes.push(<ul className="ai-drawer__formatted-list" key={`list-${nodes.length}`}>{list.map((item, index) => <li key={index}>{formatInline(item)}</li>)}</ul>);
+    list = [];
+  };
+
+  String(text || '').split('\n').forEach((line, index) => {
+    if (line.trim().startsWith('```')) {
+      flushList();
+      if (inCode) {
+        nodes.push(<pre className="ai-drawer__code" key={`code-${index}`}><code>{codeLines.join('\n')}</code></pre>);
+        codeLines = [];
+      }
+      inCode = !inCode;
+      return;
+    }
+    if (inCode) {
+      codeLines.push(line);
+      return;
+    }
+    const heading = line.match(/^#{1,3}\s+(.+)$/);
+    const bullet = line.match(/^[-*]\s+(.+)$/);
+    const numbered = line.match(/^\d+[.)]\s+(.+)$/);
+    if (heading) {
+      flushList();
+      nodes.push(<h4 className="ai-drawer__formatted-heading" key={`heading-${index}`}>{formatInline(heading[1])}</h4>);
+    } else if (bullet || numbered) {
+      list.push((bullet || numbered)[1]);
+    } else if (line.trim()) {
+      flushList();
+      nodes.push(<p className="ai-drawer__formatted-paragraph" key={`paragraph-${index}`}>{formatInline(line)}</p>);
+    }
+  });
+  flushList();
+  if (codeLines.length) nodes.push(<pre className="ai-drawer__code" key="code-final"><code>{codeLines.join('\n')}</code></pre>);
+  return <>{nodes}</>;
 }
 
 export default function AIAssistantDrawer({ data, isOpen, onClose }) {
@@ -138,13 +190,13 @@ export default function AIAssistantDrawer({ data, isOpen, onClose }) {
               )}
               {messages.map((m, i) => (
                 <div key={i} className={`ai-drawer__msg ai-drawer__msg--${m.role}${m.isError ? ' ai-drawer__msg--error' : ''}`}>
-                  <div className="ai-drawer__msg-bubble">{m.text}</div>
+                  <div className="ai-drawer__msg-bubble"><MessageContent text={m.text} /></div>
                 </div>
               ))}
               {loading && (
                 <div className="ai-drawer__msg ai-drawer__msg--assistant">
                   <div className="ai-drawer__msg-bubble ai-drawer__msg-bubble--streaming">
-                    {streamingText || <span className="ai-drawer__typing"><span></span><span></span><span></span></span>}
+                    {streamingText ? <MessageContent text={streamingText} /> : <span className="ai-drawer__typing"><span></span><span></span><span></span></span>}
                   </div>
                 </div>
               )}

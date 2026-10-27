@@ -48,7 +48,7 @@
     flex-wrap: wrap;
     padding: 10px 16px;
     border-bottom: 1px solid var(--line);
-    background: var(--surface-sunken, #f8f9fa)
+    background: rgba(255, 255, 255, .035)
 }
 
 .ai-drawer__chip {
@@ -100,9 +100,8 @@
     border-radius: 14px;
     font-size: 13.5px;
     line-height: 1.45;
-    white-space: pre-wrap;
     word-break: break-word;
-    border: 1px solid var(--border)
+    border: 1px solid var(--line)
 }
 
 .ai-drawer__msg--user .ai-drawer__msg-bubble {
@@ -112,7 +111,48 @@
 }
 
 .ai-drawer__msg--assistant .ai-drawer__msg-bubble {
-    background: var(--surface-sunken, #f1f2f4)
+    background: rgba(255, 255, 255, .055);
+    color: var(--ink)
+}
+
+.ai-drawer__formatted-heading {
+    margin: 8px 0 4px;
+    color: var(--yellow);
+    font-family: var(--display);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .02em
+}
+
+.ai-drawer__formatted-heading:first-child {
+    margin-top: 0
+}
+
+.ai-drawer__formatted-paragraph {
+    margin: 0 0 7px;
+    white-space: pre-wrap
+}
+
+.ai-drawer__formatted-list {
+    margin: 0 0 8px 18px;
+    padding: 0
+}
+
+.ai-drawer__formatted-list li {
+    margin: 3px 0
+}
+
+.ai-drawer__code {
+    margin: 8px 0;
+    overflow-x: auto;
+    padding: 9px;
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 11.5px;
+    white-space: pre
 }
 
 .ai-drawer__msg--error .ai-drawer__msg-bubble {

@@ -343,7 +343,7 @@ export function createApp(): Express {
 
   // AI health
   router.get("/ai/health", (_req: Request, res: Response) => {
-    res.json({ configured: isGeminiConfigured(), model: process.env.GEMINI_MODEL || "gemini-2.0-flash" });
+    res.json({ configured: isGeminiConfigured(), model: process.env.GEMINI_MODEL || "gemini-3.6-flash" });
   });
 
   // AI Chat handler (supports streaming via SSE if ?stream=1)
