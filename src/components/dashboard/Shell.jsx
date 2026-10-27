@@ -22,7 +22,7 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onRec
   const [transitionOrigin, setTransitionOrigin] = useState({ x: 50, y: 50 });
   const [aiOpen, setAiOpen] = useState(false);
   const stageRef = useRef(null);
-  const { profile, attendance = [], schedule = [], marks = [], calendar } = data || {};
+  const { profile, attendance = [], schedule = [], marks = [], courses = [], calendar } = data || {};
 
   // Pull-to-refresh state
   const [startY, setStartY] = useState(0);
@@ -138,7 +138,7 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onRec
                   )}
 
                   {currentActiveView === 'attendance' && (
-                    <AttendanceView attendance={attendance} schedule={schedule} />
+                    <AttendanceView attendance={attendance} schedule={schedule} calendar={calendar} />
                   )}
                   {currentActiveView === 'games' && (
                     <GamesView schedule={schedule} attendance={attendance} calendar={calendar} />
@@ -147,7 +147,7 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onRec
                     <CalendarView calendar={calendar} />
                   )}
                   {currentActiveView === 'marks' && (
-                    <MarksView marks={marks} />
+                    <MarksView marks={marks} courses={courses} schedule={schedule} attendance={attendance} />
                   )}
                 </div>
               )}

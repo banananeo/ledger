@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import ProgressRing from '../../ProgressRing.jsx';
 import {
   getAttendanceMargin,
@@ -9,15 +9,103 @@ import {
 } from '../../../utils/attendance.js';
 import './AttendanceView.css';
 
+const LAB_SPLIT_STORAGE_KEY = 'ledger_attendance_lab_misses';
+
 function parseDayNum(dayLabel) {
   const match = String(dayLabel || '').match(/\d+/);
   return match ? match[0] : String(dayLabel || '');
 }
 
-function AttendanceView({ attendance = [], schedule = [] }) {
+function isPracticalEntry(entry) {
+  return [entry?.slotType, entry?.rawType, entry?.slotCode, entry?.slot]
+    .some((value) => String(value || '').toLowerCase().includes('practical') || String(value || '').toUpperCase().startsWith('P'));
+}
+
+function timeInMinutes(value) {
+  const match = String(value || '').trim().match(/(\d{1,2}):(\d{2})(?:\s*(AM|PM))?/i);
+  if (!match) return null;
+  let hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  const meridiem = match[3]?.toUpperCase();
+  if (meridiem === 'PM' && hours < 12) hours += 12;
+  if (meridiem === 'AM' && hours === 12) hours = 0;
+  if (!meridiem && hours < 8) hours += 12;
+  return hours * 60 + minutes;
+}
+
+function AttendanceView({ attendance = [], schedule = [], calendar }) {
   const [filterTab, setFilterTab] = useState('all'); // 'all' | 'risk' | 'safe'
   const [sortBy, setSortBy] = useState('lowest'); // 'lowest' | 'highest' | 'code'
   const [simulatedDayOrder, setSimulatedDayOrder] = useState(null); // null | '1' | '2' | '3' | '4' | '5'
+  const [labMisses, setLabMisses] = useState(() => {
+    try {
+      const saved = window.localStorage.getItem(LAB_SPLIT_STORAGE_KEY);
+      const parsed = saved ? JSON.parse(saved) : {};
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(LAB_SPLIT_STORAGE_KEY, JSON.stringify(labMisses));
+    } catch {
+      // Keep the current session usable if local storage is unavailable.
+    }
+  }, [labMisses]);
+
+  const labInfoByCourse = useMemo(() => {
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const labInfo = new Map();
+    const scheduleByDay = new Map((Array.isArray(schedule) ? schedule : []).map((day) => [parseDayNum(day.dayLabel), day]));
+    (calendar?.months || []).flatMap((month) => month.entries || []).forEach((entry) => {
+      if (!entry?.date || entry.date >= todayStr || !entry.dayOrder) return;
+      const day = scheduleByDay.get(String(entry.dayOrder));
+      const labsByCourse = new Map();
+      (day?.entries || []).forEach((scheduled) => {
+        if (scheduled?.slotType !== 'Practical') return;
+        const code = String(scheduled.courseCode || '').trim().toUpperCase();
+        if (!code) return;
+        if (!labsByCourse.has(code)) labsByCourse.set(code, []);
+        labsByCourse.get(code).push(scheduled);
+      });
+      labsByCourse.forEach((entries, code) => {
+        const ordered = entries
+          .map((item) => ({ item, start: timeInMinutes(item.startTime), end: timeInMinutes(item.endTime) }))
+          .sort((a, b) => (a.start ?? 0) - (b.start ?? 0));
+        const current = labInfo.get(code) || { labHours: 0, sessions: 0, sessionLengths: [] };
+        current.labHours += ordered.length;
+        let sessionLength = 0;
+        ordered.forEach(({ start, end }, index) => {
+          const contiguous = index > 0 && start === ordered[index - 1].end;
+          if (!contiguous) {
+            if (sessionLength > 0) current.sessionLengths.push(sessionLength);
+            sessionLength = 1;
+            current.sessions += 1;
+          } else {
+            sessionLength += 1;
+          }
+        });
+        if (sessionLength > 0) current.sessionLengths.push(sessionLength);
+        labInfo.set(code, current);
+      });
+    });
+    return new Map(Array.from(labInfo, ([code, info]) => {
+      const counts = new Map();
+      info.sessionLengths.forEach((length) => counts.set(length, (counts.get(length) || 0) + 1));
+      let hoursPerSession = info.sessionLengths[0] || 0;
+      let highestCount = 0;
+      counts.forEach((count, length) => {
+        if (count > highestCount) {
+          highestCount = count;
+          hoursPerSession = length;
+        }
+      });
+      return [code, { labHours: info.labHours, sessions: info.sessions, hoursPerSession }];
+    }));
+  }, [calendar, schedule]);
 
   // Extract base attendance records
   const safeAttendance = useMemo(() => {
@@ -79,6 +167,7 @@ function AttendanceView({ attendance = [], schedule = [] }) {
 
     // Calculate hours to skip per course code
     const hoursMissedMap = new Map();
+    const labHoursMissedMap = new Map();
     scheduledEntries.forEach((entry) => {
       const code = (entry.courseCode || '').toUpperCase().trim();
       const isLab =
@@ -87,6 +176,7 @@ function AttendanceView({ attendance = [], schedule = [] }) {
         String(entry.slotCode || '').startsWith('P');
       const hours = isLab ? 2 : 1;
       hoursMissedMap.set(code, (hoursMissedMap.get(code) || 0) + hours);
+      if (isLab) labHoursMissedMap.set(code, (labHoursMissedMap.get(code) || 0) + hours);
     });
 
     let totalSkippedHours = 0;
@@ -97,10 +187,12 @@ function AttendanceView({ attendance = [], schedule = [] }) {
       const code = (course.courseCode || '').toUpperCase().trim();
       // Match by exact courseCode or partial match
       let missedHours = hoursMissedMap.get(code) || 0;
+      let missedLabHours = labHoursMissedMap.get(code) || 0;
       if (missedHours === 0) {
         for (const [k, v] of hoursMissedMap.entries()) {
           if (k && (code.includes(k) || k.includes(code))) {
             missedHours = v;
+            missedLabHours = labHoursMissedMap.get(k) || 0;
             break;
           }
         }
@@ -127,6 +219,7 @@ function AttendanceView({ attendance = [], schedule = [] }) {
       return {
         ...course,
         missedHours,
+        missedLabHours,
         origPct,
         newPct,
         pctDrop,
@@ -204,6 +297,16 @@ function AttendanceView({ attendance = [], schedule = [] }) {
 
     return sorted;
   }, [safeAttendance, simulation, filterTab, sortBy]);
+
+  const setLabMissCount = (courseCode, value) => {
+    const code = String(courseCode || '').trim().toUpperCase();
+    setLabMisses((current) => {
+      const next = { ...current };
+      if (value === '') delete next[code];
+      else next[code] = value;
+      return next;
+    });
+  };
 
   if (safeAttendance.length === 0) {
     return (
@@ -450,6 +553,40 @@ function AttendanceView({ attendance = [], schedule = [] }) {
               currentMargin.status === 'unknown'
                 ? getStatusTone(currentPct)
                 : marginTone(currentMargin);
+            const courseCode = String(r.courseCode || '').trim().toUpperCase();
+            const isJointCourse = /J$/i.test(courseCode);
+            const lab = labInfoByCourse.get(courseCode) || { labHours: 0, sessions: 0, hoursPerSession: 0 };
+            const hasLabSplit = Object.prototype.hasOwnProperty.call(labMisses, courseCode);
+            const missedLabSessions = hasLabSplit ? Number(labMisses[courseCode]) : null;
+            const splitConducted = r.conducted + (simulation ? r.missedHours : 0);
+            const splitAbsent = r.absent + (simulation ? r.missedHours : 0);
+            const splitLabConducted = lab.labHours;
+            const splitLabAbsent = (missedLabSessions || 0) * lab.hoursPerSession;
+            let splitError = !hasLabSplit
+              ? ''
+              : !Number.isInteger(missedLabSessions) || missedLabSessions < 0
+                ? 'Enter a whole number of missed lab sessions.'
+                : lab.sessions === 0 || lab.labHours === 0
+                  ? 'No past lab sessions were found in your timetable and calendar.'
+                  : missedLabSessions > lab.sessions
+                    ? `You can enter at most ${lab.sessions} missed lab session${lab.sessions === 1 ? '' : 's'}.`
+                    : splitLabConducted > splitConducted
+                      ? 'Lab sessions exceed the course classes conducted, so the split cannot be calculated.'
+                      : splitLabAbsent > splitAbsent
+                        ? 'The lab absences exceed the total absences reported for this course.'
+                        : splitLabAbsent > splitLabConducted
+                          ? 'Lab absences exceed lab classes conducted.'
+                          : '';
+            let split = !splitError && hasLabSplit ? {
+              theoryConducted: splitConducted - splitLabConducted,
+              theoryAbsent: splitAbsent - splitLabAbsent,
+              labConducted: splitLabConducted,
+              labAbsent: splitLabAbsent,
+            } : null;
+            if (split && (split.theoryConducted < 0 || split.theoryAbsent < 0 || split.theoryAbsent > split.theoryConducted)) {
+              splitError = 'Attendance totals do not support a valid Theory and Lab split.';
+              split = null;
+            }
 
             return (
               <li
@@ -497,6 +634,50 @@ function AttendanceView({ attendance = [], schedule = [] }) {
                     {marginMessage(currentMargin)}
                   </span>
                 </div>
+
+                {isJointCourse && (
+                  <div className="attendance__lab-split">
+                    <div className="attendance__lab-split-control">
+                      <label htmlFor={`lab-misses-${idx}`}>Lab classes missed</label>
+                      <input
+                        id={`lab-misses-${idx}`}
+                        type="number"
+                        min="0"
+                        max={lab.sessions || undefined}
+                        step="1"
+                        inputMode="numeric"
+                        value={hasLabSplit ? labMisses[courseCode] : ''}
+                        placeholder="Enter count"
+                        onChange={(event) => setLabMissCount(courseCode, event.target.value)}
+                      />
+                      <span>{lab.sessions} past lab session{lab.sessions === 1 ? '' : 's'} · usually {lab.hoursPerSession} class{lab.hoursPerSession === 1 ? '' : 'es'} each</span>
+                      {hasLabSplit && (
+                        <button type="button" className="attendance__lab-clear" onClick={() => setLabMissCount(courseCode, '')}>
+                          Clear split
+                        </button>
+                      )}
+                    </div>
+                    {splitError && <p className="attendance__lab-error" role="status">{splitError}</p>}
+                    {split && (
+                      <div className="attendance__lab-results">
+                        {[
+                          ['Theory', split.theoryConducted, split.theoryAbsent],
+                          ['Lab', split.labConducted, split.labAbsent],
+                        ].map(([label, conducted, absent]) => {
+                          const percentage = conducted > 0 ? ((conducted - absent) / conducted) * 100 : 0;
+                          const margin = getAttendanceMargin(conducted, absent);
+                          return (
+                            <div className="attendance__lab-result" key={label}>
+                              <strong>{label}</strong>
+                              <span className="num">{percentage.toFixed(1)}% · {conducted - absent}/{conducted}</span>
+                              <span className={`bchip bchip--${marginTone(margin)}`}>{marginMessage(margin)}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
               </li>
             );
           })}

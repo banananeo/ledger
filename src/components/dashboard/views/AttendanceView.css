@@ -499,6 +499,102 @@
   font-weight: 600;
 }
 
+.attendance__lab-split {
+  flex: 0 0 100%;
+  display: grid;
+  grid-template-columns: minmax(180px, 0.7fr) minmax(0, 1.3fr);
+  gap: 12px;
+  padding: 12px 0 0 80px;
+  border-top: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.attendance__lab-split-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-content: start;
+}
+
+.attendance__lab-split-control label {
+  width: 100%;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.attendance__lab-split-control input {
+  width: 110px;
+  padding: 7px 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+
+.attendance__lab-split-control > span {
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+
+.attendance__lab-clear {
+  padding: 4px 7px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 11px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.attendance__lab-results {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.attendance__lab-result {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  padding: 9px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+
+.attendance__lab-result strong {
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.attendance__lab-result .num {
+  color: var(--ink);
+}
+
+[data-theme="light"] .attendance__lab-result,
+.light .attendance__lab-result {
+  background: rgba(0, 0, 0, 0.045);
+}
+
+.attendance__lab-result .bchip {
+  white-space: normal;
+  text-align: left;
+}
+
+.attendance__lab-error {
+  grid-column: 2;
+  margin: 0;
+  color: var(--danger);
+  font-size: 12px;
+}
+
 .attendance__empty-card {
   padding: 28px 20px;
   text-align: center;
@@ -566,6 +662,13 @@
     width: 100%;
     text-align: left;
     margin-top: 4px;
+  }
+  .attendance__lab-split {
+    grid-template-columns: 1fr;
+    padding-left: 0;
+  }
+  .attendance__lab-error {
+    grid-column: 1;
   }
   .attendance__card-margin {
     width: 100%;
