@@ -71,7 +71,7 @@ export async function generateAIResponse(opts: {
 
 export async function generateSummary(context: AIContext): Promise<string> {
   return generateAIResponse({
-    message: "Give me a concise health summary: overall attendance, at-risk courses, marks highlights, and 3 next actions. Be brief.",
+    message: "Create a concise academic brief with these Markdown headings: Now, Attendance, Marks, This week. Give one urgent next action, attendance risk or skip margin, marks recovery priority, and a practical plan for the next seven days. Be brief.",
     context,
   });
 }

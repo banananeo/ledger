@@ -14,7 +14,6 @@ import MarksView from './views/MarksView.jsx';
 import CalendarView from './views/CalendarView.jsx';
 import GamesView from './views/GamesView.jsx';
 import AIAssistantDrawer from './AIAssistant/AIAssistantDrawer.jsx';
-import AIFab from './AIAssistant/AIFab.jsx';
 import './Shell.css';
 
 function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onReconnectAcademia, onConnectStudentPortal, academiaIssue, studentPortalIssue, studentPortalError }) {
@@ -156,7 +155,6 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onRec
         </div>
         <MobileTabBar view={view} onNavigate={navigate} />
         <NotificationDrawer onNavigate={navigate} />
-        <AIFab onClick={() => setAiOpen(true)} />
         <AIAssistantDrawer data={data} isOpen={aiOpen} onClose={() => setAiOpen(false)} />
       </div>
     </NotificationProvider>

@@ -4,7 +4,7 @@ import { aiChat, aiChatStream, aiHealth } from '../../../api.ts';
 import './AIAssistantDrawer.css';
 
 const QUICK_CHIPS = [
-  { label: 'Summarize', prompt: 'Summarize my overall academics — attendance risk, marks performance, and what to focus on this week.' },
+  { label: 'Academic Brief', prompt: 'Create my academic brief with Now, Attendance, Marks, and This week sections.' },
   { label: 'Attendance Risk', prompt: 'Analyze my attendance risks. Which courses can I safely bunk and which need immediate attendance?' },
   { label: 'Safest Bunk', prompt: 'Given my timetable, which Day Order is safest to bunk for maximum free hours with minimal risk?' },
   { label: 'Study Plan', prompt: 'Create a 7-day study plan prioritizing my weakest subjects based on marks and attendance, using my timetable and calendar.' },

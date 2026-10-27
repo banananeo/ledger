@@ -47,6 +47,58 @@
   opacity: 0.75;
 }
 
+.home__brief-card {
+  padding: 22px 24px;
+  background: var(--surface);
+}
+
+.home__brief-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.home__brief-title {
+  margin: 2px 0 4px;
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.home__brief-sub,
+.home__brief-empty {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.home__brief-action {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+.home__brief-content {
+  margin: 16px 0 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.045);
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.home__brief-error {
+  margin: 14px 0 0;
+  color: var(--danger);
+  font-size: 12px;
+}
+
 .home__hero-today {
   display: flex;
   align-items: center;
@@ -501,6 +553,15 @@
   }
   .home__today-card {
     padding: 18px;
+  }
+  .home__brief-card {
+    padding: 18px;
+  }
+  .home__brief-head {
+    flex-direction: column;
+  }
+  .home__brief-action {
+    width: 100%;
   }
   .home__today-row {
     grid-template-columns: minmax(0, 1fr) auto;

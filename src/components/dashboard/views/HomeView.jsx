@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { ClockIcon, CalendarIcon, BellIcon, GamepadIcon } from '../Icons.jsx';
 import { todayISO, findEntryForDate, allEntries } from '../../../utils/calendar.js';
 import { useNotifications } from '../../../context/NotificationContext.tsx';
+import { aiSummary } from '../../../api.ts';
 import './HomeView.css';
 
 const homeContainerVariants = {
@@ -199,6 +200,23 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
   const todayOverview = getTodayOverview(schedule, calendar);
   const positiveMessage = getDailyAffirmation(todayISO());
   const { notificationsEnabled, leadMinutes, setIsDrawerOpen } = useNotifications();
+  const [academicBrief, setAcademicBrief] = useState('');
+  const [briefLoading, setBriefLoading] = useState(false);
+  const [briefError, setBriefError] = useState('');
+
+  const generateBrief = async () => {
+    if (briefLoading) return;
+    setBriefLoading(true);
+    setBriefError('');
+    try {
+      const response = await aiSummary({ profile, attendance, marks, schedule, calendar });
+      setAcademicBrief(response);
+    } catch (error) {
+      setBriefError(error?.message || 'Ledger AI could not generate your brief right now.');
+    } finally {
+      setBriefLoading(false);
+    }
+  };
 
   return (
     <motion.div
@@ -213,6 +231,26 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
           <h2 className="home__hero-title">{profile?.name || 'Student'}</h2>
           <p className="home__hero-affirmation">✨ {positiveMessage}</p>
         </div>
+      </motion.section>
+
+      <motion.section className="bcard home__brief-card" variants={homeItemVariants} aria-label="Academic Brief">
+        <div className="home__brief-head">
+          <div>
+            <p className="eyebrow">Ledger AI</p>
+            <h3 className="home__brief-title">Academic Brief</h3>
+            <p className="home__brief-sub">A focused look at what needs your attention now and this week.</p>
+          </div>
+          <button className="bbtn bbtn--outline home__brief-action" onClick={generateBrief} disabled={briefLoading}>
+            {briefLoading ? 'Preparing…' : academicBrief ? 'Refresh brief' : 'Generate brief'}
+          </button>
+        </div>
+
+        {briefError && <p className="home__brief-error" role="status">{briefError}</p>}
+        {academicBrief ? (
+          <p className="home__brief-content">{academicBrief}</p>
+        ) : !briefLoading && !briefError ? (
+          <p className="home__brief-empty">Generate a brief for your next action, attendance, marks, and week plan.</p>
+        ) : null}
       </motion.section>
 
       {/* Next Class with Room Details */}
