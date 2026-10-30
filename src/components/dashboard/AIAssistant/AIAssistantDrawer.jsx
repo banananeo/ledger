@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { aiChat, aiChatStream, aiHealth } from '../../../api.ts';
+import MarkdownText from '../../MarkdownText.jsx';
 import './AIAssistantDrawer.css';
 
 const QUICK_CHIPS = [
@@ -15,58 +16,6 @@ function buildContext(data) {
   if (!data) return {};
   const { profile, attendance, marks, schedule, calendar } = data;
   return { profile, attendance, marks, schedule, calendar };
-}
-
-function formatInline(text) {
-  return String(text).split(/(\*\*[^*]+\*\*)/g).map((part, index) => (
-    part.startsWith('**') && part.endsWith('**')
-      ? <strong key={index}>{part.slice(2, -2)}</strong>
-      : part
-  ));
-}
-
-function MessageContent({ text }) {
-  const nodes = [];
-  let list = [];
-  let codeLines = [];
-  let inCode = false;
-
-  const flushList = () => {
-    if (!list.length) return;
-    nodes.push(<ul className="ai-drawer__formatted-list" key={`list-${nodes.length}`}>{list.map((item, index) => <li key={index}>{formatInline(item)}</li>)}</ul>);
-    list = [];
-  };
-
-  String(text || '').split('\n').forEach((line, index) => {
-    if (line.trim().startsWith('```')) {
-      flushList();
-      if (inCode) {
-        nodes.push(<pre className="ai-drawer__code" key={`code-${index}`}><code>{codeLines.join('\n')}</code></pre>);
-        codeLines = [];
-      }
-      inCode = !inCode;
-      return;
-    }
-    if (inCode) {
-      codeLines.push(line);
-      return;
-    }
-    const heading = line.match(/^#{1,3}\s+(.+)$/);
-    const bullet = line.match(/^[-*]\s+(.+)$/);
-    const numbered = line.match(/^\d+[.)]\s+(.+)$/);
-    if (heading) {
-      flushList();
-      nodes.push(<h4 className="ai-drawer__formatted-heading" key={`heading-${index}`}>{formatInline(heading[1])}</h4>);
-    } else if (bullet || numbered) {
-      list.push((bullet || numbered)[1]);
-    } else if (line.trim()) {
-      flushList();
-      nodes.push(<p className="ai-drawer__formatted-paragraph" key={`paragraph-${index}`}>{formatInline(line)}</p>);
-    }
-  });
-  flushList();
-  if (codeLines.length) nodes.push(<pre className="ai-drawer__code" key="code-final"><code>{codeLines.join('\n')}</code></pre>);
-  return <>{nodes}</>;
 }
 
 export default function AIAssistantDrawer({ data, isOpen, onClose }) {
@@ -190,13 +139,13 @@ export default function AIAssistantDrawer({ data, isOpen, onClose }) {
               )}
               {messages.map((m, i) => (
                 <div key={i} className={`ai-drawer__msg ai-drawer__msg--${m.role}${m.isError ? ' ai-drawer__msg--error' : ''}`}>
-                  <div className="ai-drawer__msg-bubble"><MessageContent text={m.text} /></div>
+                  <div className="ai-drawer__msg-bubble"><MarkdownText className="ai-drawer__md" text={m.text} /></div>
                 </div>
               ))}
               {loading && (
                 <div className="ai-drawer__msg ai-drawer__msg--assistant">
                   <div className="ai-drawer__msg-bubble ai-drawer__msg-bubble--streaming">
-                    {streamingText ? <MessageContent text={streamingText} /> : <span className="ai-drawer__typing"><span></span><span></span><span></span></span>}
+                    {streamingText ? <MarkdownText className="ai-drawer__md" text={streamingText} /> : <span className="ai-drawer__typing"><span></span><span></span><span></span></span>}
                   </div>
                 </div>
               )}

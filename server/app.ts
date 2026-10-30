@@ -5,6 +5,7 @@ import { MarksParser } from "./parsers/marks-parser.js";
 import { HttpError } from "./shared/errors.js";
 import { getDemoData } from "./shared/demo-data.js";
 import { generateAIResponse, isGeminiConfigured } from "./ai/gemini.js";
+import { BRIEF_PROMPT } from "./ai/prompts.js";
 import { checkRateLimit, rateLimitKey } from "./ai/rateLimit.js";
 import { getJaawCaptcha, loginWithJaaw, refreshJaawSession } from "./shared/client.js";
 import { randomUUID } from "crypto";
@@ -427,7 +428,7 @@ export function createApp(): Express {
         if (context.calendar) safeContext.calendar = context.calendar;
       }
       const reply = await generateAIResponse({
-        message: "Create a concise academic brief with these Markdown headings: Now, Attendance, Marks, This week. Give one urgent next action, attendance risk or skip margin, marks recovery priority, and a practical plan for the next seven days. Be brief.",
+        message: BRIEF_PROMPT,
         context: safeContext,
       });
       return res.json({ success: true, reply });

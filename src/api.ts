@@ -6,6 +6,12 @@ const STUDENT_PORTAL_COOKIE_STORAGE_KEY = "eduwars_student_portal_cookies";
 const PROFILE_STORAGE_KEY = "eduwars_student_profile";
 const METADATA_STORAGE_KEY = "eduwars_last_sync";
 const CREDS_STORAGE_KEY = "eduwars_user_creds";
+/**
+ * Device-local preference: the user chose "Skip for now" on the optional
+ * Student Portal onboarding. Kept out of clearStoredSession() on purpose so
+ * logging out never makes the prompt reappear on the next app open.
+ */
+const STUDENT_PORTAL_SKIP_KEY = "ledger_student_portal_skipped";
 
 export interface StoredCredentials {
   username: string;
@@ -174,6 +180,26 @@ export function saveStoredCredentials(
       "Failed to save credentials to localStorage:",
       err
     );
+  }
+}
+
+export function getStudentPortalSkipped(): boolean {
+  try {
+    return localStorage.getItem(STUDENT_PORTAL_SKIP_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function saveStudentPortalSkipped(skipped: boolean) {
+  try {
+    if (skipped) {
+      localStorage.setItem(STUDENT_PORTAL_SKIP_KEY, "1");
+    } else {
+      localStorage.removeItem(STUDENT_PORTAL_SKIP_KEY);
+    }
+  } catch {
+    // Storage may be unavailable; the prompt policy still handles this gracefully.
   }
 }
 

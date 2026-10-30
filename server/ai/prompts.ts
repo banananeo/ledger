@@ -120,3 +120,26 @@ export const QUICK_PROMPTS = {
   marks: "Review my internal marks. Which subjects need improvement and how can I recover?",
   nextClass: "What's my next class and how should I prepare?",
 } as const;
+
+/**
+ * Prompt for the Home dashboard "Academic Brief".
+ * The client renders Markdown, so the shape here is what makes the card readable.
+ */
+export const BRIEF_PROMPT = `Write the student's "Academic Brief" for the Ledger dashboard.
+Return ONLY GitHub-flavoured Markdown in exactly this shape — no preamble, no sign-off, no tables, no code fences:
+
+## Now
+- <single most urgent action for today, with course/time when known>
+
+## Attendance
+- <the main attendance risk>
+- <safe-skip or margin note when the data supports it>
+
+## Marks
+- <the highest-value marks recovery action>
+- <a strength or holding-pattern note when the data supports it>
+
+## This week
+- <2-3 concrete study/attendance actions tied to the timetable and calendar>
+
+Rules: at most 160 words total; 1-3 bullets per section; bold only course codes or key numbers; use only the data in the context; never invent numbers or events.`;

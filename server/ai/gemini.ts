@@ -68,10 +68,3 @@ export async function generateAIResponse(opts: {
   if (!text) throw new Error("Empty response from Gemini.");
   return text;
 }
-
-export async function generateSummary(context: AIContext): Promise<string> {
-  return generateAIResponse({
-    message: "Create a concise academic brief with these Markdown headings: Now, Attendance, Marks, This week. Give one urgent next action, attendance risk or skip margin, marks recovery priority, and a practical plan for the next seven days. Be brief.",
-    context,
-  });
-}

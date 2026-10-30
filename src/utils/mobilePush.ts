@@ -113,17 +113,21 @@ export async function sendMobileClassNotification({
   body,
   tag,
   data,
+  playSound = true,
+  vibrate = true,
 }: {
   title: string;
   body: string;
   tag?: string;
   data?: any;
+  playSound?: boolean;
+  vibrate?: boolean;
 }) {
   // 1. Trigger mobile haptic
-  triggerHapticVibration([250, 100, 250]);
+  if (vibrate) triggerHapticVibration([250, 100, 250]);
 
   // 2. Play chime
-  playNotificationChime();
+  if (playSound) playNotificationChime();
 
   if (typeof window === 'undefined' || !('Notification' in window) || Notification.permission !== 'granted') {
     return false;

@@ -302,6 +302,45 @@ export function XIcon(props) {
   );
 }
 
+export function PlusIcon(props) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
+export function TrashIcon(props) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M3.5 6h17" />
+      <path d="M9 6V4.6A1.6 1.6 0 0 1 10.6 3h2.8A1.6 1.6 0 0 1 15 4.6V6" />
+      <path d="M6 6l.9 13.1A1.9 1.9 0 0 0 8.8 21h6.4a1.9 1.9 0 0 0 1.9-1.9L18 6" />
+      <path d="M10 10.5v6M14 10.5v6" />
+    </svg>
+  );
+}
+
+export function PencilIcon(props) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M12 20h9" />
+      <path d="M16.6 3.4a2.1 2.1 0 0 1 3 3L7.3 18.7 3.5 19.5l.8-3.8Z" />
+    </svg>
+  );
+}
+
+export function ListTodoIcon(props) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="5" y="4" width="14" height="17" rx="2" />
+      <path d="M9 4V2.7h6V4" />
+      <path d="m8.4 11.6 1.9 1.9 3.7-3.7" />
+      <path d="M8.6 17.2h6.8" />
+    </svg>
+  );
+}
+
 export function LedgerLogoIcon(props) {
   return (
     <svg {...base} {...props} viewBox="0 0 24 24">

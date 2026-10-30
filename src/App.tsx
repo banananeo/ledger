@@ -15,10 +15,13 @@ import {
   getStoredCredentials,
   getStoredData,
   saveStoredData,
+  getStudentPortalSkipped,
+  saveStudentPortalSkipped,
   ApiError,
   CaptchaChallenge,
 } from './api';
 import type { AppData } from './types';
+import { hasAcademiaAuthSignal, resolveBootView, shouldOfferStudentPortal } from './utils/session.ts';
 import './App.css';
 
 function mergeAppData(prev: AppData | null, fresh: AppData): AppData {
@@ -80,76 +83,90 @@ export function App() {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [captchaChallenge, setCaptchaChallenge] = useState<CaptchaChallenge | null>(null);
-  const [showSplash, setShowSplash] = useState<boolean>(true);
+  const [splashDone, setSplashDone] = useState<boolean>(false);
+  const [restoring, setRestoring] = useState<boolean>(true);
 
   const lastSyncTimeRef = useRef<number>(Date.now());
-  const splashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleSplashDone = useCallback(() => {
-    setShowSplash(false);
+  const handleSplashDone = useCallback(() => setSplashDone(true), []);
+  const handleSplashSkip = useCallback(() => {
+    setSplashDone(true);
+    setRestoring(false);
   }, []);
 
-  // Safety timeout: never trap the user on splash even if animation stalls
+  // The splash doubles as the restore screen, but it must never trap the user.
   useEffect(() => {
-    if (!showSplash) return;
-    splashTimerRef.current = setTimeout(() => setShowSplash(false), 4000);
-    return () => {
-      if (splashTimerRef.current) {
-        clearTimeout(splashTimerRef.current);
-      }
-    };
-  }, [showSplash]);
+    const timer = setTimeout(() => {
+      setSplashDone(true);
+      setRestoring(false);
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, []);
 
-  // Attempt auto-restoring session from stored cookies or credentials on mount
+  // Boot: paint the cached dashboard immediately, then revalidate in the background.
   useEffect(() => {
     const cachedData = normalizeSavedData(getStoredData());
-    const academiaCookies = getAcademiaCookies();
-    const studentPortalCookies = getStudentPortalCookies();
+    const academiaCookies = getAcademiaCookies() || cachedData?.session?.academiaCookies || null;
+    const studentPortalCookies = getStudentPortalCookies() || cachedData?.session?.studentPortalCookies || null;
     const savedCreds = getStoredCredentials();
-    if (cachedData) setData(cachedData);
 
-    const hasAcademiaAuth = Boolean(
-      (academiaCookies && Object.keys(academiaCookies).length) || savedCreds || cachedData?.metadata?.loginBy === 'demo'
-    );
-    if (!hasAcademiaAuth) {
-      setAuthed(false);
-      setLoginStep('academia');
-      setStudentPortalIssue(!studentPortalCookies);
-      if (studentPortalCookies) {
-        refreshSession({ source: 'student-portal', cookies: studentPortalCookies })
-          .then((fresh) => setData((prev) => {
-            const merged = mergeAppData(normalizeSavedData(prev), fresh);
-            saveStoredData(merged);
-            return merged;
-          }))
-          .catch(() => setStudentPortalIssue(true));
+    if (cachedData) {
+      setData(cachedData);
+      setAuthed(true);
+    }
+
+    const noteMissingStudentPortal = () => {
+      setStudentPortalIssue(true);
+      setStudentPortalError('Connect Student Portal to load attendance and marks.');
+    };
+
+    const providers: Array<{ source: 'academia' | 'student-portal'; promise: Promise<AppData> }> = [];
+    if (hasAcademiaAuthSignal({ academiaCookies, savedCreds, cachedData })) {
+      providers.push({
+        source: 'academia',
+        promise: refreshSession({
+          cookies: academiaCookies || undefined,
+          username: savedCreds?.username,
+          password: savedCreds?.password,
+          isDemo: cachedData?.metadata?.loginBy === 'demo',
+        }),
+      });
+    }
+    if (studentPortalCookies) {
+      providers.push({
+        source: 'student-portal',
+        promise: refreshSession({ source: 'student-portal', cookies: studentPortalCookies }),
+      });
+    }
+
+    if (providers.length === 0) {
+      if (cachedData) {
+        const portalOnly = cachedData.metadata?.source === 'student-portal';
+        if (!portalOnly) {
+          setAcademiaIssue(true);
+          setError('Saved session could not be verified. Tap Reconnect Academia to sign in again.');
+        }
+        setAuthed(true);
+      } else {
+        setAuthed(false);
+        setLoginStep('academia');
       }
+      if (!studentPortalCookies) noteMissingStudentPortal();
+      setRestoring(false);
       return;
     }
 
     setRefreshing(true);
-    const providers: Array<{ source: 'academia' | 'student-portal'; promise: Promise<AppData> }> = [];
-    if (academiaCookies || savedCreds || cachedData?.metadata?.loginBy === 'demo') {
-      providers.push({ source: 'academia', promise: refreshSession({
-        cookies: academiaCookies || undefined,
-        username: savedCreds?.username,
-        password: savedCreds?.password,
-        isDemo: cachedData?.metadata?.loginBy === 'demo',
-      }) });
-    }
-    if (studentPortalCookies) {
-      providers.push({ source: 'student-portal', promise: refreshSession({ source: 'student-portal', cookies: studentPortalCookies }) });
-    }
-
-    Promise.all(providers.map(async ({ source, promise }) => ({ source, result: await Promise.allSettled([promise]) })))
+    Promise.all(
+      providers.map(async ({ source, promise }) => ({ source, result: await Promise.allSettled([promise]) })),
+    )
       .then((results) => {
         let merged = cachedData;
-        let academiaRestored = false;
+
         for (const { source, result: [outcome] } of results) {
           if (outcome.status === 'fulfilled') {
             merged = mergeAppData(merged, outcome.value);
             if (source === 'academia') {
-              academiaRestored = true;
               setAcademiaIssue(false);
               setError('');
             } else {
@@ -157,35 +174,34 @@ export function App() {
               setStudentPortalError('');
             }
           } else if (source === 'academia') {
+            // Background restores never open the CAPTCHA modal; the banner's
+            // Reconnect button lets the user start that flow explicitly.
             setAcademiaIssue(true);
             setError(outcome.reason?.message || 'Could not refresh Academia. Showing saved data.');
-            if (outcome.reason instanceof ApiError && outcome.reason.captchaChallenge) {
-              setCaptchaChallenge(outcome.reason.captchaChallenge);
-            }
           } else {
             setStudentPortalIssue(true);
             setStudentPortalError('Student Portal session needs to be reconnected.');
           }
         }
+
         if (merged) {
           setData(merged);
           saveStoredData(merged);
-          setAuthed(Boolean(studentPortalCookies) || Boolean(cachedData));
+          setAuthed(true);
           setLastSynced(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-        }
-        if (!studentPortalCookies && (academiaRestored || cachedData)) {
-          setStudentPortalIssue(true);
-          setAuthed(false);
-          setLoginStep('student-portal');
-        } else if (!merged) {
+          if (!studentPortalCookies) noteMissingStudentPortal();
+          setLoginStep(null);
+        } else {
           setAuthed(false);
           setLoginStep('academia');
-        } else {
-          setLoginStep(null);
         }
+
         lastSyncTimeRef.current = Date.now();
       })
-      .finally(() => setRefreshing(false));
+      .finally(() => {
+        setRefreshing(false);
+        setRestoring(false);
+      });
   }, []);
 
   const handleAcademiaSuccess = async (loginData: AppData) => {
@@ -195,6 +211,7 @@ export function App() {
     saveStoredData(merged);
     setAcademiaIssue(false);
     setError('');
+
     const studentPortalCookies = getStudentPortalCookies();
     if (studentPortalCookies) {
       setRefreshing(true);
@@ -205,23 +222,35 @@ export function App() {
         saveStoredData(complete);
         setStudentPortalIssue(false);
         setStudentPortalError('');
-        setAuthed(true);
-        setLoginStep(null);
       } catch {
         setStudentPortalIssue(true);
         setStudentPortalError('Student Portal session needs to be reconnected.');
-        setAuthed(false);
-        setLoginStep('student-portal');
       } finally {
         setRefreshing(false);
       }
+      setAuthed(true);
+      setLoginStep(null);
       setReconnecting(false);
       return;
     }
-    setAuthed(false);
+
     setReconnecting(false);
+
+    if (shouldOfferStudentPortal({ hasPortalCookies: false, skipped: getStudentPortalSkipped() })) {
+      // One-time onboarding: show the optional Student Portal form over the
+      // dashboard instead of blocking the app with it on every launch.
+      setAuthed(true);
+      setStudentPortalIssue(true);
+      setStudentPortalError('Connect Student Portal to load attendance and marks.');
+      setLoginStep('student-portal');
+      setReconnecting(true);
+      return;
+    }
+
+    setAuthed(true);
     setStudentPortalIssue(true);
-    setLoginStep('student-portal');
+    setStudentPortalError('Connect Student Portal to load attendance and marks.');
+    setLoginStep(null);
   };
 
   const handleStudentPortalSuccess = (portalData: AppData) => {
@@ -229,6 +258,7 @@ export function App() {
     setData(merged);
     if (portalData.session?.cookies) saveStudentPortalCookies(portalData.session.cookies);
     saveStoredData(merged);
+    saveStudentPortalSkipped(false);
     setStudentPortalIssue(false);
     setStudentPortalError('');
     setAuthed(true);
@@ -238,84 +268,93 @@ export function App() {
     lastSyncTimeRef.current = Date.now();
   };
 
-  const skipStudentPortal = () => {
-    setAuthed(true);
-    setLoginStep(null);
-    setReconnecting(false);
-    if (studentPortalIssue) setStudentPortalError('Connect Student Portal to load attendance and marks.');
-  };
-
-  const handleSync = useCallback(async (captchaText?: string) => {
-    if (refreshing) return;
-    const savedCreds = getStoredCredentials();
-    const academiaCookies = data?.session?.academiaCookies || getAcademiaCookies();
-    const studentPortalCookies = data?.session?.studentPortalCookies || getStudentPortalCookies();
-    const requests: Array<{ provider: 'academia' | 'student-portal'; promise: Promise<AppData> }> = [];
-    if (academiaCookies || savedCreds || data?.metadata?.loginBy === 'demo') {
-      requests.push({ provider: 'academia', promise: refreshSession({
-        cookies: academiaCookies || undefined,
-        username: savedCreds?.username,
-        password: savedCreds?.password,
-        captcha: captchaText,
-        cdigest: captchaText ? captchaChallenge?.cdigest : undefined,
-        isDemo: data?.metadata?.loginBy === 'demo',
-      }) });
-    }
-    if (studentPortalCookies) {
-      requests.push({ provider: 'student-portal', promise: refreshSession({ source: 'student-portal', cookies: studentPortalCookies }) });
-    }
-    if (!requests.length) return;
-    setRefreshing(true);
-    setError('');
-    let waitingForCaptcha = false;
-    try {
-      const results = await Promise.all(requests.map(async ({ provider, promise }) => ({
-        provider,
-        result: (await Promise.allSettled([promise]))[0],
-      })));
-      let mergedData = data;
-      const academiaErrors: string[] = [];
-      setLastSynced(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-      lastSyncTimeRef.current = Date.now();
-      for (const { provider, result } of results) {
-        if (result.status === 'fulfilled') {
-          mergedData = mergeAppData(mergedData, result.value);
-          if (provider === 'academia') setAcademiaIssue(false);
-          else {
-            setStudentPortalIssue(false);
-            setStudentPortalError('');
-          }
-        } else if (provider === 'academia') {
-          setAcademiaIssue(true);
-          if (result.reason instanceof ApiError && result.reason.captchaChallenge) {
-            waitingForCaptcha = true;
-            setCaptchaChallenge(result.reason.captchaChallenge);
+  const handleSync = useCallback(
+    async (captchaText?: string, options?: { interactive?: boolean }) => {
+      const interactive = options?.interactive !== false;
+      if (refreshing) return;
+      const savedCreds = getStoredCredentials();
+      const academiaCookies = data?.session?.academiaCookies || getAcademiaCookies();
+      const studentPortalCookies = data?.session?.studentPortalCookies || getStudentPortalCookies();
+      const requests: Array<{ provider: 'academia' | 'student-portal'; promise: Promise<AppData> }> = [];
+      if (academiaCookies || savedCreds || data?.metadata?.loginBy === 'demo') {
+        requests.push({
+          provider: 'academia',
+          promise: refreshSession({
+            cookies: academiaCookies || undefined,
+            username: savedCreds?.username,
+            password: savedCreds?.password,
+            captcha: captchaText,
+            cdigest: captchaText ? captchaChallenge?.cdigest : undefined,
+            isDemo: data?.metadata?.loginBy === 'demo',
+          }),
+        });
+      }
+      if (studentPortalCookies) {
+        requests.push({
+          provider: 'student-portal',
+          promise: refreshSession({ source: 'student-portal', cookies: studentPortalCookies }),
+        });
+      }
+      if (!requests.length) return;
+      setRefreshing(true);
+      setError('');
+      let waitingForCaptcha = false;
+      try {
+        const results = await Promise.all(
+          requests.map(async ({ provider, promise }) => ({
+            provider,
+            result: (await Promise.allSettled([promise]))[0],
+          })),
+        );
+        let mergedData = data;
+        const academiaErrors: string[] = [];
+        setLastSynced(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        lastSyncTimeRef.current = Date.now();
+        for (const { provider, result } of results) {
+          if (result.status === 'fulfilled') {
+            mergedData = mergeAppData(mergedData, result.value);
+            if (provider === 'academia') setAcademiaIssue(false);
+            else {
+              setStudentPortalIssue(false);
+              setStudentPortalError('');
+            }
+          } else if (provider === 'academia') {
+            setAcademiaIssue(true);
+            if (result.reason instanceof ApiError && result.reason.captchaChallenge && interactive) {
+              waitingForCaptcha = true;
+              setCaptchaChallenge(result.reason.captchaChallenge);
+            } else if (result.reason instanceof ApiError && result.reason.captchaChallenge) {
+              academiaErrors.push(
+                'Academia needs a quick re-verification. Use Reconnect Academia to sign in again.',
+              );
+            } else {
+              academiaErrors.push(result.reason?.message || 'Academia refresh failed.');
+            }
           } else {
-            academiaErrors.push(result.reason?.message || 'Academia refresh failed.');
+            setStudentPortalIssue(true);
+            setStudentPortalError('Student Portal session needs to be reconnected.');
           }
-        } else {
-          setStudentPortalIssue(true);
-          setStudentPortalError('Student Portal session needs to be reconnected.');
         }
+        if (mergedData) {
+          setData(mergedData);
+          saveStoredData(mergedData);
+        }
+        setError(academiaErrors.join(' '));
+      } finally {
+        setRefreshing(false);
+        if (!waitingForCaptcha) setCaptchaChallenge(null);
       }
-      if (mergedData) {
-        setData(mergedData);
-        saveStoredData(mergedData);
-      }
-      setError(academiaErrors.join(' '));
-    } finally {
-      setRefreshing(false);
-      if (!waitingForCaptcha) setCaptchaChallenge(null);
-    }
-  }, [data, refreshing, captchaChallenge]);
+    },
+    [data, refreshing, captchaChallenge],
+  );
 
   useEffect(() => {
     const onFocus = () => {
       const now = Date.now();
-      // Auto-sync at most once every 3 minutes on window focus/network recovery
+      // Auto-sync at most once every 3 minutes on window focus/network recovery.
       if (authed && data && now - lastSyncTimeRef.current > 180000 && !refreshing) {
         lastSyncTimeRef.current = now;
-        handleSync();
+        handleSync(undefined, { interactive: false });
       }
     };
 
@@ -353,19 +392,27 @@ export function App() {
   };
 
   const skipOrCloseStudentPortal = () => {
+    saveStudentPortalSkipped(true);
     setAuthed(true);
     setLoginStep(null);
     setReconnecting(false);
   };
 
-  const overlayLogin = authed && reconnecting;
+  const bootView = resolveBootView({ hasData: Boolean(data), restoring, splashDone });
+  const overlayLogin = Boolean(data) && reconnecting;
+  const splashStatus = !data && restoring ? 'Connecting to Academia…' : 'Preparing your dashboard';
 
   return (
     <MotionConfig reducedMotion="user">
       <AnimatePresence mode="sync">
-        {showSplash ? (
-          <SplashScreen key="splash" onDone={handleSplashDone} />
-        ) : !authed || !data ? (
+        {bootView === 'splash' ? (
+          <SplashScreen
+            key="splash"
+            onDone={handleSplashDone}
+            onSkip={handleSplashSkip}
+            status={splashStatus}
+          />
+        ) : bootView === 'login' ? (
           <motion.div
             key="login"
             initial={{ opacity: 0, y: 12, scale: 0.99, filter: 'blur(8px)' }}
@@ -426,5 +473,3 @@ export function App() {
 }
 
 export default App;
-
-

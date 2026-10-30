@@ -115,44 +115,64 @@
     color: var(--ink)
 }
 
-.ai-drawer__formatted-heading {
+.ai-drawer__md {
+    font-size: 13.5px;
+    line-height: 1.5
+}
+
+.ai-drawer__md .md-h1,
+.ai-drawer__md .md-h2,
+.ai-drawer__md .md-h3 {
     margin: 8px 0 4px;
+    padding-top: 0;
+    border-top: none;
     color: var(--yellow);
     font-family: var(--display);
     font-size: 12px;
     font-weight: 800;
-    letter-spacing: .02em
+    letter-spacing: .02em;
+    text-transform: none
 }
 
-.ai-drawer__formatted-heading:first-child {
+.ai-drawer__md .md-h1::before,
+.ai-drawer__md .md-h2::before,
+.ai-drawer__md .md-h3::before {
+    display: none
+}
+
+.ai-drawer__md .md-h1:first-child,
+.ai-drawer__md .md-h2:first-child,
+.ai-drawer__md .md-h3:first-child {
     margin-top: 0
 }
 
-.ai-drawer__formatted-paragraph {
-    margin: 0 0 7px;
-    white-space: pre-wrap
+.ai-drawer__md .md-p {
+    margin: 0 0 7px
 }
 
-.ai-drawer__formatted-list {
-    margin: 0 0 8px 18px;
-    padding: 0
+.ai-drawer__md .md-ul {
+    margin: 0 0 8px;
+    padding-left: 18px
 }
 
-.ai-drawer__formatted-list li {
+.ai-drawer__md .md-ol {
+    margin: 0 0 8px;
+    padding-left: 22px
+}
+
+.ai-drawer__md .md-li {
     margin: 3px 0
 }
 
-.ai-drawer__code {
+.ai-drawer__md .md-pre {
     margin: 8px 0;
-    overflow-x: auto;
     padding: 9px;
-    border: 1px solid var(--line-strong);
     border-radius: 8px;
-    background: var(--paper);
-    color: var(--ink);
-    font-family: var(--mono);
-    font-size: 11.5px;
-    white-space: pre
+    background: var(--paper)
+}
+
+.ai-drawer__md .md-code {
+    font-size: 11.5px
 }
 
 .ai-drawer__msg--error .ai-drawer__msg-bubble {

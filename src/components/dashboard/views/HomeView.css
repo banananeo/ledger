@@ -83,14 +83,75 @@
 
 .home__brief-content {
   margin: 16px 0 0;
-  padding: 14px;
+  padding: 14px 16px;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.045);
   color: var(--ink);
-  font-size: 13px;
-  line-height: 1.55;
-  white-space: pre-wrap;
+}
+
+/* Rendered markdown inside the brief card */
+.home__brief-md .md-p {
+  margin-bottom: 8px;
+}
+
+.home__brief-md .md-ul,
+.home__brief-md .md-ol {
+  margin-bottom: 8px;
+}
+
+.home__brief-md .md-h2,
+.home__brief-md .md-h3 {
+  margin: 16px 0 7px;
+  padding-top: 11px;
+}
+
+.home__brief-md .md-h2:first-child,
+.home__brief-md .md-h3:first-child {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.home__brief-skeleton {
+  margin: 16px 0 0;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.home__brief-skeleton span {
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--line) 0%, var(--line-strong) 45%, var(--line) 100%);
+  background-size: 200% 100%;
+  animation: home-brief-shimmer 1.4s ease-in-out infinite;
+}
+
+.home__brief-skeleton span:nth-child(2) {
+  width: 92%;
+}
+
+.home__brief-skeleton span:nth-child(3) {
+  width: 64%;
+}
+
+@keyframes home-brief-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home__brief-skeleton span {
+    animation: none;
+  }
 }
 
 .home__brief-error {

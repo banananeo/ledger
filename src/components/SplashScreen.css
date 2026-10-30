@@ -1,4 +1,7 @@
-/* Logo-only super-modern splash — matches Ledger dark neo-brutalist theme */
+/* Ledger splash — dark neo-brutalist brand loader.
+   Also acts as the session-restore screen, so the status line and Skip button
+   stay meaningful if the app is still restoring data past the intro. */
+
 .splash-screen.splash-logo-only {
   position: fixed;
   inset: 0;
@@ -15,7 +18,8 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-/* ambient */
+/* ---- ambient layers ---- */
+
 .slo-glow {
   position: absolute;
   width: min(560px, 120vw);
@@ -25,15 +29,17 @@
     radial-gradient(closest-side, rgba(45, 212, 191, 0.16), transparent 70%),
     radial-gradient(closest-side at 70% 65%, rgba(251, 191, 36, 0.1), transparent 70%);
   filter: blur(10px);
-  animation: slo-breathe 2.4s ease-in-out both;
+  animation: slo-breathe 3.2s ease-in-out both;
   pointer-events: none;
 }
+
 @keyframes slo-breathe {
   0% { opacity: 0; transform: scale(0.92); }
   25% { opacity: 1; transform: scale(1); }
   80% { opacity: 1; transform: scale(1.02); }
   100% { opacity: 0.85; transform: scale(1.03); }
 }
+
 .slo-grid {
   position: absolute;
   inset: -10%;
@@ -46,6 +52,23 @@
   opacity: 0.7;
   pointer-events: none;
 }
+
+.slo-orbit {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: min(330px, 84vw);
+  height: min(330px, 84vw);
+  border: 1px dashed rgba(94, 234, 212, 0.22);
+  border-radius: 50%;
+  animation: slo-orbit-spin 22s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes slo-orbit-spin {
+  to { transform: rotate(360deg); }
+}
+
 .slo-vignette {
   position: absolute;
   inset: 0;
@@ -53,19 +76,22 @@
   pointer-events: none;
 }
 
-/* stack */
+/* ---- stack ---- */
+
 .slo-stack {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
+  gap: 16px;
   animation: slo-stack-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+
 @keyframes slo-stack-in {
   from { opacity: 0; transform: translateY(10px) scale(0.985); }
   to { opacity: 1; transform: none; }
 }
+
 .slo-eyebrow {
   font-family: var(--mono, ui-monospace, monospace);
   font-size: 11px;
@@ -73,15 +99,16 @@
   text-transform: uppercase;
   color: var(--ink-soft, #9fa6b5);
   opacity: 0;
-  animation: slo-fade-up 0.45s ease 0.15s forwards;
+  animation: slo-fade-up 0.45s ease 0.1s forwards;
 }
 
-/* logo card */
+/* ---- logo card ---- */
+
 .slo-logo-card {
   position: relative;
-  width: 112px;
-  height: 112px;
-  border-radius: 28px;
+  width: 120px;
+  height: 120px;
+  border-radius: 30px;
   background: var(--surface, #1a1c23);
   border: var(--stroke, 2px) solid var(--ink, #f7f7f9);
   box-shadow: var(--shadow-hard, 5px 5px 0 #000), var(--teal-glow, 0 0 16px rgba(45, 212, 191, 0.4));
@@ -90,80 +117,106 @@
   justify-content: center;
   overflow: hidden;
   color: var(--ink, #f7f7f9);
-  animation: slo-card-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: slo-card-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
   will-change: transform;
   backface-visibility: hidden;
 }
+
 @keyframes slo-card-in {
   0% { opacity: 0; transform: translateY(16px) scale(0.9) rotate(-4deg); }
   100% { opacity: 1; transform: none; }
 }
+
 .slo-mark {
-  width: 76px;
-  height: 76px;
+  width: 82px;
+  height: 82px;
   overflow: visible;
 }
+
+/* The Ledger mark is an L with a dot — never a top/middle bar. */
 .slo-l-draw {
-  stroke-dasharray: 320;
-  stroke-dashoffset: 320;
-  animation: slo-l-draw 0.7s cubic-bezier(0.4, 0, 0.2, 1) 0.25s forwards;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: slo-l-draw 0.55s cubic-bezier(0.4, 0, 0.2, 1) 0.15s forwards;
 }
+
 @keyframes slo-l-draw {
   to { stroke-dashoffset: 0; }
 }
+
 .slo-dot {
   fill: var(--yellow, #fbbf24);
   opacity: 0;
-  transform-origin: 96px 96px;
-  animation: slo-dot-pop 0.4s cubic-bezier(0.2, 1.8, 0.3, 1) 0.85s both;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation:
+    slo-dot-pop 0.35s cubic-bezier(0.2, 1.8, 0.3, 1) 0.6s both,
+    slo-dot-pulse 2.6s ease-in-out 1s infinite;
 }
+
 @keyframes slo-dot-pop {
   0% { opacity: 0; transform: scale(0.2); }
   100% { opacity: 1; transform: scale(1); }
 }
+
+@keyframes slo-dot-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.12); opacity: 0.85; }
+}
+
 .slo-shimmer {
   position: absolute;
   inset: -40%;
   background: linear-gradient(105deg, transparent 42%, rgba(255, 255, 255, 0.22) 50%, transparent 58%);
   transform: translateX(-70%);
-  animation: slo-shimmer 0.9s ease 1s both;
+  animation: slo-shimmer 0.8s ease 0.7s both;
   pointer-events: none;
 }
+
 @keyframes slo-shimmer {
   to { transform: translateX(70%); }
 }
 
-/* wordmark */
+/* ---- wordmark ---- */
+
 .slo-brand {
   font-family: var(--display, 'Space Grotesk', system-ui, sans-serif);
-  font-size: 42px;
+  font-size: 44px;
   font-weight: 700;
   letter-spacing: -0.035em;
   line-height: 1;
   display: inline-flex;
   align-items: baseline;
 }
+
 .slo-letter {
   display: inline-block;
   opacity: 0;
-  transform: translateY(12px);
-  animation: slo-letter-rise 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform: translateY(10px);
+  animation: slo-letter-rise 0.34s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: calc(0.36s + var(--i, 0) * 35ms);
 }
+
 @keyframes slo-letter-rise {
   to { opacity: 1; transform: none; }
 }
-.slo-letter-dot { color: var(--yellow, #fbbf24); }
 
-/* hairline loader */
+.slo-letter-dot {
+  color: var(--yellow, #fbbf24);
+}
+
+/* ---- loader + status ---- */
+
 .slo-loader {
-  width: 132px;
+  width: 150px;
   height: 3px;
   border-radius: 999px;
   background: var(--line, #272a35);
   overflow: hidden;
   opacity: 0;
-  animation: slo-fade-up 0.4s ease 0.3s forwards;
+  animation: slo-fade-up 0.4s ease 0.2s forwards;
 }
+
 .slo-loader-fill {
   height: 100%;
   width: 100%;
@@ -171,34 +224,137 @@
   background: linear-gradient(90deg, var(--teal, #2dd4bf), var(--accent, #5eead4));
   transform-origin: 0% 50%;
   transform: scaleX(0);
-  animation: slo-loader-fill 2s cubic-bezier(0.3, 0.7, 0.3, 1) 0.3s forwards;
+  animation: slo-loader-fill 1.2s cubic-bezier(0.3, 0.7, 0.3, 1) 0.25s forwards;
 }
+
 @keyframes slo-loader-fill {
   to { transform: scaleX(1); }
 }
+
+.slo-status {
+  margin: 0;
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--mute, #6c7283);
+  opacity: 0;
+  animation:
+    slo-fade-up 0.5s ease 0.45s forwards,
+    slo-status-pulse 2.4s ease-in-out 1.2s infinite;
+}
+
+@keyframes slo-status-pulse {
+  0%, 100% { opacity: 0.72; }
+  50% { opacity: 1; }
+}
+
 @keyframes slo-fade-up {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: none; }
 }
 
-/* dock handled by App exit; no extra docking class needed */
+/* ---- skip ---- */
+
+.slo-skip {
+  position: absolute;
+  bottom: calc(26px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-chip, 999px);
+  background: transparent;
+  color: var(--mute, #6c7283);
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  opacity: 0;
+  animation: slo-skip-in 0.45s ease 1.05s forwards;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.slo-skip:hover {
+  color: var(--ink, #f7f7f9);
+  border-color: var(--line-strong, #383d4c);
+}
+
+.slo-skip:focus-visible {
+  outline: 2px solid var(--accent, #5eead4);
+  outline-offset: 3px;
+  color: var(--ink, #f7f7f9);
+}
+
+@keyframes slo-skip-in {
+  to { opacity: 1; }
+}
+
+/* ---- small screens ---- */
+
+@media (max-width: 380px) {
+  .slo-stack {
+    gap: 14px;
+  }
+
+  .slo-logo-card {
+    width: 104px;
+    height: 104px;
+    border-radius: 24px;
+  }
+
+  .slo-mark {
+    width: 72px;
+    height: 72px;
+  }
+
+  .slo-brand {
+    font-size: 38px;
+  }
+
+  .slo-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.28em;
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .slo-glow,
-  .slo-shimmer {
+  .slo-shimmer,
+  .slo-orbit {
     display: none !important;
   }
+
   .slo-stack,
-  .slo-logo-card,
   .slo-eyebrow,
+  .slo-logo-card,
   .slo-letter,
-  .slo-loader {
+  .slo-loader,
+  .slo-status,
+  .slo-skip {
     opacity: 1 !important;
     transform: none !important;
     animation: none !important;
   }
-  .slo-l-draw { stroke-dashoffset: 0 !important; animation: none !important; }
-  .slo-dot { opacity: 1 !important; transform: none !important; animation: none !important; }
-  .slo-loader-fill { transform: scaleX(1) !important; animation: none !important; }
-  .splash-screen.splash-logo-only { cursor: default; }
+
+  .slo-skip {
+    transform: translateX(-50%) !important;
+  }
+
+  .slo-l-draw {
+    stroke-dashoffset: 0 !important;
+    animation: none !important;
+  }
+
+  .slo-dot {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+
+  .slo-loader-fill {
+    transform: scaleX(1) !important;
+    animation: none !important;
+  }
 }

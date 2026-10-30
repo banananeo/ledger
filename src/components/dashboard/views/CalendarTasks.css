@@ -1,0 +1,817 @@
+/* =========================================================================
+   My Tasks — personal to-do list rendered inside the Academic Calendar view.
+
+   Mobile-first rules:
+   - row actions drop to their own line so titles keep a readable width
+   - 40px+ touch targets for checkbox / edit / delete
+   - form controls are 16px on phones so iOS does not zoom on focus
+   - filters scroll horizontally instead of stacking into 3 rows
+   ========================================================================= */
+
+.ctasks {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ---- Header ---- */
+
+.ctasks__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.ctasks__head-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  min-width: 0;
+}
+
+.ctasks__icon-badge {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: var(--stroke) solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--accent);
+}
+
+.ctasks__title {
+  font-size: 18px;
+  color: var(--ink);
+  margin-top: 2px;
+}
+
+.ctasks__sub {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  margin-top: 2px;
+}
+
+.ctasks__head-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ctasks__stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ctasks__add-btn {
+  min-height: 38px;
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+/* ---- Notices ---- */
+
+.ctasks__notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  border: 1.5px solid var(--warning);
+  border-radius: 9px;
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: 12.5px;
+}
+
+.ctasks__notice--soft {
+  border-color: var(--line-strong);
+  background: var(--paper);
+  color: var(--ink-soft);
+}
+
+.ctasks__mini-btn {
+  min-height: 34px;
+  padding: 5px 10px;
+  font-size: 11.5px;
+}
+
+/* ---- Add / edit form ---- */
+
+.ctasks__form {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--paper);
+}
+
+.ctasks__form-title {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.ctasks__form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.ctasks__field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.ctasks__field--wide {
+  grid-column: 1 / -1;
+}
+
+.ctasks__label {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+.ctasks__input {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 9px 11px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 13.5px;
+  line-height: 1.35;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ctasks__input::placeholder {
+  color: var(--mute);
+}
+
+.ctasks__input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+select.ctasks__input {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 30px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--ink-soft) 50%),
+    linear-gradient(135deg, var(--ink-soft) 50%, transparent 50%);
+  background-position: calc(100% - 15px) 55%, calc(100% - 10px) 55%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+textarea.ctasks__input {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.ctasks__form-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ctasks__form-actions .bbtn {
+  min-height: 40px;
+}
+
+.ctasks__form-error {
+  color: var(--danger);
+  font-size: 12.5px;
+}
+
+/* ---- Filters ---- */
+
+.ctasks__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ctasks__filters {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ctasks__filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 6px 12px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--radius-chip);
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+}
+
+.ctasks__filter:hover {
+  border-color: var(--ink-soft);
+  color: var(--ink);
+}
+
+.ctasks__filter:active {
+  background: var(--line);
+}
+
+.ctasks__filter--active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.ctasks__filter-count {
+  font-size: 10.5px;
+  opacity: 0.75;
+}
+
+.ctasks__clear {
+  min-height: 34px;
+  padding: 4px;
+  border: none;
+  background: none;
+  color: var(--mute);
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ctasks__clear:hover {
+  color: var(--ink);
+}
+
+/* ---- Task list ---- */
+
+.ctasks__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.ctasks__row {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: 'check main actions';
+  align-items: start;
+  column-gap: 9px;
+  row-gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--surface);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.ctasks__row--priority-high {
+  border-left-color: var(--danger);
+}
+
+.ctasks__row--priority-medium {
+  border-left-color: var(--warning);
+}
+
+.ctasks__row--priority-low {
+  border-left-color: var(--line-strong);
+}
+
+.ctasks__row--done {
+  opacity: 0.62;
+  border-left-color: var(--line);
+}
+
+.ctasks__check {
+  grid-area: check;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin: -8px 0 -8px -8px;
+  border-radius: 10px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ctasks__check:active {
+  background: var(--line);
+}
+
+.ctasks__check input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.ctasks__row-main {
+  grid-area: main;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 1px;
+}
+
+.ctasks__row-titleline {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ctasks__row-title {
+  font-size: 14.5px;
+  line-height: 1.35;
+  font-weight: 600;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.ctasks__row--done .ctasks__row-title {
+  color: var(--ink-soft);
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+}
+
+.ctasks__row-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ctasks__due {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  padding: 2px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-chip);
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.ctasks__due--today {
+  border-color: var(--warning);
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.ctasks__due--overdue {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.ctasks__due--done {
+  border-color: var(--line);
+  color: var(--mute);
+}
+
+.ctasks__chip {
+  font-size: 9.5px;
+  padding: 2px 8px;
+  border-width: 1.5px;
+}
+
+.ctasks__row-notes {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.ctasks__row-actions {
+  grid-area: actions;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+.ctasks__row-actions--confirming::before {
+  content: 'Delete?';
+  margin-right: 2px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--danger);
+}
+
+.ctasks__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1.5px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+}
+
+.ctasks__icon-btn:hover {
+  border-color: var(--line-strong);
+  background: var(--line);
+  color: var(--ink);
+}
+
+.ctasks__icon-btn--danger:hover {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.ctasks__icon-btn--confirm {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: var(--paper);
+}
+
+.ctasks__icon-btn--confirm:hover {
+  background: var(--danger);
+  color: var(--paper);
+}
+
+/* ---- Empty state ---- */
+
+.ctasks__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 16px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 12px;
+  background: var(--paper);
+}
+
+.ctasks__empty p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.ctasks__empty-btn {
+  min-height: 40px;
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+/* Mobile-only shortcut shown under the list */
+.ctasks__add-footer {
+  display: none;
+}
+
+/* ---- Selected-day task list (inside the calendar day details card) ---- */
+
+.ctasks__day {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ctasks__day-title {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+.ctasks__day-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ctasks__day-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  width: 100%;
+  min-height: 38px;
+  padding: 4px 2px;
+  font-size: 13px;
+  color: var(--ink);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ctasks__day-label input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  flex: none;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.ctasks__day-title-text {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ctasks__day-row--done {
+  color: var(--ink-soft);
+}
+
+.ctasks__day-row--done .ctasks__day-title-text {
+  text-decoration: line-through;
+}
+
+/* =========================================================================
+   Responsive
+   ========================================================================= */
+
+@media (max-width: 700px) {
+  .ctasks__form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ctasks__field--wide {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 620px) {
+  .ctasks {
+    padding: 14px 12px;
+    gap: 12px;
+  }
+
+  .ctasks__icon-badge {
+    width: 34px;
+    height: 34px;
+  }
+
+  .ctasks__title {
+    font-size: 17px;
+  }
+
+  .ctasks__sub {
+    font-size: 12px;
+  }
+
+  .ctasks__head-right {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .ctasks__stats {
+    gap: 5px;
+  }
+
+  .ctasks__stats .bchip {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+
+  .ctasks__add-btn {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+    font-size: 14px;
+  }
+
+  .ctasks__notice {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ctasks__mini-btn {
+    min-height: 38px;
+    align-self: flex-start;
+  }
+
+  /* iOS zooms focused controls below 16px — keep the form readable */
+  .ctasks__input {
+    font-size: 16px;
+    min-height: 46px;
+    padding: 10px 12px;
+  }
+
+  textarea.ctasks__input {
+    min-height: 76px;
+  }
+
+  .ctasks__field--date {
+    grid-column: 1 / -1;
+  }
+
+  .ctasks__form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ctasks__form-actions .bbtn {
+    min-height: 44px;
+    width: 100%;
+  }
+
+  .ctasks__toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .ctasks__filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 2px 2px 6px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .ctasks__filters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .ctasks__filter {
+    flex: 0 0 auto;
+    min-height: 38px;
+    padding: 7px 13px;
+    font-size: 12.5px;
+  }
+
+  .ctasks__clear {
+    align-self: flex-start;
+    min-height: 32px;
+  }
+
+  /* Actions move below the task so the title gets the full width */
+  .ctasks__row {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      'check main'
+      'actions actions';
+    row-gap: 6px;
+    padding: 11px 12px;
+  }
+
+  .ctasks__check {
+    width: 42px;
+    height: 42px;
+    margin: -9px 0 -9px -9px;
+  }
+
+  .ctasks__check input {
+    width: 22px;
+    height: 22px;
+  }
+
+  .ctasks__row-main {
+    gap: 7px;
+  }
+
+  .ctasks__row-title {
+    font-size: 15px;
+  }
+
+  .ctasks__due {
+    font-size: 11px;
+    min-height: 24px;
+  }
+
+  .ctasks__chip {
+    font-size: 10px;
+    padding: 2px 8px;
+  }
+
+  .ctasks__row-actions {
+    justify-self: end;
+    margin-top: -2px;
+  }
+
+  .ctasks__icon-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+
+  .ctasks__row-actions--confirming::before {
+    font-size: 10.5px;
+  }
+
+  .ctasks__add-footer {
+    display: inline-flex;
+    width: 100%;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+
+  .ctasks__empty {
+    padding: 14px;
+  }
+
+  .ctasks__empty-btn {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .ctasks__day-label {
+    min-height: 44px;
+    font-size: 13.5px;
+  }
+
+  .ctasks__day-label input[type='checkbox'] {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+@media (max-width: 380px) {
+  .ctasks__form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ctasks__field--wide,
+  .ctasks__field--date {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ctasks__input,
+  .ctasks__filter,
+  .ctasks__row,
+  .ctasks__icon-btn {
+    transition: none;
+  }
+}

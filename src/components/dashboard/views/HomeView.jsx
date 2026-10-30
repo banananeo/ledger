@@ -4,6 +4,7 @@ import { ClockIcon, CalendarIcon, BellIcon, GamepadIcon } from '../Icons.jsx';
 import { todayISO, findEntryForDate, allEntries } from '../../../utils/calendar.js';
 import { useNotifications } from '../../../context/NotificationContext.tsx';
 import { aiSummary } from '../../../api.ts';
+import MarkdownText from '../../MarkdownText.jsx';
 import './HomeView.css';
 
 const homeContainerVariants = {
@@ -210,7 +211,9 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
     setBriefError('');
     try {
       const response = await aiSummary({ profile, attendance, marks, schedule, calendar });
-      setAcademicBrief(response);
+      const brief = String(response || '').trim();
+      if (!brief) throw new Error('Ledger AI returned an empty brief. Try again.');
+      setAcademicBrief(brief);
     } catch (error) {
       setBriefError(error?.message || 'Ledger AI could not generate your brief right now.');
     } finally {
@@ -246,9 +249,17 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
         </div>
 
         {briefError && <p className="home__brief-error" role="status">{briefError}</p>}
-        {academicBrief ? (
-          <p className="home__brief-content">{academicBrief}</p>
-        ) : !briefLoading && !briefError ? (
+        {briefLoading ? (
+          <div className="home__brief-skeleton" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
+        ) : academicBrief ? (
+          <div className="home__brief-content" aria-live="polite">
+            <MarkdownText className="home__brief-md" text={academicBrief} />
+          </div>
+        ) : !briefError ? (
           <p className="home__brief-empty">Generate a brief for your next action, attendance, marks, and week plan.</p>
         ) : null}
       </motion.section>

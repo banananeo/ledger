@@ -7,6 +7,7 @@ import NotificationDrawer from './NotificationDrawer.jsx';
 import AcademiaDownBanner from './AcademiaDownBanner.jsx';
 import CurtainsScopeTransition from './CurtainsScopeTransition.jsx';
 import { NotificationProvider } from '../../context/NotificationContext.tsx';
+import { TodoProvider } from '../../context/TodoContext.tsx';
 import HomeView from './views/HomeView.jsx';
 import TimetableView from './views/TimetableView.jsx';
 import AttendanceView from './views/AttendanceView.jsx';
@@ -68,98 +69,99 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onRec
 
   return (
     <NotificationProvider schedule={schedule} calendar={calendar}>
-      <div
-        className="shell"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        <Sidebar
-          view={view}
-          onNavigate={navigate}
-          onRefresh={onRefresh}
-          refreshing={refreshing}
-          onLogout={onLogout}
-          onReconnectAcademia={onReconnectAcademia}
-          onConnectStudentPortal={onConnectStudentPortal}
-          academiaIssue={academiaIssue}
-          studentPortalIssue={studentPortalIssue}
-        />
-        <div className="shell__main" style={{ transform: `translateY(${pullDistance}px)`, transition: pullDistance === 0 ? 'transform 0.2s ease-out' : 'none' }}>
-          {/* Pull Indicator */}
-          <div className="shell__pull-indicator" style={{ height: pullDistance > 0 ? 60 : 0, opacity: pullDistance / 80 }}>
-            {refreshing ? 'Syncing...' : pullDistance > 60 ? 'Release to refresh' : 'Pull down to refresh'}
-          </div>
-          <TopBar
+      <TodoProvider>
+        <div
+          className="shell"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          <Sidebar
             view={view}
-            onBack={() => navigate('home')}
+            onNavigate={navigate}
             onRefresh={onRefresh}
             refreshing={refreshing}
-            profile={profile}
             onLogout={onLogout}
-            onOpenAI={() => setAiOpen(true)}
+            onReconnectAcademia={onReconnectAcademia}
+            onConnectStudentPortal={onConnectStudentPortal}
+            academiaIssue={academiaIssue}
+            studentPortalIssue={studentPortalIssue}
           />
-          {error && (
-            <AcademiaDownBanner
-              error={error}
-              onRetry={onRefresh}
-              onReconnectAcademia={onReconnectAcademia}
-              onPlayGame={(gameType) => {
-                navigate('games');
-              }}
-            />
-          )}
-          {studentPortalError && (
-            <div className="student-portal-notice" role="status">
-              <span>{studentPortalError}</span>
-              <button type="button" onClick={onConnectStudentPortal}>Connect Student Portal</button>
+          <div className="shell__main" style={{ transform: `translateY(${pullDistance}px)`, transition: pullDistance === 0 ? 'transform 0.2s ease-out' : 'none' }}>
+            {/* Pull Indicator */}
+            <div className="shell__pull-indicator" style={{ height: pullDistance > 0 ? 60 : 0, opacity: pullDistance / 80 }}>
+              {refreshing ? 'Syncing...' : pullDistance > 60 ? 'Release to refresh' : 'Pull down to refresh'}
             </div>
-          )}
-          <div className="shell__content">
-            <ClassReminderBanner onNavigate={navigate} />
+            <TopBar
+              view={view}
+              onBack={() => navigate('home')}
+              onRefresh={onRefresh}
+              refreshing={refreshing}
+              profile={profile}
+              onLogout={onLogout}
+              onOpenAI={() => setAiOpen(true)}
+            />
+            {error && (
+              <AcademiaDownBanner
+                error={error}
+                onRetry={onRefresh}
+                onReconnectAcademia={onReconnectAcademia}
+                onPlayGame={(gameType) => {
+                  navigate('games');
+                }}
+              />
+            )}
+            {studentPortalError && (
+              <div className="student-portal-notice" role="status">
+                <span>{studentPortalError}</span>
+                <button type="button" onClick={onConnectStudentPortal}>Connect Student Portal</button>
+              </div>
+            )}
+            <div className="shell__content">
+              <ClassReminderBanner onNavigate={navigate} />
 
-            <CurtainsScopeTransition activeView={view} origin={transitionOrigin}>
-              {(currentActiveView) => (
-                <div className="shell__view-wrapper">
-                  {currentActiveView === 'home' && (
-                    <HomeView
-                      profile={profile}
-                      attendance={attendance}
-                      schedule={schedule}
-                      marks={marks}
-                      calendar={calendar}
-                      lastSynced={lastSynced}
-                      onNavigate={navigate}
-                    />
-                  )}
-                  {currentActiveView === 'timetable' && (
-                    <TimetableView schedule={schedule} calendar={calendar} profile={profile} />
-                  )}
+              <CurtainsScopeTransition activeView={view} origin={transitionOrigin}>
+                {(currentActiveView) => (
+                  <div className="shell__view-wrapper">
+                    {currentActiveView === 'home' && (
+                      <HomeView
+                        profile={profile}
+                        attendance={attendance}
+                        schedule={schedule}
+                        marks={marks}
+                        calendar={calendar}
+                        lastSynced={lastSynced}
+                        onNavigate={navigate}
+                      />
+                    )}
+                    {currentActiveView === 'timetable' && (
+                      <TimetableView schedule={schedule} calendar={calendar} profile={profile} />
+                    )}
 
-                  {currentActiveView === 'attendance' && (
-                    <AttendanceView attendance={attendance} schedule={schedule} calendar={calendar} />
-                  )}
-                  {currentActiveView === 'games' && (
-                    <GamesView schedule={schedule} attendance={attendance} calendar={calendar} />
-                  )}
-                  {currentActiveView === 'calendar' && (
-                    <CalendarView calendar={calendar} />
-                  )}
-                  {currentActiveView === 'marks' && (
-                    <MarksView marks={marks} courses={courses} schedule={schedule} attendance={attendance} />
-                  )}
-                </div>
-              )}
-            </CurtainsScopeTransition>
+                    {currentActiveView === 'attendance' && (
+                      <AttendanceView attendance={attendance} schedule={schedule} calendar={calendar} />
+                    )}
+                    {currentActiveView === 'games' && (
+                      <GamesView schedule={schedule} attendance={attendance} calendar={calendar} />
+                    )}
+                    {currentActiveView === 'calendar' && (
+                      <CalendarView calendar={calendar} courses={courses} />
+                    )}
+                    {currentActiveView === 'marks' && (
+                      <MarksView marks={marks} courses={courses} schedule={schedule} attendance={attendance} />
+                    )}
+                  </div>
+                )}
+              </CurtainsScopeTransition>
+            </div>
           </div>
+          <MobileTabBar view={view} onNavigate={navigate} />
+          <NotificationDrawer onNavigate={navigate} />
+          <AIAssistantDrawer data={data} isOpen={aiOpen} onClose={() => setAiOpen(false)} />
         </div>
-        <MobileTabBar view={view} onNavigate={navigate} />
-        <NotificationDrawer onNavigate={navigate} />
-        <AIAssistantDrawer data={data} isOpen={aiOpen} onClose={() => setAiOpen(false)} />
-      </div>
+      </TodoProvider>
     </NotificationProvider>
   );
 }
 
 export default Shell;
-
