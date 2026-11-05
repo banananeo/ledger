@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   getStudentPortalCaptcha,
   loginStudentPortal,
-  ApiError,
 } from '../api';
 import './LoginForm.css';
 
@@ -33,6 +32,12 @@ const itemVariants = {
     },
   },
 };
+
+/** Never render a non-string error (it would show as "[object Object]"). */
+function readableError(err, fallback) {
+  const message = typeof err?.message === 'string' ? err.message.trim() : '';
+  return message && message !== '[object Object]' ? message : fallback;
+}
 
 function LoginForm({ onSuccess, onSkip, overlay = false }) {
   const [username, setUsername] = useState('');
@@ -70,8 +75,10 @@ function LoginForm({ onSuccess, onSkip, overlay = false }) {
       );
 
       setError(
-        err?.message ||
-        'Failed to load the SRM Student Portal CAPTCHA.'
+        readableError(
+          err,
+          'Failed to load the SRM Student Portal CAPTCHA.'
+        )
       );
     } finally {
       setCaptchaLoading(false);
@@ -139,19 +146,12 @@ function LoginForm({ onSuccess, onSkip, overlay = false }) {
         err
       );
 
-      if (
-        err instanceof ApiError
-      ) {
-        setError(
-          err.message ||
+      setError(
+        readableError(
+          err,
           'Student Portal login failed.'
-        );
-      } else {
-        setError(
-          err?.message ||
-          'Student Portal login failed.'
-        );
-      }
+        )
+      );
 
       /*
        * CAPTCHA sessions should not be reused after

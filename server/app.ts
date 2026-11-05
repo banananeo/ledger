@@ -16,6 +16,20 @@ const studentPortalSessions = new Map<
     image: string;
   }
 >();
+
+/**
+ * Errors bubbled up from third-party clients can carry objects; never send a
+ * non-string message to the UI (it renders as "[object Object]").
+ */
+function safeErrorMessage(err: any, fallback: string): string {
+  const message = err?.message;
+  if (typeof message === "string") {
+    const trimmed = message.trim();
+    if (trimmed && trimmed !== "[object Object]") return trimmed;
+  }
+  return fallback;
+}
+
 export function createApp(): Express {
   const app = express();
 
@@ -174,9 +188,10 @@ export function createApp(): Express {
       console.error("[Student Portal CAPTCHA]", err);
 
       return res.status(500).json({
-        detail:
-          err?.message ||
+        detail: safeErrorMessage(
+          err,
           "Failed to fetch Student Portal CAPTCHA",
+        ),
       });
     }
   });
@@ -207,9 +222,10 @@ export function createApp(): Express {
         );
 
         return res.status(500).json({
-          detail:
-            err?.message ||
+          detail: safeErrorMessage(
+            err,
             "Failed to return CAPTCHA image",
+          ),
         });
       }
     }
@@ -284,10 +300,13 @@ export function createApp(): Express {
         err
       );
 
-      return res.status(/invalid|credential|captcha|auth/i.test(err?.message || "") ? 401 : 500).json({
-        detail:
-          err?.message ||
-          "Failed to fetch attendance from SRM Student Portal",
+      const message = safeErrorMessage(
+        err,
+        "Failed to fetch attendance from SRM Student Portal",
+      );
+
+      return res.status(/invalid|credential|captcha|auth/i.test(message) ? 401 : 500).json({
+        detail: message,
       });
     }
   });

@@ -19,7 +19,7 @@ function initials(name) {
   return (parts[0]?.[0] || '') + (parts[1]?.[0] || '');
 }
 
-function TopBar({ view, onBack, onRefresh, refreshing, profile, onLogout, onOpenAI }) {
+function TopBar({ view, onBack, onRefresh, refreshing, profile, onLogout, onOpenAI, onEasterEggTap }) {
   const isHome = view === 'home';
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
@@ -47,14 +47,14 @@ function TopBar({ view, onBack, onRefresh, refreshing, profile, onLogout, onOpen
     <header className="topbar">
       <div className="topbar__left">
         {isHome ? (
-          <div className="topbar__logo">
-            <div className="topbar__logo-icon-box">
+          <button type="button" className="topbar__logo" onClick={onEasterEggTap} aria-label="Ledger">
+            <span className="topbar__logo-icon-box">
               <img src="/icon.svg" alt="Ledger" className="topbar__logo-img" />
-            </div>
+            </span>
             <span className="topbar__logo-text">
               Ledger<span className="topbar__logo-dot">.</span>
             </span>
-          </div>
+          </button>
         ) : (
           <button className="bbtn bbtn--outline bbtn--icon topbar__back" onClick={onBack} aria-label="Back to home" title="Back to home">
             <ArrowLeftIcon width={18} height={18} />

@@ -12,15 +12,15 @@ export const NAV_ITEMS = [
   { id: 'games', label: 'Games', Icon: GamepadIcon },
 ];
 
-function Sidebar({ view, onNavigate, onRefresh, refreshing, onLogout, onReconnectAcademia, onConnectStudentPortal, academiaIssue, studentPortalIssue }) {
+function Sidebar({ view, onNavigate, onRefresh, refreshing, onLogout, onReconnectAcademia, onConnectStudentPortal, academiaIssue, studentPortalIssue, onOpenEasterEgg }) {
   const { activeReminders, testReminder, setIsDrawerOpen } = useNotifications();
   const hasActiveAlert = activeReminders.length > 0 || Boolean(testReminder);
 
   return (
     <aside className="sidebar">
-      <div className="sidebar__mark">
+      <button className="sidebar__mark" type="button" onClick={onOpenEasterEgg} aria-label="Ledger">
         Ledger<span className="sidebar__mark-dot">.</span>
-      </div>
+      </button>
       <nav className="sidebar__nav">
         {NAV_ITEMS.map(({ id, label, Icon }) => (
           <button

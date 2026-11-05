@@ -15,14 +15,28 @@ import MarksView from './views/MarksView.jsx';
 import CalendarView from './views/CalendarView.jsx';
 import GamesView from './views/GamesView.jsx';
 import AIAssistantDrawer from './AIAssistant/AIAssistantDrawer.jsx';
+import AfterHoursScene from './AfterHoursScene.jsx';
 import './Shell.css';
 
 function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onReconnectAcademia, onConnectStudentPortal, academiaIssue, studentPortalIssue, studentPortalError }) {
   const [view, setView] = useState('home');
   const [transitionOrigin, setTransitionOrigin] = useState({ x: 50, y: 50 });
   const [aiOpen, setAiOpen] = useState(false);
+  const [afterHoursOpen, setAfterHoursOpen] = useState(false);
+  const logoTapRef = useRef({ count: 0, lastTap: 0 });
   const stageRef = useRef(null);
   const { profile, attendance = [], schedule = [], marks = [], courses = [], calendar } = data || {};
+
+  const handleSecretLogoTap = () => {
+    const now = Date.now();
+    if (now - logoTapRef.current.lastTap > 2400) logoTapRef.current.count = 0;
+    logoTapRef.current.lastTap = now;
+    logoTapRef.current.count += 1;
+    if (logoTapRef.current.count >= 7) {
+      logoTapRef.current.count = 0;
+      setAfterHoursOpen(true);
+    }
+  };
 
   // Pull-to-refresh state
   const [startY, setStartY] = useState(0);
@@ -86,6 +100,7 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onRec
             onConnectStudentPortal={onConnectStudentPortal}
             academiaIssue={academiaIssue}
             studentPortalIssue={studentPortalIssue}
+            onOpenEasterEgg={handleSecretLogoTap}
           />
           <div className="shell__main" style={{ transform: `translateY(${pullDistance}px)`, transition: pullDistance === 0 ? 'transform 0.2s ease-out' : 'none' }}>
             {/* Pull Indicator */}
@@ -100,6 +115,7 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onRec
               profile={profile}
               onLogout={onLogout}
               onOpenAI={() => setAiOpen(true)}
+              onEasterEggTap={handleSecretLogoTap}
             />
             {error && (
               <AcademiaDownBanner
@@ -158,6 +174,7 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onRec
           <MobileTabBar view={view} onNavigate={navigate} />
           <NotificationDrawer onNavigate={navigate} />
           <AIAssistantDrawer data={data} isOpen={aiOpen} onClose={() => setAiOpen(false)} />
+          {afterHoursOpen && <AfterHoursScene onClose={() => setAfterHoursOpen(false)} />}
         </div>
       </TodoProvider>
     </NotificationProvider>

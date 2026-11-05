@@ -28,6 +28,11 @@
 }
 
 .topbar__logo {
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 10px;

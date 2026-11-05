@@ -291,6 +291,52 @@ async function parseJsonResponse(
   }
 }
 
+function readDisplayMessage(value: unknown): string | null {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed && trimmed !== "[object Object]" ? trimmed : null;
+  }
+
+  if (Array.isArray(value)) {
+    const parts = value.map(readDisplayMessage).filter((part): part is string => Boolean(part));
+    return parts.length ? parts.join(" ") : null;
+  }
+
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    for (const key of ["message", "msg", "error", "detail"]) {
+      const message = readDisplayMessage(record[key]);
+      if (message) return message;
+    }
+    if (typeof record.type === "string") {
+      return record.type
+        .trim()
+        .replace(/_/g, " ")
+        .toLowerCase()
+        .replace(/^\w/, (char) => char.toUpperCase());
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Extracts a readable message from any API error payload.
+ * `detail` can be a string, an object ({ type, message }) or an array.
+ */
+export function errorMessageFromPayload(payload: unknown, fallback: string): string {
+  if (payload && typeof payload === "object") {
+    const record = payload as Record<string, unknown>;
+    return (
+      readDisplayMessage(record.detail) ||
+      readDisplayMessage(record.message) ||
+      readDisplayMessage(record.error) ||
+      fallback
+    );
+  }
+  return fallback;
+}
+
 /* =========================================================
    ACADEMIA LOGIN
    ========================================================= */
@@ -330,11 +376,10 @@ export async function login(
       );
     }
 
-    const message =
-      typeof detail === "string"
-        ? detail
-        : detail?.message ||
-        "Failed to log in to Academia";
+    const message = errorMessageFromPayload(
+      data,
+      "Failed to log in to Academia"
+    );
 
     throw new ApiError(
       message,
@@ -385,12 +430,11 @@ export async function getStudentPortalCaptcha(): Promise<StudentPortalCaptcha> {
     await parseJsonResponse(response);
 
   if (!response.ok) {
-    const detail = data?.detail;
-
     throw new ApiError(
-      typeof detail === "string"
-        ? detail
-        : "Failed to load Student Portal CAPTCHA.",
+      errorMessageFromPayload(
+        data,
+        "Failed to load Student Portal CAPTCHA."
+      ),
       response.status
     );
   }
@@ -432,12 +476,11 @@ export async function loginStudentPortal(
     await parseJsonResponse(response);
 
   if (!response.ok) {
-    const detail = data?.detail;
-
     throw new ApiError(
-      typeof detail === "string"
-        ? detail
-        : "Failed to authenticate with the SRM Student Portal.",
+      errorMessageFromPayload(
+        data,
+        "Failed to authenticate with the SRM Student Portal."
+      ),
       response.status
     );
   }
@@ -484,11 +527,10 @@ export async function refreshSession(
       );
     }
 
-    const message =
-      typeof detail === "string"
-        ? detail
-        : detail?.message ||
-        "Failed to refresh data";
+    const message = errorMessageFromPayload(
+      data,
+      "Failed to refresh data"
+    );
 
     throw new ApiError(
       message,
@@ -538,11 +580,10 @@ export async function aiChat(
 
   if (!res.ok) {
     throw new ApiError(
-      typeof data?.detail ===
-        "string"
-        ? data.detail
-        : data?.detail?.message ||
-        "AI request failed",
+      errorMessageFromPayload(
+        data,
+        "AI request failed"
+      ),
       res.status
     );
   }
@@ -574,10 +615,10 @@ export async function aiChatStream(
       await parseJsonResponse(res);
 
     throw new ApiError(
-      typeof data?.detail ===
-        "string"
-        ? data.detail
-        : "AI streaming failed",
+      errorMessageFromPayload(
+        data,
+        "AI streaming failed"
+      ),
       res.status
     );
   }
@@ -710,10 +751,10 @@ export async function aiSummary(
 
   if (!res.ok) {
     throw new ApiError(
-      typeof data?.detail ===
-        "string"
-        ? data.detail
-        : "AI summary failed",
+      errorMessageFromPayload(
+        data,
+        "AI summary failed"
+      ),
       res.status
     );
   }
