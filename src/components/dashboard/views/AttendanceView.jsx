@@ -595,7 +595,6 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
           })}
         </ul>
       )}
-      <div className="attendance__connection"><span aria-hidden="true" />ACADEMIA + STUDENT PORTAL CONNECTED</div>
     </div>
   );
 }

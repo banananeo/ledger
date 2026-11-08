@@ -263,6 +263,7 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
           <p className="home__brief-empty">Generate a brief for your next action, attendance, marks, and week plan.</p>
         ) : null}
       </motion.section>
+      <br></br>
 
       {/* Next Class with Room Details */}
       <motion.section className="home__next-class-card" variants={homeItemVariants}>
@@ -312,21 +313,6 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
                   <span className="home__next-class-meta-label">Faculty</span>
                   <span className="home__next-class-meta-val">{nextClassInfo.entry.faculty || 'Assigned Faculty'}</span>
                 </div>
-              </div>
-
-              <div className="home__next-class-reminder-footer">
-                <button
-                  className="home__next-class-reminder-pill"
-                  onClick={() => setIsDrawerOpen(true)}
-                  title="Configure Class Reminder"
-                >
-                  <BellIcon width={13} height={13} />
-                  <span>
-                    {notificationsEnabled
-                      ? `Reminder set for ${leadMinutes}m before class`
-                      : 'Class reminders are paused — Tap to enable'}
-                  </span>
-                </button>
               </div>
             </div>
           </div>
