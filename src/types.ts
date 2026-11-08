@@ -94,6 +94,32 @@ export interface AcademicCalendar {
   months: CalendarMonth[];
 }
 
+export type TodoKind = "exam" | "assignment" | "quiz" | "project" | "reading" | "other";
+
+export type TodoPriority = "high" | "medium" | "low";
+
+export type TodoFilter = "open" | "today" | "overdue" | "done" | "all";
+
+export interface TodoItem {
+  id: string;
+  title: string;
+  /** Local calendar date (YYYY-MM-DD). Null only for legacy/corrupt stored items. */
+  dueDate: string | null;
+  kind: TodoKind;
+  priority: TodoPriority;
+  /** Course code linked from the Academia course catalog; empty when unlinked. */
+  courseCode: string;
+  notes: string;
+  completed: boolean;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+export type TodoDraft = Pick<
+  TodoItem,
+  "title" | "dueDate" | "kind" | "priority" | "courseCode" | "notes"
+>;
+
 export interface AppData {
   success: boolean;
   profile?: StudentProfile;

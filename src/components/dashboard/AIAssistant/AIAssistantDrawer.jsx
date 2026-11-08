@@ -1,14 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { aiChat, aiChatStream, aiHealth } from '../../../api.ts';
+import MarkdownText from '../../MarkdownText.jsx';
 import './AIAssistantDrawer.css';
 
 const QUICK_CHIPS = [
-  { label: 'Summarize', prompt: 'Summarize my overall academics — attendance risk, marks performance, and what to focus on this week.' },
-  { label: 'Attendance Risk', prompt: 'Analyze my attendance risks. Which courses can I safely bunk and which need immediate attendance?' },
-  { label: 'Safest Bunk', prompt: 'Given my timetable, which Day Order is safest to bunk for maximum free hours with minimal risk?' },
-  { label: 'Study Plan', prompt: 'Create a 7-day study plan prioritizing my weakest subjects based on marks and attendance, using my timetable and calendar.' },
-  { label: 'Marks Review', prompt: 'Review my internal marks. Which subjects need improvement and how can I recover?' },
+  { label: 'Academic Brief', prompt: 'Create my academic brief with Now, Attendance, Marks, and This week sections.' },
+  { label: 'Today Focus', prompt: 'What should I focus on today based on my timetable, attendance, and marks?' },
+  { label: 'Attendance Plan', prompt: 'Analyze my attendance. Which courses must I attend and where do I still have a skip margin?' },
+  { label: 'Marks Recovery', prompt: 'Which subject needs the most marks recovery and what should I do next?' },
+  { label: 'Week Plan', prompt: 'Create a practical seven-day study plan around my timetable and calendar.' },
 ];
 
 function buildContext(data) {
@@ -138,13 +139,13 @@ export default function AIAssistantDrawer({ data, isOpen, onClose }) {
               )}
               {messages.map((m, i) => (
                 <div key={i} className={`ai-drawer__msg ai-drawer__msg--${m.role}${m.isError ? ' ai-drawer__msg--error' : ''}`}>
-                  <div className="ai-drawer__msg-bubble">{m.text}</div>
+                  <div className="ai-drawer__msg-bubble"><MarkdownText className="ai-drawer__md" text={m.text} /></div>
                 </div>
               ))}
               {loading && (
                 <div className="ai-drawer__msg ai-drawer__msg--assistant">
                   <div className="ai-drawer__msg-bubble ai-drawer__msg-bubble--streaming">
-                    {streamingText || <span className="ai-drawer__typing"><span></span><span></span><span></span></span>}
+                    {streamingText ? <MarkdownText className="ai-drawer__md" text={streamingText} /> : <span className="ai-drawer__typing"><span></span><span></span><span></span></span>}
                   </div>
                 </div>
               )}

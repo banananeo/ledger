@@ -47,6 +47,119 @@
   opacity: 0.75;
 }
 
+.home__brief-card {
+  padding: 22px 24px;
+  background: var(--surface);
+}
+
+.home__brief-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.home__brief-title {
+  margin: 2px 0 4px;
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.home__brief-sub,
+.home__brief-empty {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.home__brief-action {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+.home__brief-content {
+  margin: 16px 0 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.045);
+  color: var(--ink);
+}
+
+/* Rendered markdown inside the brief card */
+.home__brief-md .md-p {
+  margin-bottom: 8px;
+}
+
+.home__brief-md .md-ul,
+.home__brief-md .md-ol {
+  margin-bottom: 8px;
+}
+
+.home__brief-md .md-h2,
+.home__brief-md .md-h3 {
+  margin: 16px 0 7px;
+  padding-top: 11px;
+}
+
+.home__brief-md .md-h2:first-child,
+.home__brief-md .md-h3:first-child {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.home__brief-skeleton {
+  margin: 16px 0 0;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.home__brief-skeleton span {
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--line) 0%, var(--line-strong) 45%, var(--line) 100%);
+  background-size: 200% 100%;
+  animation: home-brief-shimmer 1.4s ease-in-out infinite;
+}
+
+.home__brief-skeleton span:nth-child(2) {
+  width: 92%;
+}
+
+.home__brief-skeleton span:nth-child(3) {
+  width: 64%;
+}
+
+@keyframes home-brief-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home__brief-skeleton span {
+    animation: none;
+  }
+}
+
+.home__brief-error {
+  margin: 14px 0 0;
+  color: var(--danger);
+  font-size: 12px;
+}
+
 .home__hero-today {
   display: flex;
   align-items: center;
@@ -422,6 +535,15 @@
   }
   .home__today-card {
     padding: 18px;
+  }
+  .home__brief-card {
+    padding: 18px;
+  }
+  .home__brief-head {
+    flex-direction: column;
+  }
+  .home__brief-action {
+    width: 100%;
   }
   .home__today-row {
     grid-template-columns: minmax(0, 1fr) auto;

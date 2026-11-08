@@ -77,7 +77,7 @@ function NotificationDrawer({ onNavigate }) {
                   {notificationsEnabled ? 'Reminders Active' : 'Reminders Paused'}
                 </div>
                 <div className="notif-drawer__toggle-desc">
-                  Alerts you before classes with room number & countdown
+                  Alerts you before classes and on task due dates
                 </div>
               </div>
               <button

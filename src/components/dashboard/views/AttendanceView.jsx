@@ -338,10 +338,9 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
               -{simulation.overallDrop.toFixed(1)}% if skipped
             </span>
           )}
-
+          {totalConducted > 0 && <span className="attendance__summary-count num">{simulation ? simulation.simTotalAttended || totalAttended : totalAttended} / {simulation ? (totalConducted + simulation.totalSkippedHours) : totalConducted}</span>}
         </div>
-
-        <br></br>
+        <div className="attendance__summary-divider" />
         <div className="attendance__summary-bottom"><span>Below 75%</span><span className="attendance__summary-badge">{simulation ? simulation.simAtRisk : atRiskList.length} {(simulation ? simulation.simAtRisk : atRiskList.length) === 1 ? 'course' : 'courses'}</span></div>
         {simulation && simulation.newAtRiskCount > 0 && <span className="attendance__summary-simulation">+{simulation.newAtRiskCount} new at risk if skipped</span>}
       </div>
@@ -594,7 +593,6 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
           })}
         </ul>
       )}
-      <div className="attendance__connection"><span aria-hidden="true" />ACADEMIA + STUDENT PORTAL CONNECTED</div>
     </div>
   );
 }

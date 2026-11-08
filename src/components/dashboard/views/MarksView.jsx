@@ -83,7 +83,6 @@ function MarksView({ marks = [], courses = [], schedule = [], attendance = [], c
           );
         })}
       </ul>}
-
     </div>
   );
 }

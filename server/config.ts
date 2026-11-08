@@ -20,7 +20,7 @@ export function getCalendarUrl(semester: "ODD" | "EVEN"): string {
 }
 
 
-export const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+export const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
 
 export const URLS = {
   profile: "/srm_university/academia-academic-services/page/My_Time_Table_2023_24",

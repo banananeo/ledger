@@ -5,6 +5,7 @@ import { MarksParser } from "./parsers/marks-parser.js";
 import { HttpError } from "./shared/errors.js";
 import { getDemoData } from "./shared/demo-data.js";
 import { generateAIResponse, isGeminiConfigured } from "./ai/gemini.js";
+import { BRIEF_PROMPT } from "./ai/prompts.js";
 import { checkRateLimit, rateLimitKey } from "./ai/rateLimit.js";
 import { getJaawCaptcha, loginWithJaaw, refreshJaawSession } from "./shared/client.js";
 import { randomUUID } from "crypto";
@@ -15,6 +16,20 @@ const studentPortalSessions = new Map<
     image: string;
   }
 >();
+
+/**
+ * Errors bubbled up from third-party clients can carry objects; never send a
+ * non-string message to the UI (it renders as "[object Object]").
+ */
+function safeErrorMessage(err: any, fallback: string): string {
+  const message = err?.message;
+  if (typeof message === "string") {
+    const trimmed = message.trim();
+    if (trimmed && trimmed !== "[object Object]") return trimmed;
+  }
+  return fallback;
+}
+
 export function createApp(): Express {
   const app = express();
 
@@ -173,9 +188,10 @@ export function createApp(): Express {
       console.error("[Student Portal CAPTCHA]", err);
 
       return res.status(500).json({
-        detail:
-          err?.message ||
+        detail: safeErrorMessage(
+          err,
           "Failed to fetch Student Portal CAPTCHA",
+        ),
       });
     }
   });
@@ -206,9 +222,10 @@ export function createApp(): Express {
         );
 
         return res.status(500).json({
-          detail:
-            err?.message ||
+          detail: safeErrorMessage(
+            err,
             "Failed to return CAPTCHA image",
+          ),
         });
       }
     }
@@ -283,10 +300,13 @@ export function createApp(): Express {
         err
       );
 
-      return res.status(/invalid|credential|captcha|auth/i.test(err?.message || "") ? 401 : 500).json({
-        detail:
-          err?.message ||
-          "Failed to fetch attendance from SRM Student Portal",
+      const message = safeErrorMessage(
+        err,
+        "Failed to fetch attendance from SRM Student Portal",
+      );
+
+      return res.status(/invalid|credential|captcha|auth/i.test(message) ? 401 : 500).json({
+        detail: message,
       });
     }
   });
@@ -343,7 +363,7 @@ export function createApp(): Express {
 
   // AI health
   router.get("/ai/health", (_req: Request, res: Response) => {
-    res.json({ configured: isGeminiConfigured(), model: process.env.GEMINI_MODEL || "gemini-2.0-flash" });
+    res.json({ configured: isGeminiConfigured(), model: process.env.GEMINI_MODEL || "gemini-3.6-flash" });
   });
 
   // AI Chat handler (supports streaming via SSE if ?stream=1)
@@ -427,7 +447,7 @@ export function createApp(): Express {
         if (context.calendar) safeContext.calendar = context.calendar;
       }
       const reply = await generateAIResponse({
-        message: "Give me a concise health summary: overall attendance, at-risk courses, marks highlights, and 3 next actions. Be brief.",
+        message: BRIEF_PROMPT,
         context: safeContext,
       });
       return res.json({ success: true, reply });

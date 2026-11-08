@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Sparkles } from 'lucide-react';
 import { ClockIcon, CalendarIcon, BellIcon } from '../Icons.jsx';
 import { todayISO, findEntryForDate, allEntries } from '../../../utils/calendar.js';
 import { useNotifications } from '../../../context/NotificationContext.tsx';
+import { aiSummary } from '../../../api.ts';
+import MarkdownText from '../../MarkdownText.jsx';
 import './HomeView.css';
 
 const homeContainerVariants = {
@@ -200,6 +202,25 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
   const todayOverview = getTodayOverview(schedule, calendar);
   const positiveMessage = getDailyAffirmation(todayISO());
   const { notificationsEnabled, leadMinutes, setIsDrawerOpen } = useNotifications();
+  const [academicBrief, setAcademicBrief] = useState('');
+  const [briefLoading, setBriefLoading] = useState(false);
+  const [briefError, setBriefError] = useState('');
+
+  const generateBrief = async () => {
+    if (briefLoading) return;
+    setBriefLoading(true);
+    setBriefError('');
+    try {
+      const response = await aiSummary({ profile, attendance, marks, schedule, calendar });
+      const brief = String(response || '').trim();
+      if (!brief) throw new Error('Ledger AI returned an empty brief. Try again.');
+      setAcademicBrief(brief);
+    } catch (error) {
+      setBriefError(error?.message || 'Ledger AI could not generate your brief right now.');
+    } finally {
+      setBriefLoading(false);
+    }
+  };
 
   return (
     <motion.div
@@ -210,11 +231,39 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
     >
       <motion.section className="home__hero" variants={homeItemVariants}>
         <div className="home__hero-info">
-          <div className="view-intro__meta home__meta"><span>SRM / {profile?.name || 'Student'}</span><span>Sample data</span></div>
           <h2 className="home__hero-title">{new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening'},<br />{(profile?.name || 'Student').split(' ')[0]}.</h2>
           <p className="home__hero-meta">{new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · {new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</p>
         </div>
       </motion.section>
+
+      <motion.section className="bcard home__brief-card" variants={homeItemVariants} aria-label="Academic Brief">
+        <div className="home__brief-head">
+          <div>
+            <p className="eyebrow">Ledger AI</p>
+            <h3 className="home__brief-title">Academic Brief</h3>
+            <p className="home__brief-sub">A focused look at what needs your attention now and this week.</p>
+          </div>
+          <button className="bbtn bbtn--outline home__brief-action" onClick={generateBrief} disabled={briefLoading}>
+            {briefLoading ? 'Preparing…' : academicBrief ? 'Refresh brief' : 'Generate brief'}
+          </button>
+        </div>
+
+        {briefError && <p className="home__brief-error" role="status">{briefError}</p>}
+        {briefLoading ? (
+          <div className="home__brief-skeleton" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
+        ) : academicBrief ? (
+          <div className="home__brief-content" aria-live="polite">
+            <MarkdownText className="home__brief-md" text={academicBrief} />
+          </div>
+        ) : !briefError ? (
+          <p className="home__brief-empty">Generate a brief for your next action, attendance, marks, and week plan.</p>
+        ) : null}
+      </motion.section>
+      <br></br>
 
       {/* Next Class with Room Details */}
       <motion.section className="home__next-class-card" variants={homeItemVariants}>
@@ -265,21 +314,6 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
                   <span className="home__next-class-meta-val">{nextClassInfo.entry.faculty || 'Assigned Faculty'}</span>
                 </div>
               </div>
-
-              <div className="home__next-class-reminder-footer">
-                <button
-                  className="home__next-class-reminder-pill"
-                  onClick={() => setIsDrawerOpen(true)}
-                  title="Configure Class Reminder"
-                >
-                  <BellIcon width={13} height={13} />
-                  <span>
-                    {notificationsEnabled
-                      ? `Reminder set for ${leadMinutes}m before class`
-                      : 'Class reminders are paused — Tap to enable'}
-                  </span>
-                </button>
-              </div>
             </div>
           </div>
         ) : (
@@ -291,9 +325,10 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
 
       <motion.section className="home__brief" variants={homeItemVariants}>
         <div className="home__brief-heading">
-          <h3>Academic Brief</h3><span>LEDGER AI</span>
+          <h3>Ledger AI</h3><span>Ask Anything</span>
+
         </div>
-        <p>Turn your schedule, attendance and marks into a short academic overview.</p>
+        <br></br>
         <button type="button" onClick={onOpenAI} aria-label="Open Ledger AI">
           <span className="home__brief-action-label">Open Ledger AI</span>
           <span className="home__brief-action-icon" aria-hidden="true"><Sparkles size={18} strokeWidth={1.8} /></span>
@@ -342,7 +377,7 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
         )}
       </motion.section>
 
-      <p className="attendance__connection"><span /> ACADEMIA + STUDENT PORTAL CONNECTED</p>
+
 
     </motion.div>
   );
