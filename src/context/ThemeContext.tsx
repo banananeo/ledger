@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-type Theme = 'dark';
+type Theme = 'light';
 
 interface ThemeContextType {
   theme: Theme;
@@ -13,31 +13,27 @@ const THEME_STORAGE_KEY = 'eduwars_theme';
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme] = useState<Theme>('dark');
+  const [theme] = useState<Theme>('light');
 
   useEffect(() => {
     try {
       const root = document.documentElement;
-      root.classList.add('dark');
-      root.setAttribute('data-theme', 'dark');
-      localStorage.setItem(THEME_STORAGE_KEY, 'dark');
+      root.classList.remove('dark');
+      root.setAttribute('data-theme', 'light');
+      localStorage.setItem(THEME_STORAGE_KEY, 'light');
 
       const metaThemeColor = document.querySelector('meta[name="theme-color"]');
       if (metaThemeColor) {
-        metaThemeColor.setAttribute('content', '#0c0d10');
+        metaThemeColor.setAttribute('content', '#fafaf5');
       }
     } catch (e) {
       console.error('Failed to sync theme to DOM/storage:', e);
     }
   }, []);
 
-  const toggleTheme = () => {
-    // Dark mode is the only mode
-  };
+  const toggleTheme = () => {};
 
-  const setTheme = () => {
-    // Dark mode is the only mode
-  };
+  const setTheme = () => {};
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>

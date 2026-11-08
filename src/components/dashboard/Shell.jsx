@@ -12,9 +12,7 @@ import TimetableView from './views/TimetableView.jsx';
 import AttendanceView from './views/AttendanceView.jsx';
 import MarksView from './views/MarksView.jsx';
 import CalendarView from './views/CalendarView.jsx';
-import GamesView from './views/GamesView.jsx';
 import AIAssistantDrawer from './AIAssistant/AIAssistantDrawer.jsx';
-import AIFab from './AIAssistant/AIFab.jsx';
 import './Shell.css';
 
 function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onReconnectAcademia, onConnectStudentPortal, academiaIssue, studentPortalIssue, studentPortalError }) {
@@ -98,16 +96,12 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onRec
             refreshing={refreshing}
             profile={profile}
             onLogout={onLogout}
-            onOpenAI={() => setAiOpen(true)}
           />
           {error && (
             <AcademiaDownBanner
               error={error}
               onRetry={onRefresh}
               onReconnectAcademia={onReconnectAcademia}
-              onPlayGame={(gameType) => {
-                navigate('games');
-              }}
             />
           )}
           {studentPortalError && (
@@ -131,6 +125,7 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onRec
                       calendar={calendar}
                       lastSynced={lastSynced}
                       onNavigate={navigate}
+                      onOpenAI={() => setAiOpen(true)}
                     />
                   )}
                   {currentActiveView === 'timetable' && (
@@ -140,14 +135,11 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onRec
                   {currentActiveView === 'attendance' && (
                     <AttendanceView attendance={attendance} schedule={schedule} calendar={calendar} />
                   )}
-                  {currentActiveView === 'games' && (
-                    <GamesView schedule={schedule} attendance={attendance} calendar={calendar} />
-                  )}
                   {currentActiveView === 'calendar' && (
                     <CalendarView calendar={calendar} />
                   )}
                   {currentActiveView === 'marks' && (
-                    <MarksView marks={marks} courses={courses} schedule={schedule} attendance={attendance} />
+                    <MarksView marks={marks} courses={courses} schedule={schedule} attendance={attendance} calendar={calendar} />
                   )}
                 </div>
               )}
@@ -156,7 +148,6 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onRec
         </div>
         <MobileTabBar view={view} onNavigate={navigate} />
         <NotificationDrawer onNavigate={navigate} />
-        <AIFab onClick={() => setAiOpen(true)} />
         <AIAssistantDrawer data={data} isOpen={aiOpen} onClose={() => setAiOpen(false)} />
       </div>
     </NotificationProvider>

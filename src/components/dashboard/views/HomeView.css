@@ -391,69 +391,6 @@
   flex: 1;
 }
 
-.home__games-banner {
-  padding: 20px 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  background: var(--surface);
-  cursor: pointer;
-  position: relative;
-  overflow: visible;
-}
-
-.home__games-banner-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.home__games-banner-content {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.home__games-banner-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: var(--mint);
-  color: #111827;
-  border: var(--stroke) solid var(--ink);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  box-shadow: var(--shadow-hard-sm);
-}
-
-.home__games-banner-title {
-  font-family: var(--display);
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--ink);
-  margin: 2px 0 4px;
-}
-
-.home__games-banner-desc {
-  font-size: 13px;
-  color: var(--ink-soft);
-  margin: 0;
-  line-height: 1.45;
-  word-break: normal;
-  overflow-wrap: break-word;
-}
-
-.home__games-banner-btn {
-  white-space: nowrap;
-  padding: 10px 20px;
-  font-size: 13.5px;
-  flex-shrink: 0;
-}
-
 @media (max-width: 680px) {
   .home__next-class-body {
     flex-direction: column;
@@ -467,22 +404,6 @@
   }
   .home__next-class-room-type {
     margin-top: 0;
-  }
-  .home__games-banner {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
-    padding: 18px;
-  }
-  .home__games-banner-left {
-    align-items: flex-start;
-    gap: 14px;
-    width: 100%;
-  }
-  .home__games-banner-btn {
-    width: 100%;
-    justify-content: center;
-    text-align: center;
   }
 }
 

@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { NAV_ITEMS } from './Sidebar.jsx';
 import './MobileTabBar.css';
 
-const MOBILE_NAV_ITEMS = NAV_ITEMS.filter((item) => item.id !== 'games');
+const MOBILE_NAV_ITEMS = NAV_ITEMS;
 
 function MobileTabBar({ view, onNavigate }) {
   return (

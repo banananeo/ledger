@@ -1,17 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeftIcon, RefreshIcon, UserIcon, LogoutIcon, BellIcon, BellOffIcon } from './Icons.jsx';
+import { motion } from 'motion/react';
+import { RefreshCw, UserRound, LogOut, Bell } from 'lucide-react';
 import { useNotifications } from '../../context/NotificationContext.tsx';
 import './TopBar.css';
-
-const TITLES = {
-  home: 'Home',
-  timetable: 'Timetable',
-  attendance: 'Attendance',
-  games: 'Games & Roulette',
-  calendar: 'Academic Calendar',
-  marks: 'Internal Marks',
-};
 
 function initials(name) {
   if (!name) return '';
@@ -19,11 +10,10 @@ function initials(name) {
   return (parts[0]?.[0] || '') + (parts[1]?.[0] || '');
 }
 
-function TopBar({ view, onBack, onRefresh, refreshing, profile, onLogout, onOpenAI }) {
-  const isHome = view === 'home';
+function TopBar({ onRefresh, refreshing, profile, onLogout }) {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
-  const { notificationsEnabled, activeReminders, testReminder, setIsDrawerOpen } = useNotifications();
+  const { activeReminders, testReminder, setIsDrawerOpen } = useNotifications();
 
   const profileName = profile?.name;
   const regNo = profile?.registrationNumber;
@@ -46,7 +36,6 @@ function TopBar({ view, onBack, onRefresh, refreshing, profile, onLogout, onOpen
   return (
     <header className="topbar">
       <div className="topbar__left">
-        {isHome ? (
           <div className="topbar__logo">
             <div className="topbar__logo-icon-box">
               <img src="/icon.svg" alt="Ledger" className="topbar__logo-img" />
@@ -55,23 +44,8 @@ function TopBar({ view, onBack, onRefresh, refreshing, profile, onLogout, onOpen
               Ledger<span className="topbar__logo-dot">.</span>
             </span>
           </div>
-        ) : (
-          <button className="bbtn bbtn--outline bbtn--icon topbar__back" onClick={onBack} aria-label="Back to home" title="Back to home">
-            <ArrowLeftIcon width={18} height={18} />
-          </button>
-        )}
       </div>
       <div className="topbar__right" ref={menuRef}>
-
-        <button
-          className="bbtn bbtn--outline bbtn--icon"
-          onClick={onOpenAI}
-          aria-label="Ledger AI"
-          title="Ledger AI Assistant"
-          style={{ position: 'relative' }}
-        >
-          <span style={{ fontSize: 14 }}>✨</span>
-        </button>
 
         <motion.button
           whileHover={{ scale: 1.05 }}
@@ -82,7 +56,7 @@ function TopBar({ view, onBack, onRefresh, refreshing, profile, onLogout, onOpen
           title="Class Reminders & Notification Settings"
           style={{ position: 'relative' }}
         >
-          {notificationsEnabled ? <BellIcon width={17} height={17} /> : <BellOffIcon width={17} height={17} />}
+          <Bell size={18} />
           {hasActiveAlert && (
             <span className="topbar__notif-badge" />
           )}
@@ -95,7 +69,7 @@ function TopBar({ view, onBack, onRefresh, refreshing, profile, onLogout, onOpen
           aria-label="Sync now"
           title="Sync with SRM Academia"
         >
-          <RefreshIcon width={17} height={17} className={refreshing ? 'topbar__spin' : ''} />
+          <RefreshCw size={18} className={refreshing ? 'topbar__spin' : ''} />
         </button>
 
         <button
@@ -104,7 +78,7 @@ function TopBar({ view, onBack, onRefresh, refreshing, profile, onLogout, onOpen
           aria-label="Log out"
           title="Log out"
         >
-          <LogoutIcon width={17} height={17} />
+          <LogOut size={18} />
         </button>
 
         <button
@@ -114,7 +88,7 @@ function TopBar({ view, onBack, onRefresh, refreshing, profile, onLogout, onOpen
           aria-expanded={showMenu}
         >
           <div className="topbar__avatar" title={profileName || 'Profile'}>
-            {profileName ? initials(profileName) : <UserIcon width={16} height={16} />}
+            {profileName ? initials(profileName) : <UserRound size={16} />}
           </div>
         </button>
 

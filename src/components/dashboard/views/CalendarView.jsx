@@ -28,6 +28,18 @@ function CalendarView({ calendar }) {
   const currentMonthIdx = useMemo(() => monthIndexForDate(months, today), [months, today]);
   const [index, setIndex] = useState(() => currentMonthIdx);
   const [selectedDate, setSelectedDate] = useState(() => today);
+  const [tasks, setTasks] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('ledger_calendar_tasks') || '[]'); } catch { return []; }
+  });
+  const [taskFilter, setTaskFilter] = useState('Open');
+  const [taskTitle, setTaskTitle] = useState('');
+  const [addingTask, setAddingTask] = useState(false);
+  const [taskPriority, setTaskPriority] = useState('Medium');
+  const [taskCourse, setTaskCourse] = useState('');
+  const saveTasks = (next) => {
+    setTasks(next);
+    try { localStorage.setItem('ledger_calendar_tasks', JSON.stringify(next)); } catch { /* retain in-memory tasks */ }
+  };
 
   const month = months[index];
   const { weeks, weekdays } = useMemo(() => buildMonthGrid(month), [month]);
@@ -54,9 +66,7 @@ function CalendarView({ calendar }) {
 
   if (months.length === 0) {
     return (
-      <div className="bcard calendar__empty-card">
-        <p>No academic calendar data available from Academia.</p>
-      </div>
+      <div className="calendar"><header className="view-intro"><div className="view-intro__meta"><span>ODD SEMESTER / {calendar?.academicYearLabel || '2026-27'}</span><span>Sample data</span></div><h2>Calendar</h2><p>Academic Schedule &amp; Day Orders</p></header><div className="bcard calendar__empty-card"><p>No academic calendar data available from Academia.</p></div><p className="attendance__connection"><span /> ACADEMIA + STUDENT PORTAL CONNECTED</p></div>
     );
   }
 
@@ -84,15 +94,12 @@ function CalendarView({ calendar }) {
 
   return (
     <div className="calendar">
-      {/* Header & Meta */}
+      <header className="view-intro">
+        <div className="view-intro__meta"><span>{calendar?.plannerType || 'ODD'} SEMESTER / {calendar?.academicYearLabel || '2026-27'}</span><span>Sample data</span></div>
+        <h2>Calendar</h2>
+        <p>Academic Schedule &amp; Day Orders</p>
+      </header>
       <div className="calendar__header-bar">
-        <div>
-          <p className="eyebrow">Academic Schedule & Day Orders</p>
-          <h2 className="calendar__main-title">
-            {calendar?.plannerType === 'ODD' ? 'Odd Semester' : 'Even Semester'}{' '}
-            {calendar?.academicYearLabel ? `· ${calendar.academicYearLabel}` : ''}
-          </h2>
-        </div>
         {index !== currentMonthIdx && (
           <button className="bbtn bbtn--outline calendar__today-btn" onClick={jumpToToday}>
             Jump to Today
@@ -162,7 +169,7 @@ function CalendarView({ calendar }) {
                     <span className="calendar__cell-num num">{Number(cell.date.slice(-2))}</span>
 
                     {isWorking ? (
-                      <span className="calendar__cell-do num">Day {cell.dayOrder}</span>
+                      <span className="calendar__cell-do num">D{cell.dayOrder}</span>
                     ) : cell.category === 'holiday' ? (
                       <span className="calendar__cell-tag calendar__cell-tag--holiday">Holiday</span>
                     ) : cell.category === 'event' ? (
@@ -237,6 +244,20 @@ function CalendarView({ calendar }) {
         </div>
       )}
 
+      <section className="calendar-tasks" aria-label="My Tasks">
+        <div className="calendar-tasks__head"><div><h3>My Tasks</h3><p>Personal to-do · saved in this browser, separate from your academic calendar.</p></div><button type="button" onClick={() => setAddingTask((value) => !value)}>{addingTask ? 'Cancel' : '+ Add task'}</button></div>
+        {addingTask && <form className="calendar-tasks__form" onSubmit={(event) => { event.preventDefault(); if (!taskTitle.trim()) return; saveTasks([{ id: `${Date.now()}`, title: taskTitle.trim(), course: taskCourse.trim(), due: selectedDate, priority: taskPriority, done: false }, ...tasks]); setTaskTitle(''); setTaskCourse(''); setAddingTask(false); }}>
+          <label>Task<input autoFocus value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} placeholder="e.g. Submit assignment" required /></label>
+          <label>Course<input value={taskCourse} onChange={(event) => setTaskCourse(event.target.value)} placeholder="Course code (optional)" /></label>
+          <label>Due date<input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} /></label>
+          <label>Priority<select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value)}><option>High</option><option>Medium</option><option>Low</option></select></label>
+          <button type="submit">Save task</button>
+        </form>}
+        <div className="calendar-tasks__counts"><span>Open {tasks.filter((task) => !task.done).length}</span><span>Today {tasks.filter((task) => task.due === today && !task.done).length}</span><span>Overdue {tasks.filter((task) => task.due < today && !task.done).length}</span></div>
+        <div className="calendar-tasks__filters">{['Open', 'Today', 'Overdue', 'Done', 'All'].map((filter) => <button key={filter} className={taskFilter === filter ? 'is-active' : ''} onClick={() => setTaskFilter(filter)} type="button">{filter}</button>)}</div>
+        <ul>{tasks.filter((task) => taskFilter === 'All' || (taskFilter === 'Done' ? task.done : !task.done && (taskFilter !== 'Today' || task.due === today) && (taskFilter !== 'Overdue' || task.due < today))).map((task) => <li key={task.id}><input aria-label={`Complete ${task.title}`} type="checkbox" checked={task.done} onChange={() => saveTasks(tasks.map((item) => item.id === task.id ? { ...item, done: !item.done } : item))} /><div><strong>{task.title}</strong><small>{task.course && `${task.course} · `}{task.due} · {task.priority.toUpperCase()} PRIORITY</small></div><button aria-label={`Delete ${task.title}`} type="button" onClick={() => saveTasks(tasks.filter((item) => item.id !== task.id))}>×</button></li>)}</ul>
+      </section>
+
       {/* Month Highlights / Schedule Notice */}
       <div className="bcard calendar__highlights">
         <div className="calendar__highlights-head">
@@ -254,7 +275,7 @@ function CalendarView({ calendar }) {
                 onClick={() => setSelectedDate(e.date)}
               >
                 <div className="calendar__highlights-date-col">
-                  <span className="num calendar__highlights-date">{formatDateDisplay(e.date)}</span>
+                  <span className="num calendar__highlights-date">{Number(e.date.slice(-2))}</span>
                   {e.dayOrder && <span className="calendar__highlights-do num">Day {e.dayOrder}</span>}
                 </div>
                 <span className="calendar__highlights-text">{e.title}</span>
@@ -266,6 +287,7 @@ function CalendarView({ calendar }) {
           </ul>
         )}
       </div>
+      <p className="attendance__connection"><span /> ACADEMIA + STUDENT PORTAL CONNECTED</p>
     </div>
   );
 }

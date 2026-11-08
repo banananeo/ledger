@@ -1,8 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import ProgressRing from '../../ProgressRing.jsx';
+import { Settings2, TriangleAlert, Check } from 'lucide-react';
 import {
   getAttendanceMargin,
-  getStatusTone,
   marginMessage,
   marginTone,
   REQUIRED_PERCENTAGE,
@@ -318,11 +317,15 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
 
   return (
     <div className="attendance">
-      {/* Attendance Metrics Top Summary */}
+      <header className="view-intro">
+        <div className="view-intro__meta"><span>STUDENT PORTAL / CONNECTED</span><span>Sample data</span></div>
+        <h2>Attendance</h2>
+        <p>Know your margins. Plan your next class.</p>
+      </header>
+      {/* Overall attendance summary */}
       <div className="bcard attendance__summary">
-        <div className="attendance__summary-col">
-          <p className="eyebrow">Overall Attendance</p>
-          <div className="attendance__summary-main">
+        <p className="eyebrow">Overall Attendance</p>
+        <div className="attendance__summary-main">
             <p
               className={`attendance__summary-value num${
                 (simulation ? simulation.simOverall : overall) < REQUIRED_PERCENTAGE
@@ -337,61 +340,29 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
                 -{simulation.overallDrop.toFixed(1)}% if skipped
               </span>
             )}
-          </div>
-          {totalConducted > 0 && (
-            <span className="attendance__summary-sub num">
-              {simulation ? simulation.simTotalAttended || totalAttended : totalAttended}/
-              {simulation ? (totalConducted + simulation.totalSkippedHours) : totalConducted} classes attended
-            </span>
-          )}
+          {totalConducted > 0 && <span className="attendance__summary-count num">{simulation ? simulation.simTotalAttended || totalAttended : totalAttended} / {simulation ? (totalConducted + simulation.totalSkippedHours) : totalConducted}</span>}
         </div>
-
+        <p className="attendance__summary-sub">Attended / conducted · weighted by conducted count</p>
         <div className="attendance__summary-divider" />
-
-        <div className="attendance__summary-col">
-          <p className="eyebrow">Below 75% Cutoff</p>
-          <div className="attendance__summary-main">
-            <p
-              className={`attendance__summary-value num${
-                (simulation ? simulation.simAtRisk : atRiskList.length) > 0
-                  ? ' attendance__summary-value--danger'
-                  : ''
-              }`}
-            >
-              {simulation ? simulation.simAtRisk : atRiskList.length}{' '}
-              {(simulation ? simulation.simAtRisk : atRiskList.length) === 1 ? 'Course' : 'Courses'}
-            </p>
-            {simulation && simulation.newAtRiskCount > 0 && (
-              <span className="bchip bchip--danger attendance__sim-delta">
-                +{simulation.newAtRiskCount} new at risk!
-              </span>
-            )}
-          </div>
-          <span className="attendance__summary-sub">
-            {(simulation ? simulation.simAtRisk : atRiskList.length) === 0
-              ? 'All courses safe'
-              : 'Needs attention for exam eligibility'}
-          </span>
-        </div>
+        <div className="attendance__summary-bottom"><span>Below 75% Cutoff</span><span className="attendance__summary-badge">{simulation ? simulation.simAtRisk : atRiskList.length} {(simulation ? simulation.simAtRisk : atRiskList.length) === 1 ? 'course' : 'courses'}</span></div>
+        {simulation && simulation.newAtRiskCount > 0 && <span className="attendance__summary-simulation">+{simulation.newAtRiskCount} new at risk if skipped</span>}
       </div>
 
       {/* Attendance Predictor Feature Card */}
       <div className="bcard attendance-predictor">
         <div className="attendance-predictor__header">
           <div className="attendance-predictor__title-group">
-            <div className="attendance-predictor__icon-wrap">
-              <span>⚡</span>
-            </div>
             <div>
               <div className="attendance-predictor__title-row">
                 <h3 className="attendance-predictor__title">Attendance Predictor</h3>
-                <span className="bchip bchip--sky">Live Margin Simulation</span>
+                <span className="attendance-predictor__live">LIVE MARGIN SIMULATION</span>
               </div>
               <p className="attendance-predictor__sub">
-                Select a Day Order to preview your updated attendance and margin if you skip classes today.
+                Choose a day order to preview skipping its classes. Your current counts stay unchanged.
               </p>
             </div>
           </div>
+          <span className="attendance-predictor__settings" aria-hidden="true"><Settings2 size={18} /></span>
 
           {simulatedDayOrder && (
             <button
@@ -422,6 +393,8 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
             ))}
           </div>
         </div>
+
+        {!simulation && <p className="attendance-predictor__status">NO SIMULATION APPLIED</p>}
 
         {/* Active Simulation Impact Breakdown */}
         {simulation && (
@@ -507,7 +480,7 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
             className={`attendance__tab${filterTab === 'all' ? ' attendance__tab--active' : ''}`}
             onClick={() => setFilterTab('all')}
           >
-            All Courses ({safeAttendance.length})
+            <span>All Courses</span><small>{safeAttendance.length}</small>
           </button>
           <button
             className={`attendance__tab attendance__tab--risk${
@@ -515,17 +488,18 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
             }`}
             onClick={() => setFilterTab('risk')}
           >
-            Below 75% ({simulation ? simulation.simAtRisk : atRiskList.length})
+            <span>Below 75%</span><small>{simulation ? simulation.simAtRisk : atRiskList.length}</small>
           </button>
           <button
             className={`attendance__tab${filterTab === 'safe' ? ' attendance__tab--active' : ''}`}
             onClick={() => setFilterTab('safe')}
           >
-            Safe ≥75% ({simulation ? safeAttendance.length - simulation.simAtRisk : safeList.length})
+            <span>Safe ≥75%</span><small>{simulation ? safeAttendance.length - simulation.simAtRisk : safeList.length}</small>
           </button>
         </div>
 
         <div className="attendance__tools">
+          <span className="attendance__course-count">{String(displayCourses.length).padStart(2, '0')} COURSES</span>
           <select
             className="attendance__sort-select"
             value={sortBy}
@@ -549,10 +523,6 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
           {displayCourses.map((r, idx) => {
             const currentPct = simulation ? r.newPct : r.numericPct;
             const currentMargin = simulation ? r.newMargin : getAttendanceMargin(r.conducted, r.absent);
-            const tone =
-              currentMargin.status === 'unknown'
-                ? getStatusTone(currentPct)
-                : marginTone(currentMargin);
             const courseCode = String(r.courseCode || '').trim().toUpperCase();
             const isJointCourse = /J$/i.test(courseCode);
             const lab = labInfoByCourse.get(courseCode) || { labHours: 0, sessions: 0, hoursPerSession: 0 };
@@ -595,7 +565,7 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
                   simulation && r.isAffected ? ' attendance__card--simulated' : ''
                 }`}
               >
-                <ProgressRing percentage={currentPct} size={64} stroke={6} />
+                <div className="attendance__course-meta"><span>{courseCode || 'COURSE NAME'}{r.courseType ? ` / ${r.courseType.toUpperCase()}` : ''}</span><span className={currentPct < REQUIRED_PERCENTAGE ? 'is-risk' : currentPct === REQUIRED_PERCENTAGE ? 'is-cutoff' : 'is-safe'}>{currentPct < REQUIRED_PERCENTAGE ? 'BELOW 75%' : currentPct === REQUIRED_PERCENTAGE ? 'AT CUTOFF' : 'SAFE ≥75%'}</span></div>
 
                 <div className="attendance__card-main">
                   <div className="attendance__card-header-line">
@@ -613,27 +583,13 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
                   </div>
 
                   <div className="attendance__card-sub">
-                    <span className="attendance__meta-item num">
-                      <strong>{r.courseCode}</strong>
-                    </span>
-                    {r.slot && (
-                      <span className="attendance__meta-item">
-                        Slot: <strong>{r.slot}</strong>
-                      </span>
-                    )}
-                    {r.conducted > 0 && (
-                      <span className="attendance__meta-item num">
-                        {r.attended}/{simulation ? r.conducted + r.missedHours : r.conducted} attended
-                      </span>
-                    )}
+                    <strong className={currentPct < REQUIRED_PERCENTAGE || currentPct === REQUIRED_PERCENTAGE ? 'is-risk' : 'is-safe'}>{currentPct.toFixed(1)}%</strong>
+                    {r.conducted > 0 && <span className="num">{r.attended} / {simulation ? r.conducted + r.missedHours : r.conducted} attended</span>}
                   </div>
                 </div>
 
-                <div className="attendance__card-right">
-                  <span className={`bchip bchip--${tone} attendance__card-margin`}>
-                    {marginMessage(currentMargin)}
-                  </span>
-                </div>
+                <div className="attendance__progress" role="progressbar" aria-label={`${r.courseTitle || r.courseCode} attendance`} aria-valuenow={Math.round(currentPct)} aria-valuemin={0} aria-valuemax={100}><span className={currentPct <= REQUIRED_PERCENTAGE ? 'is-risk' : 'is-safe'} style={{ width: `${Math.max(0, Math.min(100, currentPct))}%` }} /></div>
+                <div className={`attendance__margin-note ${currentPct < REQUIRED_PERCENTAGE || currentPct === REQUIRED_PERCENTAGE ? 'is-risk' : 'is-safe'}`}>{currentPct < REQUIRED_PERCENTAGE || currentPct === REQUIRED_PERCENTAGE ? <TriangleAlert size={15} aria-hidden="true" /> : <Check size={15} aria-hidden="true" />}<span>{marginMessage(currentMargin)}</span></div>
 
                 {isJointCourse && (
                   <div className="attendance__lab-split">
@@ -683,6 +639,7 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
           })}
         </ul>
       )}
+      <div className="attendance__connection"><span aria-hidden="true" />ACADEMIA + STUDENT PORTAL CONNECTED</div>
     </div>
   );
 }

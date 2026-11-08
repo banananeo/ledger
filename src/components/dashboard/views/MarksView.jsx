@@ -1,15 +1,7 @@
 import React from 'react';
 import './MarksView.css';
 
-function MarksView({ marks = [], courses = [], schedule = [], attendance = [] }) {
-  if (marks.length === 0) {
-    return (
-      <div className="bcard marks__empty-card">
-        <p>No internal assessment marks recorded in Academia for this semester yet.</p>
-      </div>
-    );
-  }
-
+function MarksView({ marks = [], courses = [], schedule = [], attendance = [], calendar }) {
   const courseNames = new Map();
   const addCourseNames = (records = []) => {
     records.forEach((course) => {
@@ -24,11 +16,16 @@ function MarksView({ marks = [], courses = [], schedule = [], attendance = [] })
 
   return (
     <div className="marks">
-      <p className="marks__note">
-        Internal test performances, cycle tests, surprise tests, and lab assessments recorded in SRM Academia.
-      </p>
+      <header className="view-intro">
+        <div className="view-intro__meta"><span>STUDENT PORTAL / CONNECTED</span><span>Sample data</span></div>
+        <h2>Marks</h2>
+        <p>Your internal assessments: cycle tests, quizzes and labs, organised by course.</p>
+      </header>
+      <div className="marks__overview"><div><span>{calendar?.plannerType || 'ODD'} SEMESTER / {calendar?.academicYearLabel || '2026-27'}</span><span>{String(marks.length).padStart(2, '0')} COURSES</span></div><p>Percentages reflect the assessments shown below, not semester results.</p></div>
 
-      <ul className="marks__list">
+      {marks.length === 0 ? <div className="bcard marks__empty-card"><p>No internal assessment marks recorded in Academia for this semester yet.</p></div> : null}
+
+      {marks.length > 0 && <ul className="marks__list">
         {marks.map((record) => {
           const hasSummary = record.summary && record.summary !== 'N/A';
           const pct =
@@ -38,26 +35,12 @@ function MarksView({ marks = [], courses = [], schedule = [], attendance = [] })
 
           return (
             <li key={record.courseCode} className="bcard marks__card">
-              <div className="marks__card-head">
-                <div>
-                  <h3 className="marks__card-title">{
-                    (typeof record.courseTitle === 'string' && record.courseTitle.trim()) ||
-                    courseNames.get(String(record.courseCode || '').trim().toUpperCase()) ||
-                    record.courseCode
-                  }</h3>
-                  <span className="marks__card-type">{record.courseType}</span>
-                </div>
-                <div className="marks__card-head-right">
-                  {pct !== null && (
-                    <span className={`bchip num ${pct >= 75 ? 'bchip--good' : pct >= 50 ? 'bchip--warning' : 'bchip--danger'}`}>
-                      {pct.toFixed(1)}%
-                    </span>
-                  )}
-                  <span className="bchip num">
-                    {hasSummary ? record.summary : 'Pending'}
-                  </span>
-                </div>
-              </div>
+              <div className="marks__card-meta"><span>{record.courseCode} / {record.courseType || 'THEORY'}</span><span className={`marks__band ${pct === null ? 'marks__band--pending' : pct >= 75 ? 'marks__band--high' : pct >= 50 ? 'marks__band--mid' : 'marks__band--low'}`}>{pct === null ? 'PENDING' : pct >= 75 ? 'HIGH' : pct >= 50 ? 'MIDDLE' : 'LOW'}</span></div>
+              <h3 className="marks__card-title">{
+                (typeof record.courseTitle === 'string' && record.courseTitle.trim()) ||
+                courseNames.get(String(record.courseCode || '').trim().toUpperCase()) || record.courseCode
+              }</h3>
+              <div className="marks__total-row"><strong className={`marks__total ${pct !== null && pct < 50 ? 'marks__total--low' : ''}`}>{pct !== null ? `${pct.toFixed(1)}%` : '—'}</strong><span className="marks__obtained">{record.totalMarksObtained ?? '—'} / {record.totalMarksMaximum ?? '—'}<small>TOTAL OBTAINED</small></span></div>
 
               {record.assessments && record.assessments.length > 0 ? (
                 <div className="marks__table-container">
@@ -102,7 +85,9 @@ function MarksView({ marks = [], courses = [], schedule = [], attendance = [] })
             </li>
           );
         })}
-      </ul>
+      </ul>}
+      <div className="marks__display-bands"><span>DISPLAY BANDS</span><p><i className="high" /> ≥75 high　 <i className="mid" /> ≥50 middle　 <i className="low" /> &lt;50 low</p><small>Bands are visual emphasis only, not pass/fail rules.</small></div>
+      <p className="attendance__connection"><span /> ACADEMIA + STUDENT PORTAL CONNECTED</p>
     </div>
   );
 }

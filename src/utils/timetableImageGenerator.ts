@@ -143,20 +143,20 @@ export async function generateTimetableCanvas(
         roomBox: '#1e222d',
       }
     : {
-        bg: '#fcfcfd',
+        bg: '#FAF9F4',
         cardBg: '#ffffff',
-        border: '#121317',
-        ink: '#121317',
-        inkSoft: '#4b5563',
-        mute: '#6b7280',
-        yellow: '#f59e0b',
-        yellowSoft: '#fef3c7',
-        sky: '#0284c7',
-        skySoft: '#e0f2fe',
-        mint: '#059669',
-        mintSoft: '#d1fae5',
-        freeCell: '#f8fafc',
-        roomBox: '#f1f5f9',
+        border: '#C3CCF5',
+        ink: '#17399F',
+        inkSoft: '#60749F',
+        mute: '#60749F',
+        yellow: '#2949F5',
+        yellowSoft: '#EEF1FC',
+        sky: '#2949F5',
+        skySoft: '#EEF1FC',
+        mint: '#2949F5',
+        mintSoft: '#EEF1FC',
+        freeCell: '#FAF9F4',
+        roomBox: '#EEF1FC',
       };
 
   // Background
@@ -192,23 +192,23 @@ export async function generateTimetableCanvas(
   ctx.stroke();
 
   // Logo text "L."
-  ctx.font = 'bold 36px Georgia, serif';
+  ctx.font = 'bold 36px "Manrope", sans-serif';
   ctx.fillStyle = colors.ink;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('L', logoX + 24, logoY + 34);
 
-  ctx.fillStyle = '#ef4444';
+  ctx.fillStyle = '#2949F5';
   ctx.fillText('.', logoX + 44, logoY + 34);
 
   // Main Brand & Title
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = colors.ink;
-  ctx.font = 'bold 32px "Space Grotesk", system-ui, -apple-system, sans-serif';
+  ctx.font = 'bold 32px "Manrope", system-ui, sans-serif';
   ctx.fillText('Ledger.', logoX + logoSize + 16, logoY + 32);
 
-  ctx.font = '600 16px "JetBrains Mono", monospace';
+  ctx.font = '600 16px "IBM Plex Mono", monospace';
   ctx.fillStyle = colors.yellow;
   ctx.fillText('WEEKLY ACADEMIC TIMETABLE', logoX + logoSize + 16, logoY + 54);
 
@@ -228,11 +228,11 @@ export async function generateTimetableCanvas(
   ctx.lineWidth = 2;
   ctx.stroke();
 
-  ctx.font = 'bold 17px "Space Grotesk", sans-serif';
+  ctx.font = 'bold 17px "Manrope", sans-serif';
   ctx.fillStyle = colors.ink;
   ctx.fillText(profileName, infoCardX + 16, infoCardY + 28);
 
-  ctx.font = '14px "JetBrains Mono", monospace';
+  ctx.font = '14px "IBM Plex Mono", monospace';
   ctx.fillStyle = colors.inkSoft;
   ctx.fillText(regNumber, infoCardX + 16, infoCardY + 50);
 
@@ -245,7 +245,7 @@ export async function generateTimetableCanvas(
   ctx.stroke();
 
   // Subtitle info
-  ctx.font = '13px "JetBrains Mono", monospace';
+  ctx.font = '13px "IBM Plex Mono", monospace';
   ctx.fillStyle = colors.inkSoft;
   ctx.fillText('DAY ORDER SYSTEM • SRM KATTANKULATHUR CAMPUS', 40, 150);
 
@@ -268,7 +268,7 @@ export async function generateTimetableCanvas(
   ctx.lineWidth = 1.5;
   ctx.strokeRect(tableX, tableY, dayColW, colHeaderHeight);
 
-  ctx.font = 'bold 14px "JetBrains Mono", monospace';
+  ctx.font = 'bold 14px "IBM Plex Mono", monospace';
   ctx.fillStyle = colors.ink;
   ctx.textAlign = 'center';
   ctx.fillText('DAY ORDER', tableX + dayColW / 2, tableY + 36);
@@ -276,18 +276,18 @@ export async function generateTimetableCanvas(
   // Column Headers (Periods)
   timeSlots.forEach((slot, colIdx) => {
     const x = tableX + dayColW + colIdx * slotColW;
-    ctx.fillStyle = isDark ? '#161922' : '#f8fafc';
+    ctx.fillStyle = isDark ? '#161922' : colors.freeCell;
     ctx.fillRect(x, tableY, slotColW, colHeaderHeight);
     ctx.strokeStyle = colors.border;
     ctx.lineWidth = 1.5;
     ctx.strokeRect(x, tableY, slotColW, colHeaderHeight);
 
-    ctx.font = 'bold 13px "Space Grotesk", sans-serif';
+    ctx.font = 'bold 13px "Manrope", sans-serif';
     ctx.fillStyle = colors.ink;
     ctx.textAlign = 'center';
     ctx.fillText(slot.label, x + slotColW / 2, tableY + 26);
 
-    ctx.font = '11.5px "JetBrains Mono", monospace';
+    ctx.font = '11.5px "IBM Plex Mono", monospace';
     ctx.fillStyle = colors.inkSoft;
     ctx.fillText(`${slot.start} - ${slot.end}`, x + slotColW / 2, tableY + 46);
   });
@@ -317,12 +317,12 @@ export async function generateTimetableCanvas(
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    ctx.font = 'bold 22px "Space Grotesk", sans-serif';
+    ctx.font = 'bold 22px "Manrope", sans-serif';
     ctx.fillStyle = colors.ink;
     ctx.textAlign = 'center';
     ctx.fillText(String(dayText), badgeX + badgeSize / 2, badgeY + 32);
 
-    ctx.font = 'bold 12.5px "JetBrains Mono", monospace';
+    ctx.font = 'bold 12.5px "IBM Plex Mono", monospace';
     ctx.fillStyle = colors.inkSoft;
     ctx.fillText(dayLabel.toUpperCase(), tableX + dayColW / 2, y + 116);
 
@@ -336,7 +336,7 @@ export async function generateTimetableCanvas(
       ctx.strokeRect(x, y, slotColW, rowHeight);
 
       // Subtle "Free" text
-      ctx.font = '11px "JetBrains Mono", monospace';
+      ctx.font = '11px "IBM Plex Mono", monospace';
       ctx.fillStyle = isDark ? '#333846' : '#cbd5e1';
       ctx.textAlign = 'center';
       ctx.fillText('—', x + slotColW / 2, y + rowHeight / 2);
@@ -377,7 +377,7 @@ export async function generateTimetableCanvas(
       roundRect(ctx, cellX, cellY, cellW, cellH, 8);
       ctx.fill();
 
-      ctx.strokeStyle = isLab ? colors.yellow : (isDark ? colors.border : '#121317');
+      ctx.strokeStyle = isLab ? colors.yellow : colors.border;
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
@@ -388,7 +388,7 @@ export async function generateTimetableCanvas(
       ctx.fillStyle = tagBg;
       ctx.fill();
 
-      ctx.font = 'bold 11px "JetBrains Mono", monospace';
+      ctx.font = 'bold 11px "IBM Plex Mono", monospace';
       ctx.fillStyle = tagColor;
       ctx.textAlign = 'left';
       ctx.fillText(entry.courseCode || 'CLASS', cellX + 10, cellY + 20);
@@ -396,13 +396,13 @@ export async function generateTimetableCanvas(
       // Slot type chip right side
       if (entry.slotType) {
         ctx.textAlign = 'right';
-        ctx.font = '9.5px "Space Grotesk", sans-serif';
+        ctx.font = '9.5px "Manrope", sans-serif';
         ctx.fillText(entry.slotType, cellX + cellW - 10, cellY + 20);
       }
 
       // Course Title (truncated neatly if long)
       ctx.textAlign = 'left';
-      ctx.font = 'bold 12.5px "Space Grotesk", sans-serif';
+      ctx.font = 'bold 12.5px "Manrope", sans-serif';
       ctx.fillStyle = colors.ink;
       
       const title = entry.courseTitle || entry.courseCode || 'Lecture';
@@ -427,16 +427,16 @@ export async function generateTimetableCanvas(
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      ctx.font = 'bold 9px "JetBrains Mono", monospace';
+      ctx.font = 'bold 9px "IBM Plex Mono", monospace';
       ctx.fillStyle = colors.inkSoft;
       ctx.fillText('ROOM', cellX + 12, roomBoxY + 14);
 
-      ctx.font = 'bold 13px "Space Grotesk", sans-serif';
+      ctx.font = 'bold 13px "Manrope", sans-serif';
       ctx.fillStyle = colors.ink;
       ctx.fillText(entry.room || 'TBA', cellX + 12, roomBoxY + 28);
 
       // Faculty / Timing in footer of card
-      ctx.font = '10px "Space Grotesk", sans-serif';
+      ctx.font = '10px "Manrope", sans-serif';
       ctx.fillStyle = colors.inkSoft;
       const facultyStr = entry.faculty ? entry.faculty.slice(0, 18) : entry.startTime;
       ctx.fillText(facultyStr, cellX + 8, cellY + cellH - 12);
@@ -444,7 +444,7 @@ export async function generateTimetableCanvas(
       // Slot name in right corner
       if (entry.slotName) {
         ctx.textAlign = 'right';
-        ctx.font = 'bold 10px "JetBrains Mono", monospace';
+        ctx.font = 'bold 10px "IBM Plex Mono", monospace';
         ctx.fillStyle = colors.mute;
         ctx.fillText(entry.slotName, cellX + cellW - 8, cellY + cellH - 12);
       }
@@ -458,7 +458,7 @@ export async function generateTimetableCanvas(
 
   // Legend
   ctx.textAlign = 'left';
-  ctx.font = '12px "Space Grotesk", sans-serif';
+  ctx.font = '12px "Manrope", sans-serif';
 
   // Theory Pill
   ctx.fillStyle = colors.skySoft;
@@ -483,7 +483,7 @@ export async function generateTimetableCanvas(
 
   // Watermark
   ctx.textAlign = 'right';
-  ctx.font = '12px "JetBrains Mono", monospace';
+  ctx.font = '12px "IBM Plex Mono", monospace';
   ctx.fillStyle = colors.inkSoft;
   ctx.fillText('Built with Ledger • Academia Suite', width - 40, footY - 1);
 

@@ -1,52 +1,52 @@
 @import "tailwindcss";
 
 :root {
-  /* ---- dark palette: deep graphite paper + crisp off-white ink, luminescent accents ---- */
-  --paper: #131418;
-  --surface: #1a1c23;
-  --ink: #f7f7f9;
-  --ink-soft: #9fa6b5;
-  --mute: #6c7283;
-  --line: #272a35;
-  --line-strong: #383d4c;
-  --accent: #5eead4;
-  --accent-soft: rgba(94, 234, 212, 0.12);
-  --warning: #fbbf24;
-  --warning-soft: rgba(251, 191, 36, 0.15);
-  --danger: #f87171;
-  --danger-soft: rgba(248, 113, 113, 0.15);
-  --shadow-soft: 0 2px 10px rgba(0, 0, 0, 0.45);
+  /* Ledger cobalt editorial system */
+  --paper: #fafaf5;
+  --surface: #ffffff;
+  --ink: #1534a6;
+  --ink-soft: #53638d;
+  --mute: #7180a2;
+  --line: #dce3f4;
+  --line-strong: #bec8e9;
+  --accent: #2349eb;
+  --accent-soft: #eef1fc;
+  --warning: #ebf581;
+  --warning-soft: #f7f8f2;
+  --danger: #ae4b25;
+  --danger-soft: #faede5;
+  --shadow-soft: 0 10px 30px rgba(21, 52, 166, 0.08);
 
-  --display: 'Space Grotesk', system-ui, sans-serif;
-  --sans: 'Inter', system-ui, sans-serif;
+  --display: 'Manrope', system-ui, sans-serif;
+  --sans: 'Manrope', system-ui, sans-serif;
   --mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
 
-  /* ---- dashboard shell: dark neo-brutalist tactile palette ---- */
-  --dash-bg: #0c0d10;
-  --sidebar-bg: #141715;
-  --yellow: #fbbf24;
-  --yellow-soft: #231b0e;
-  --teal: #2dd4bf;
-  --teal-soft: #0d2824;
-  --teal-glow: 0 0 16px rgba(45, 212, 191, 0.4), 0 0 32px rgba(45, 212, 191, 0.2);
-  --pink: #f472b6;
-  --pink-soft: #251322;
-  --sky: #38bdf8;
-  --sky-soft: #102131;
-  --peach: #fb923c;
-  --peach-soft: #26170e;
-  --mint: #34d399;
-  --mint-soft: #0e2419;
+  /* Compatibility aliases for existing view styles */
+  --dash-bg: #fafaf5;
+  --sidebar-bg: #f7f8f2;
+  --yellow: #ebf581;
+  --yellow-soft: #f7f8f2;
+  --teal: #193e32;
+  --teal-soft: #e8efe7;
+  --teal-glow: 0 8px 24px rgba(35, 73, 235, 0.12);
+  --pink: #ae4b25;
+  --pink-soft: #faede5;
+  --sky: #2349eb;
+  --sky-soft: #eef1fc;
+  --peach: #ae4b25;
+  --peach-soft: #faede5;
+  --mint: #193e32;
+  --mint-soft: #e8efe7;
 
-  --stroke: 2px;
-  --shadow-hard: 5px 5px 0 #000000;
-  --shadow-hard-sm: 3px 3px 0 #000000;
-  --radius-card: 16px;
+  --stroke: 1px;
+  --shadow-hard: 0 14px 34px rgba(21, 52, 166, 0.09);
+  --shadow-hard-sm: 0 5px 14px rgba(21, 52, 166, 0.1);
+  --radius-card: 14px;
   --radius-chip: 999px;
   --radius-btn: 10px;
 
   font: 16px/1.5 var(--sans);
-  color-scheme: dark;
+  color-scheme: light;
   color: var(--ink-soft);
   background: var(--dash-bg);
   font-synthesis: none;
@@ -56,9 +56,8 @@
 }
 
 :root.dark,
-[data-theme="dark"] {
-  /* Retained for backward-compatibility selectors */
-  color-scheme: dark;
+[data-theme="light"] {
+  color-scheme: light;
   color: var(--ink-soft);
   background: var(--dash-bg);
 }
@@ -70,7 +69,7 @@
 }
 
 html {
-  scrollbar-color: var(--line-strong) transparent;
+  scrollbar-color: var(--line-strong) var(--paper);
   scrollbar-width: thin;
 }
 
@@ -132,20 +131,17 @@ input:focus-visible {
   color: var(--ink);
 }
 
-/* =========================================================================
-   Dashboard shell — shared neo-brutalist utility classes.
-   Bold ink borders + hard offset shadows, no blur, no gradients.
-   ========================================================================= */
+/* Shared Ledger components */
 
 .bcard {
   background: var(--surface);
-  border: var(--stroke) solid var(--ink);
+  border: 1px solid var(--line);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-hard);
   transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.bcard--yellow { background: var(--yellow-soft); }
+.bcard--yellow { background: var(--accent-soft); }
 .bcard--pink { background: var(--pink-soft); }
 .bcard--sky { background: var(--sky-soft); }
 .bcard--peach { background: var(--peach-soft); }
@@ -166,29 +162,29 @@ input:focus-visible {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   padding: 4px 10px;
-  border: var(--stroke) solid var(--ink);
-  border-radius: var(--radius-chip);
-  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--paper);
   color: var(--ink);
   white-space: nowrap;
 }
 
 .bchip--good {
-  background: var(--mint-soft);
+  background: #e8efe7;
   color: var(--mint);
-  border-color: var(--ink);
+  border-color: #b8d0be;
 }
 
 .bchip--warning {
   background: var(--yellow-soft);
-  color: var(--yellow);
-  border-color: var(--ink);
+  color: #59621b;
+  border-color: #dce28e;
 }
 
 .bchip--danger {
   background: var(--danger-soft);
   color: var(--danger);
-  border-color: var(--ink);
+  border-color: #e5c3b3;
 }
 
 [data-theme="dark"] .bchip--good, .dark .bchip--good { border-color: rgba(52, 211, 153, 0.6); }
@@ -204,22 +200,21 @@ input:focus-visible {
   font-size: 14px;
   font-weight: 600;
   padding: 10px 16px;
-  border-radius: var(--radius-btn);
-  border: var(--stroke) solid var(--ink);
-  background: var(--ink);
-  color: var(--paper);
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #ffffff;
   cursor: pointer;
-  box-shadow: var(--shadow-hard-sm);
+  box-shadow: none;
   transition: transform 0.12s ease, background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .bbtn:hover:not(:disabled) {
-  transform: translate(-1px, -1px);
+  background: #1534a6;
 }
 
 .bbtn:active:not(:disabled) {
-  transform: translate(1px, 1px);
-  box-shadow: 1px 1px 0 var(--ink);
+  transform: translateY(1px);
 }
 
 .bbtn:disabled {
@@ -228,12 +223,12 @@ input:focus-visible {
 }
 
 .bbtn--outline {
-  background: var(--surface);
-  color: var(--ink);
+  background: transparent;
+  color: var(--accent);
 }
 
 .bbtn--outline:hover:not(:disabled) {
-  background: var(--line);
+  background: var(--accent-soft);
 }
 
 .bbtn--ghost {
@@ -245,7 +240,7 @@ input:focus-visible {
 
 .bbtn--ghost:hover:not(:disabled) {
   transform: none;
-  border-color: var(--ink);
+  border-color: var(--line-strong);
 }
 
 .bbtn--icon {
@@ -271,12 +266,12 @@ input:focus-visible {
   width: 9px;
   height: 9px;
   border-radius: 999px;
-  border: 1.5px solid var(--ink);
+  border: 1.5px solid var(--line-strong);
   background: var(--surface);
   padding: 0;
   cursor: pointer;
 }
 
 .bstepper__dot--active {
-  background: var(--ink);
+  background: var(--accent);
 }
