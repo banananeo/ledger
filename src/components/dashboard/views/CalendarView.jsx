@@ -66,7 +66,7 @@ function CalendarView({ calendar }) {
 
   if (months.length === 0) {
     return (
-      <div className="calendar"><header className="view-intro"><div className="view-intro__meta"><span>ODD SEMESTER / {calendar?.academicYearLabel || '2026-27'}</span></div><h2>Calendar</h2><p>Academic Schedule &amp; Day Orders</p></header><div className="bcard calendar__empty-card"><p>No academic calendar data available from Academia.</p></div><p className="attendance__connection"><span /> ACADEMIA + STUDENT PORTAL CONNECTED</p></div>
+      <div className="calendar"><header className="view-intro"><div className="view-intro__meta"><span>ODD SEMESTER / {calendar?.academicYearLabel || '2026-27'}</span><span>Sample data</span></div><h2>Calendar</h2><p>Academic Schedule &amp; Day Orders</p></header><div className="bcard calendar__empty-card"><p>No academic calendar data available from Academia.</p></div><p className="attendance__connection"><span /> ACADEMIA + STUDENT PORTAL CONNECTED</p></div>
     );
   }
 

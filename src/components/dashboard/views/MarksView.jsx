@@ -18,10 +18,7 @@ function MarksView({ marks = [], courses = [], schedule = [], attendance = [], c
     <div className="marks">
       <header className="view-intro">
         <h2>Marks</h2>
-        <p>Your internal assessments: cycle tests, quizzes and labs, organised by course.</p>
       </header>
-      <div className="marks__overview"><div><span>{calendar?.plannerType || 'ODD'} SEMESTER / {calendar?.academicYearLabel || '2026-27'}</span><span>{String(marks.length).padStart(2, '0')} COURSES</span></div><p>Percentages reflect the assessments shown below, not semester results.</p></div>
-
       {marks.length === 0 ? <div className="bcard marks__empty-card"><p>No internal assessment marks recorded in Academia for this semester yet.</p></div> : null}
 
       {marks.length > 0 && <ul className="marks__list">
