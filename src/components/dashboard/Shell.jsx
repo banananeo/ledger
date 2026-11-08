@@ -7,36 +7,20 @@ import NotificationDrawer from './NotificationDrawer.jsx';
 import AcademiaDownBanner from './AcademiaDownBanner.jsx';
 import CurtainsScopeTransition from './CurtainsScopeTransition.jsx';
 import { NotificationProvider } from '../../context/NotificationContext.tsx';
-import { TodoProvider } from '../../context/TodoContext.tsx';
 import HomeView from './views/HomeView.jsx';
 import TimetableView from './views/TimetableView.jsx';
 import AttendanceView from './views/AttendanceView.jsx';
 import MarksView from './views/MarksView.jsx';
 import CalendarView from './views/CalendarView.jsx';
-import GamesView from './views/GamesView.jsx';
 import AIAssistantDrawer from './AIAssistant/AIAssistantDrawer.jsx';
-import AfterHoursScene from './AfterHoursScene.jsx';
 import './Shell.css';
 
 function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onReconnectAcademia, onConnectStudentPortal, academiaIssue, studentPortalIssue, studentPortalError }) {
   const [view, setView] = useState('home');
   const [transitionOrigin, setTransitionOrigin] = useState({ x: 50, y: 50 });
   const [aiOpen, setAiOpen] = useState(false);
-  const [afterHoursOpen, setAfterHoursOpen] = useState(false);
-  const logoTapRef = useRef({ count: 0, lastTap: 0 });
   const stageRef = useRef(null);
   const { profile, attendance = [], schedule = [], marks = [], courses = [], calendar } = data || {};
-
-  const handleSecretLogoTap = () => {
-    const now = Date.now();
-    if (now - logoTapRef.current.lastTap > 2400) logoTapRef.current.count = 0;
-    logoTapRef.current.lastTap = now;
-    logoTapRef.current.count += 1;
-    if (logoTapRef.current.count >= 7) {
-      logoTapRef.current.count = 0;
-      setAfterHoursOpen(true);
-    }
-  };
 
   // Pull-to-refresh state
   const [startY, setStartY] = useState(0);
@@ -83,102 +67,92 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onRec
 
   return (
     <NotificationProvider schedule={schedule} calendar={calendar}>
-      <TodoProvider>
-        <div
-          className="shell"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-        >
-          <Sidebar
+      <div
+        className="shell"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <Sidebar
+          view={view}
+          onNavigate={navigate}
+          onRefresh={onRefresh}
+          refreshing={refreshing}
+          onLogout={onLogout}
+          onReconnectAcademia={onReconnectAcademia}
+          onConnectStudentPortal={onConnectStudentPortal}
+          academiaIssue={academiaIssue}
+          studentPortalIssue={studentPortalIssue}
+        />
+        <div className="shell__main" style={{ transform: `translateY(${pullDistance}px)`, transition: pullDistance === 0 ? 'transform 0.2s ease-out' : 'none' }}>
+          {/* Pull Indicator */}
+          <div className="shell__pull-indicator" style={{ height: pullDistance > 0 ? 60 : 0, opacity: pullDistance / 80 }}>
+            {refreshing ? 'Syncing...' : pullDistance > 60 ? 'Release to refresh' : 'Pull down to refresh'}
+          </div>
+          <TopBar
             view={view}
-            onNavigate={navigate}
+            onBack={() => navigate('home')}
             onRefresh={onRefresh}
             refreshing={refreshing}
+            profile={profile}
             onLogout={onLogout}
-            onReconnectAcademia={onReconnectAcademia}
-            onConnectStudentPortal={onConnectStudentPortal}
-            academiaIssue={academiaIssue}
-            studentPortalIssue={studentPortalIssue}
-            onOpenEasterEgg={handleSecretLogoTap}
           />
-          <div className="shell__main" style={{ transform: `translateY(${pullDistance}px)`, transition: pullDistance === 0 ? 'transform 0.2s ease-out' : 'none' }}>
-            {/* Pull Indicator */}
-            <div className="shell__pull-indicator" style={{ height: pullDistance > 0 ? 60 : 0, opacity: pullDistance / 80 }}>
-              {refreshing ? 'Syncing...' : pullDistance > 60 ? 'Release to refresh' : 'Pull down to refresh'}
-            </div>
-            <TopBar
-              view={view}
-              onBack={() => navigate('home')}
-              onRefresh={onRefresh}
-              refreshing={refreshing}
-              profile={profile}
-              onLogout={onLogout}
-              onOpenAI={() => setAiOpen(true)}
-              onEasterEggTap={handleSecretLogoTap}
+          {error && (
+            <AcademiaDownBanner
+              error={error}
+              onRetry={onRefresh}
+              onReconnectAcademia={onReconnectAcademia}
             />
-            {error && (
-              <AcademiaDownBanner
-                error={error}
-                onRetry={onRefresh}
-                onReconnectAcademia={onReconnectAcademia}
-                onPlayGame={(gameType) => {
-                  navigate('games');
-                }}
-              />
-            )}
-            {studentPortalError && (
-              <div className="student-portal-notice" role="status">
-                <span>{studentPortalError}</span>
-                <button type="button" onClick={onConnectStudentPortal}>Connect Student Portal</button>
-              </div>
-            )}
-            <div className="shell__content">
-              <ClassReminderBanner onNavigate={navigate} />
-
-              <CurtainsScopeTransition activeView={view} origin={transitionOrigin}>
-                {(currentActiveView) => (
-                  <div className="shell__view-wrapper">
-                    {currentActiveView === 'home' && (
-                      <HomeView
-                        profile={profile}
-                        attendance={attendance}
-                        schedule={schedule}
-                        marks={marks}
-                        calendar={calendar}
-                        lastSynced={lastSynced}
-                        onNavigate={navigate}
-                      />
-                    )}
-                    {currentActiveView === 'timetable' && (
-                      <TimetableView schedule={schedule} calendar={calendar} profile={profile} />
-                    )}
-
-                    {currentActiveView === 'attendance' && (
-                      <AttendanceView attendance={attendance} schedule={schedule} calendar={calendar} />
-                    )}
-                    {currentActiveView === 'games' && (
-                      <GamesView schedule={schedule} attendance={attendance} calendar={calendar} />
-                    )}
-                    {currentActiveView === 'calendar' && (
-                      <CalendarView calendar={calendar} courses={courses} />
-                    )}
-                    {currentActiveView === 'marks' && (
-                      <MarksView marks={marks} courses={courses} schedule={schedule} attendance={attendance} />
-                    )}
-                  </div>
-                )}
-              </CurtainsScopeTransition>
+          )}
+          {studentPortalError && (
+            <div className="student-portal-notice" role="status">
+              <span>{studentPortalError}</span>
+              <button type="button" onClick={onConnectStudentPortal}>Connect Student Portal</button>
             </div>
+          )}
+          <div className="shell__content">
+            <ClassReminderBanner onNavigate={navigate} />
+
+            <CurtainsScopeTransition activeView={view} origin={transitionOrigin}>
+              {(currentActiveView) => (
+                <div className="shell__view-wrapper">
+                  {currentActiveView === 'home' && (
+                    <HomeView
+                      profile={profile}
+                      attendance={attendance}
+                      schedule={schedule}
+                      marks={marks}
+                      calendar={calendar}
+                      lastSynced={lastSynced}
+                      onNavigate={navigate}
+                      onOpenAI={() => setAiOpen(true)}
+                    />
+                  )}
+                  {currentActiveView === 'timetable' && (
+                    <TimetableView schedule={schedule} calendar={calendar} profile={profile} />
+                  )}
+
+                  {currentActiveView === 'attendance' && (
+                    <AttendanceView attendance={attendance} schedule={schedule} calendar={calendar} />
+                  )}
+                  {currentActiveView === 'calendar' && (
+                    <CalendarView calendar={calendar} />
+                  )}
+                  {currentActiveView === 'marks' && (
+                    <MarksView marks={marks} courses={courses} schedule={schedule} attendance={attendance} calendar={calendar} />
+                  )}
+                </div>
+              )}
+            </CurtainsScopeTransition>
           </div>
-          <MobileTabBar view={view} onNavigate={navigate} />
-          <NotificationDrawer onNavigate={navigate} />
-          <AIAssistantDrawer data={data} isOpen={aiOpen} onClose={() => setAiOpen(false)} />
-          {afterHoursOpen && <AfterHoursScene onClose={() => setAfterHoursOpen(false)} />}
         </div>
-      </TodoProvider>
+        <MobileTabBar view={view} onNavigate={navigate} />
+        <NotificationDrawer onNavigate={navigate} />
+        <AIAssistantDrawer data={data} isOpen={aiOpen} onClose={() => setAiOpen(false)} />
+      </div>
     </NotificationProvider>
   );
 }
 
 export default Shell;
+

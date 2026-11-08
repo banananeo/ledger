@@ -1,15 +1,14 @@
 import React from 'react';
-import { HomeIcon, ClockIcon, CheckRingIcon, CalendarIcon, AwardIcon, GamepadIcon, RefreshIcon, LogoutIcon, BellIcon } from './Icons.jsx';
+import { House, Clock3, UserRoundCheck, CalendarDays, ChartNoAxesColumnIncreasing, RefreshCw, LogOut, Bell } from 'lucide-react';
 import { useNotifications } from '../../context/NotificationContext.tsx';
 import './Sidebar.css';
 
 export const NAV_ITEMS = [
-  { id: 'home', label: 'Home', Icon: HomeIcon },
-  { id: 'timetable', label: 'Timetable', Icon: ClockIcon },
-  { id: 'attendance', label: 'Attendance', Icon: CheckRingIcon },
-  { id: 'calendar', label: 'Calendar', Icon: CalendarIcon },
-  { id: 'marks', label: 'Marks', Icon: AwardIcon },
-  { id: 'games', label: 'Games', Icon: GamepadIcon },
+  { id: 'home', label: 'Home', Icon: House },
+  { id: 'timetable', label: 'Timetable', Icon: Clock3 },
+  { id: 'attendance', label: 'Attendance', Icon: UserRoundCheck },
+  { id: 'calendar', label: 'Calendar', Icon: CalendarDays },
+  { id: 'marks', label: 'Marks', Icon: ChartNoAxesColumnIncreasing },
 ];
 
 function Sidebar({ view, onNavigate, onRefresh, refreshing, onLogout, onReconnectAcademia, onConnectStudentPortal, academiaIssue, studentPortalIssue, onOpenEasterEgg }) {
@@ -40,14 +39,14 @@ function Sidebar({ view, onNavigate, onRefresh, refreshing, onLogout, onReconnec
           title="Class Reminders & Notification Settings"
           style={{ position: 'relative' }}
         >
-          <BellIcon width={18} height={18} />
+          <Bell size={18} />
           <span>Reminders</span>
           {hasActiveAlert && (
             <span className="sidebar__notif-dot" />
           )}
         </button>
         <button className="sidebar__item" onClick={onRefresh} disabled={refreshing}>
-          <RefreshIcon width={18} height={18} className={refreshing ? 'sidebar__spin' : ''} />
+          <RefreshCw size={18} className={refreshing ? 'sidebar__spin' : ''} />
           <span>{refreshing ? 'Syncing…' : 'Sync'}</span>
         </button>
         {academiaIssue && (
@@ -63,7 +62,7 @@ function Sidebar({ view, onNavigate, onRefresh, refreshing, onLogout, onReconnec
           </button>
         )}
         <button className="sidebar__item" onClick={onLogout}>
-          <LogoutIcon width={18} height={18} />
+          <LogOut size={18} />
           <span>Log out</span>
         </button>
       </div>

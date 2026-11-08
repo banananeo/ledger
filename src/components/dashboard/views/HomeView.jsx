@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { ClockIcon, CalendarIcon, BellIcon, GamepadIcon } from '../Icons.jsx';
+import { Sparkles } from 'lucide-react';
+import { ClockIcon, CalendarIcon, BellIcon } from '../Icons.jsx';
 import { todayISO, findEntryForDate, allEntries } from '../../../utils/calendar.js';
 import { useNotifications } from '../../../context/NotificationContext.tsx';
 import { aiSummary } from '../../../api.ts';
@@ -137,7 +138,7 @@ function getNextClassInfo(schedule = [], calendar) {
         entry: nextClasses[0],
         status: 'Upcoming Class',
         statusTone: 'neutral',
-        timingNote: `${futureWorkingDay.date} · Starts at ${nextClasses[0].startTime}`,
+        timingNote: `Starts at ${nextClasses[0].startTime}`,
         dayLabel: `Day ${futureWorkingDay.dayOrder}`,
         isOngoing: false,
       };
@@ -196,7 +197,7 @@ function getDailyAffirmation(dateStr) {
   return DAILY_AFFIRMATIONS[hash % DAILY_AFFIRMATIONS.length];
 }
 
-function HomeView({ profile, attendance = [], schedule = [], marks = [], calendar, lastSynced, onNavigate }) {
+function HomeView({ profile, attendance = [], schedule = [], marks = [], calendar, lastSynced, onNavigate, onOpenAI }) {
   const nextClassInfo = getNextClassInfo(schedule, calendar);
   const todayOverview = getTodayOverview(schedule, calendar);
   const positiveMessage = getDailyAffirmation(todayISO());
@@ -228,11 +229,11 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
       initial={false}
       animate="visible"
     >
-      <motion.section className="bcard bcard--yellow home__hero" variants={homeItemVariants}>
+      <motion.section className="home__hero" variants={homeItemVariants}>
         <div className="home__hero-info">
-          <p className="eyebrow">Welcome</p>
-          <h2 className="home__hero-title">{profile?.name || 'Student'}</h2>
-          <p className="home__hero-affirmation">✨ {positiveMessage}</p>
+          <div className="view-intro__meta home__meta"><span>SRM / {profile?.name || 'Student'}</span><span>Sample data</span></div>
+          <h2 className="home__hero-title">{new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening'},<br />{(profile?.name || 'Student').split(' ')[0]}.</h2>
+          <p className="home__hero-meta">{new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · {new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</p>
         </div>
       </motion.section>
 
@@ -265,21 +266,15 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
       </motion.section>
 
       {/* Next Class with Room Details */}
-      <motion.section className="bcard home__next-class-card" variants={homeItemVariants}>
+      <motion.section className="home__next-class-card" variants={homeItemVariants}>
         <div className="home__next-class-head">
           <div>
-            <p className="eyebrow">Next Class & Room Details</p>
-            <h3 className="home__next-class-heading">
-              {nextClassInfo?.isOngoing ? 'Current Ongoing Class' : 'What is My Next Class?'}
-            </h3>
+            <p className="eyebrow">Next class &amp; room details</p>
           </div>
           {nextClassInfo && (
             <div className="home__next-class-tags">
-              <span className={`bchip bchip--${nextClassInfo.statusTone}`}>
-                {nextClassInfo.status}
-              </span>
               <span className="bchip num">
-                {nextClassInfo.dayLabel}
+                {nextClassInfo.dayLabel.replace(/ \(.+\)/, '').toUpperCase()}
               </span>
             </div>
           )}
@@ -288,13 +283,14 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
         {nextClassInfo?.entry ? (
           <div className="home__next-class-body">
             <div className="home__next-class-room-badge">
-              <span className="home__next-class-room-label">ROOM / VENUE</span>
-              <span className="home__next-class-room-number num">
-                {nextClassInfo.entry.room || 'TBA'}
-              </span>
-              <span className="home__next-class-room-type">
-                {nextClassInfo.entry.slotType || 'Lecture Hall'}
-              </span>
+              <div className="home__next-class-feature">
+                <span className="home__next-class-room-label">Room</span>
+                <span className="home__next-class-room-number num">{nextClassInfo.entry.room || 'TBA'}</span>
+              </div>
+              <div className="home__next-class-countdown">
+                <span className="bchip bchip--good">{nextClassInfo.isOngoing ? 'IN PROGRESS' : 'UP NEXT'}</span>
+                <span>{nextClassInfo.status === 'Next Class Today' ? nextClassInfo.timingNote : nextClassInfo.timingNote || nextClassInfo.status}</span>
+              </div>
             </div>
 
             <div className="home__next-class-details">
@@ -342,14 +338,24 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
         )}
       </motion.section>
 
+      <motion.section className="home__brief" variants={homeItemVariants}>
+        <div className="home__brief-heading">
+          <h3>Academic Brief</h3><span>LEDGER AI</span>
+        </div>
+        <p>Turn your schedule, attendance and marks into a short academic overview.</p>
+        <button type="button" onClick={onOpenAI} aria-label="Open Ledger AI">
+          <span className="home__brief-action-label">Open Ledger AI</span>
+          <span className="home__brief-action-icon" aria-hidden="true"><Sparkles size={18} strokeWidth={1.8} /></span>
+        </button>
+      </motion.section>
 
-      <motion.section className="bcard home__today-card" variants={homeItemVariants} aria-label="Today at a glance">
+
+      <motion.section className="home__today-card" variants={homeItemVariants} aria-label="Today at a glance">
         <div className="home__today-head">
           <div>
             <p className="eyebrow">Today at a glance</p>
-            <h3 className="home__today-date">{todayOverview.dateLabel}</h3>
           </div>
-          {todayOverview.dayOrder && <span className="bchip num">Day {todayOverview.dayOrder}</span>}
+          <div className="home__today-summary"><span>{todayOverview.classes.length} CLASSES REMAINING</span><span>DAY {todayOverview.dayOrder || '—'}</span></div>
         </div>
 
         {todayOverview.classes.length || todayOverview.events.length ? (
@@ -362,7 +368,7 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
                     const isOngoing = entry.startMinutes != null && entry.startMinutes <= todayOverview.currentMinutes && (entry.endMinutes == null || entry.endMinutes >= todayOverview.currentMinutes);
                     return (
                       <li className="home__today-row" key={`${entry.courseCode}-${entry.slotCode}-${index}`}>
-                        <span className="home__today-time num">{entry.startTime}{entry.endTime ? ` – ${entry.endTime}` : ''}</span>
+                        <span className="home__today-time num"><span>{entry.startTime}</span><small>{entry.endTime}</small></span>
                         <span className="home__today-class-name">{entry.courseTitle || entry.courseCode}</span>
                         <span className="home__today-room">{isOngoing ? 'Ongoing' : (entry.room || 'Room TBA')}</span>
                       </li>
@@ -385,29 +391,8 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
         )}
       </motion.section>
 
-      {/* Quick Launch Games Card */}
-      <motion.section variants={homeItemVariants}>
-        <div className="bcard home__games-banner" onClick={() => onNavigate('games')}>
-          <div className="home__games-banner-left">
-            <div className="home__games-banner-icon">
-              <GamepadIcon width={24} height={24} />
-            </div>
-            <div className="home__games-banner-content">
-              <p className="eyebrow">Student Arcade & Simulator</p>
-              <h3 className="home__games-banner-title">Bunk Roulette & Campus Rush</h3>
-              <p className="home__games-banner-desc">
-                Simulate attendance bunking risks or sprint past strict proctors and grab Java Chai in Campus Rush!
-              </p>
-            </div>
-          </div>
-          <button className="bbtn bbtn--good home__games-banner-btn" onClick={(e) => {
-            e.stopPropagation();
-            onNavigate('games', e);
-          }}>
-            <span>Launch Games →</span>
-          </button>
-        </div>
-      </motion.section>
+      <p className="attendance__connection"><span /> ACADEMIA + STUDENT PORTAL CONNECTED</p>
+
     </motion.div>
   );
 }

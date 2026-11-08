@@ -1,8 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import DayBadge from '../DayBadge.jsx';
-import { DownloadIcon, ClockIcon } from '../Icons.jsx';
+import { Download } from 'lucide-react';
 import { todayISO, findEntryForDate, allEntries } from '../../../utils/calendar.js';
-import TimetableExportModal from '../TimetableExportModal.jsx';
+import { downloadTimetableImage } from '../../../utils/timetableImageGenerator';
 import './TimetableView.css';
 
 function dayNumber(dayLabel) {
@@ -23,6 +22,12 @@ function formatDatePretty(isoStr) {
   });
 }
 
+function formatDateMeta(isoStr) {
+  if (!isoStr) return '';
+  const date = new Date(`${isoStr}T00:00:00`);
+  return `${date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()} / ${date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}`;
+}
+
 function TimetableView({ schedule = [], calendar, profile }) {
   const todayDateISO = todayISO();
   const todayDayOrder = findEntryForDate(calendar, todayDateISO)?.dayOrder;
@@ -34,12 +39,30 @@ function TimetableView({ schedule = [], calendar, profile }) {
   }, [schedule, todayDayOrder]);
 
   const [index, setIndex] = useState(initialIndex);
-  const [showExportModal, setShowExportModal] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState('');
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    setExportError('');
+    try {
+      await downloadTimetableImage({ schedule, profile, theme: 'light' });
+    } catch (error) {
+      setExportError(error?.message || 'Could not generate the timetable image. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   if (!schedule || schedule.length === 0) {
     return (
-      <div className="bcard timetable__empty-card">
-        <p>No timetable data came back from Academia.</p>
+      <div className="timetable">
+        <header className="view-intro">
+          <div className="view-intro__meta"><span>ACADEMIA / ODD SEMESTER</span></div>
+          <h2>Timetable</h2>
+          <p>Regular timetable for Day Orders 1–5</p>
+        </header>
+        <div className="timetable__empty-card"><p>No timetable data came back from Academia.</p></div>
       </div>
     );
   }
@@ -86,21 +109,24 @@ function TimetableView({ schedule = [], calendar, profile }) {
 
   return (
     <div className="timetable">
+      <header className="view-intro">
+        <div className="view-intro__meta"><span>ACADEMIA / ODD SEMESTER</span></div>
+        <h2>Timetable</h2>
+        <p>Regular timetable for Day Orders 1–5</p>
+      </header>
       {/* Top Bar & Download Button */}
       <div className="timetable__header-bar">
-        <p className="timetable__note">
-          Regular timetable for Day Orders 1–5.
-        </p>
-
         <button
-          className="bbtn timetable__download-trigger-btn"
-          onClick={() => setShowExportModal(true)}
-          title="Download full weekly timetable poster as PNG"
+          className="timetable__download-trigger-btn"
+          onClick={handleExport}
+          disabled={isExporting}
+          title="Download a clean timetable image"
         >
-          <DownloadIcon width={16} height={16} />
-          <span>Download Timetable Image</span>
+          <span>{isExporting ? 'Generating image…' : 'Download Timetable Image'}</span>
+          <Download size={16} aria-hidden="true" />
         </button>
       </div>
+      {exportError && <p className="timetable__export-error" role="alert">{exportError}</p>}
 
       {/* Quick Day Tabs */}
       <div className="timetable__day-tabs-wrap">
@@ -118,7 +144,7 @@ function TimetableView({ schedule = [], calendar, profile }) {
                 onClick={() => setIndex(i)}
               >
                 <span>Day {dNum}</span>
-                {isDayToday && <span className="timetable__tab-dot" title="Today's Day Order" />}
+                {isDayToday && <span className="timetable__tab-today">TODAY</span>}
               </button>
             );
           })}
@@ -127,28 +153,9 @@ function TimetableView({ schedule = [], calendar, profile }) {
 
       {/* Main Day Order Stepper Card */}
       <div className="bcard timetable__stepper">
-        <div className="timetable__stepper-center">
-          <DayBadge
-            day={currentDayNum}
-            size="lg"
-            tone={isToday ? 'sky' : 'yellow'}
-          />
-
-          <div className="timetable__stepper-meta">
-            {isToday ? (
-              <span className="bchip bchip--good timetable__status-chip">
-                Today's Day Order
-              </span>
-            ) : dateInfo ? (
-              <span className="bchip bchip--sky timetable__status-chip">
-                {dateInfo.label}
-              </span>
-            ) : null}
-
-            <span className="timetable__count num">
-              {entries.length} {entries.length === 1 ? 'class' : 'classes'} scheduled
-            </span>
-          </div>
+        <div className="timetable__stepper-center timetable__day-heading">
+          <div><h3>Day {currentDayNum}</h3><span>{isToday ? formatDateMeta(todayDateISO) : dateInfo?.label}</span></div>
+          <span className="timetable__count num">{String(entries.length).padStart(2, '0')} CLASSES</span>
         </div>
       </div>
 
@@ -160,17 +167,16 @@ function TimetableView({ schedule = [], calendar, profile }) {
       ) : (
         <ul className="timetable__list">
           {entries.map((p, i) => (
-            <li key={`${p.slotCode}-${i}`} className="bcard timetable__period">
+            <li key={`${p.slotCode}-${i}`} className={`timetable__period${isToday && i === 0 ? ' timetable__period--up-next' : ''}`}>
               <div className="timetable__period-header-row">
                 <div className="timetable__period-time-badge">
-                  <ClockIcon width={13} height={13} />
                   <span className="num">{p.startTime}</span>
                   <span className="timetable__period-time-sep">–</span>
                   <span className="num">{p.endTime}</span>
                 </div>
 
-                <span className={`bchip timetable__period-type${p.slotType === 'Practical' ? ' bchip--warning' : p.slotType === 'Training' ? ' bchip--good' : ''}`}>
-                  {p.slotType || 'Theory'}
+                <span className="timetable__period-type">
+                  {isToday && i === 0 ? 'UP NEXT / ' : ''}{(p.slotType || 'Theory').toUpperCase()}
                 </span>
               </div>
 
@@ -178,16 +184,11 @@ function TimetableView({ schedule = [], calendar, profile }) {
                 <h4 className="timetable__period-title">{p.courseTitle}</h4>
                 <div className="timetable__period-meta">
                   <span className="timetable__period-room-tag">
-                    Room {p.room || 'TBA'}
+                    <small>ROOM</small>{p.room || 'TBA'}
                   </span>
                   {p.faculty && (
                     <span className="timetable__period-faculty">
-                      {p.faculty}
-                    </span>
-                  )}
-                  {p.slotName && (
-                    <span className="timetable__period-slot">
-                      Slot {p.slotName}
+                      <small>FACULTY</small>{p.faculty}
                     </span>
                   )}
                 </div>
@@ -197,13 +198,8 @@ function TimetableView({ schedule = [], calendar, profile }) {
         </ul>
       )}
 
-      {/* Export Timetable Modal */}
-      <TimetableExportModal
-        isOpen={showExportModal}
-        onClose={() => setShowExportModal(false)}
-        schedule={schedule}
-        profile={profile}
-      />
+      <p className="timetable__footer-note">Day orders follow the academic calendar, not the weekday. Check Calendar for the next assigned day.</p>
+
     </div>
   );
 }

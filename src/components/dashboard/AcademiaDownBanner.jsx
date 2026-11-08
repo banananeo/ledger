@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { GamepadIcon, RefreshIcon, DiceIcon } from './Icons.jsx';
+import { RefreshIcon } from './Icons.jsx';
 import './AcademiaDownBanner.css';
 
-export function AcademiaDownBanner({ error, onRetry, onPlayGame, onReconnectAcademia }) {
+export function AcademiaDownBanner({ error, onRetry, onReconnectAcademia }) {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
@@ -33,31 +33,15 @@ export function AcademiaDownBanner({ error, onRetry, onPlayGame, onReconnectAcad
               <span className="academia-down-banner__tip">Offline Mode Active</span>
             </div>
             <h4 className="academia-down-banner__title">
-              Academia is taking a nap! Want to play a game while waiting?
+              Academia is temporarily unavailable.
             </h4>
             <p className="academia-down-banner__desc">
-              {error} — Test your luck with <strong>Bunk Roulette</strong> or beat your high score in <strong>Retro Snake</strong>.
+              {error}
             </p>
           </div>
         </div>
 
         <div className="academia-down-banner__actions">
-          <button
-            className="bbtn bbtn--good academia-down-banner__btn"
-            onClick={() => onPlayGame && onPlayGame('roulette')}
-          >
-            <DiceIcon width={16} height={16} />
-            <span>Spin Bunk Roulette</span>
-          </button>
-
-          <button
-            className="bbtn bbtn--outline academia-down-banner__btn"
-            onClick={() => onPlayGame && onPlayGame('snake')}
-          >
-            <GamepadIcon width={16} height={16} />
-            <span>Play Snake</span>
-          </button>
-
           {onRetry && (
             <button
               className="bbtn bbtn--outline academia-down-banner__btn"

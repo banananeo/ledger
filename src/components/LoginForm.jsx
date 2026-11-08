@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { ShieldCheck } from 'lucide-react';
 import {
   getStudentPortalCaptcha,
   loginStudentPortal,
@@ -166,28 +167,26 @@ function LoginForm({ onSuccess, onSkip, overlay = false }) {
 
   return (
     <div className={`login-wrapper${overlay ? ' login-wrapper--overlay' : ''}`}>
-      <motion.div
-        className="login-card"
+      <header className="login-topbar">
+        <div className="login-topbar__brand"><span className="login-brand-mark" aria-hidden="true">L</span>Ledger</div>
+        <span className="login-topbar__context">STUDENT PORTAL</span>
+      </header>
+      <motion.main
+        className={`login-card${captchaChallenge ? ' login-card--captcha' : ' login-card--student-portal'}`}
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
+        <section className="login-editorial-hero">
+          <div className="login-editorial-step"><span>{captchaChallenge ? '03' : '02'}</span><span>STUDENT PORTAL</span><span>{captchaChallenge ? 'VERIFY' : 'CONNECT'}</span></div>
+          <h1>{captchaChallenge ? <>One last<br />step.</> : <>Bring it<br />together.</>}</h1>
+          <p>{captchaChallenge ? 'Enter the security code shown below to finish connecting your SRM account.' : 'Add attendance and marks from SRM to your Ledger dashboard.'}</p>
+        </section>
         <motion.div
           className="login-header"
           variants={itemVariants}
         >
-          <div className="login-header__top-row">
-            <div className="login-header__brand">
-              Ledger
-              <span className="login-header__brand-dot">
-                .
-              </span>
-            </div>
-          </div>
-
-          <p className="login-header__subtitle">
-            Connect the SRM Student Portal to add attendance and marks to your Ledger dashboard.
-          </p>
+          <span className="login-step-label">{captchaChallenge ? 'CAPTCHA VERIFICATION' : 'STUDENT PORTAL CREDENTIALS'}</span>
         </motion.div>
 
         <AnimatePresence>
@@ -289,10 +288,11 @@ function LoginForm({ onSuccess, onSkip, overlay = false }) {
                 className="form-toggle-btn"
                 onClick={() =>
                   setShowPassword(
-                    !showPassword
+                    (visible) => !visible
                   )
                 }
-                tabIndex={-1}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-pressed={showPassword}
               >
                 {showPassword
                   ? 'HIDE'
@@ -382,12 +382,10 @@ function LoginForm({ onSuccess, onSkip, overlay = false }) {
           className="login-footer-tip"
           variants={itemVariants}
         >
-          🔒 <strong>Direct Integration</strong>:
-          Your credentials are sent securely to
-          the local backend to establish your SRM
-          session. No passwords are stored.
+          <ShieldCheck className="login-footer-icon" size={16} aria-hidden="true" />
+          <span><strong>Secure connection.</strong> Your credentials are used to establish an SRM session for Ledger.</span>
         </motion.div>
-      </motion.div>
+      </motion.main>
     </div>
   );
 }
