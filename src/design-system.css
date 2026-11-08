@@ -422,6 +422,9 @@ html, body, #root { background:#faf9f4; }
 .topbar__sync { order:1; }
 .topbar__notif { order:2; }
 .topbar__logout { display:none; }
+@media (max-width:880px) {
+  .topbar__logout { display:inline-flex; order:3; }
+}
 .topbar__avatar { width:44px; height:44px; border:1px solid #c3ccf5; border-radius:0; background:transparent; color:#17399f; font:500 12px var(--mono); }
 .shell__content { width:min(100%,441px); margin:0 auto; padding:24px 24px calc(100px + env(safe-area-inset-bottom)); }
 .shell__view-wrapper { width:100%; }

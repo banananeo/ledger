@@ -24,6 +24,8 @@ import type { AppData } from './types';
 import { hasAcademiaAuthSignal, resolveBootView, shouldOfferStudentPortal } from './utils/session.ts';
 import './App.css';
 
+const APP_SESSION_KEY = 'ledger_app_session_active';
+
 function mergeAppData(prev: AppData | null, fresh: AppData): AppData {
   const isStudentPortal = fresh.metadata?.source === 'student-portal';
   return {
@@ -83,16 +85,44 @@ export function App() {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [captchaChallenge, setCaptchaChallenge] = useState<CaptchaChallenge | null>(null);
+  const [welcomeName, setWelcomeName] = useState<string | null>(null);
+  const [revealDashboard, setRevealDashboard] = useState(false);
   const [splashDone, setSplashDone] = useState<boolean>(false);
   const [restoring, setRestoring] = useState<boolean>(true);
+  const [isFreshAppSession] = useState(() => {
+    try {
+      return sessionStorage.getItem(APP_SESSION_KEY) !== 'active';
+    } catch {
+      return false;
+    }
+  });
+  const welcomeShownRef = useRef(false);
 
   const lastSyncTimeRef = useRef<number>(Date.now());
 
   const handleSplashDone = useCallback(() => setSplashDone(true), []);
+  const handleWelcomeDone = useCallback(() => {
+    setWelcomeName(null);
+    setRevealDashboard(true);
+  }, []);
   const handleSplashSkip = useCallback(() => {
     setSplashDone(true);
     setRestoring(false);
   }, []);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(APP_SESSION_KEY, 'active');
+    } catch {
+      // The app remains usable if session storage is unavailable.
+    }
+  }, []);
+
+  const showSessionWelcome = (profile?: AppData['profile']) => {
+    if (!isFreshAppSession || welcomeShownRef.current) return;
+    welcomeShownRef.current = true;
+    setWelcomeName(profile?.name?.trim() || '');
+  };
 
   // The splash doubles as the restore screen, but it must never trap the user.
   useEffect(() => {
@@ -113,6 +143,7 @@ export function App() {
     if (cachedData) {
       setData(cachedData);
       setAuthed(true);
+      showSessionWelcome(cachedData.profile);
     }
 
     const noteMissingStudentPortal = () => {
@@ -188,6 +219,7 @@ export function App() {
           setData(merged);
           saveStoredData(merged);
           setAuthed(true);
+          showSessionWelcome(merged.profile);
           setLastSynced(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
           if (!studentPortalCookies) noteMissingStudentPortal();
           setLoginStep(null);
@@ -231,6 +263,7 @@ export function App() {
       setAuthed(true);
       setLoginStep(null);
       setReconnecting(false);
+      showSessionWelcome(complete.profile);
       return;
     }
 
@@ -251,6 +284,7 @@ export function App() {
     setStudentPortalIssue(true);
     setStudentPortalError('Connect Student Portal to load attendance and marks.');
     setLoginStep(null);
+    showSessionWelcome(merged.profile);
   };
 
   const handleStudentPortalSuccess = (portalData: AppData) => {
@@ -261,6 +295,7 @@ export function App() {
     saveStudentPortalSkipped(false);
     setStudentPortalIssue(false);
     setStudentPortalError('');
+    showSessionWelcome(merged.profile);
     setAuthed(true);
     setLoginStep(null);
     setReconnecting(false);
@@ -393,6 +428,7 @@ export function App() {
 
   const skipOrCloseStudentPortal = () => {
     saveStudentPortalSkipped(true);
+    showSessionWelcome(data?.profile);
     setAuthed(true);
     setLoginStep(null);
     setReconnecting(false);
@@ -405,7 +441,14 @@ export function App() {
   return (
     <MotionConfig reducedMotion="user">
       <AnimatePresence mode="sync">
-        {bootView === 'splash' ? (
+        {welcomeName !== null ? (
+          <SplashScreen
+            key="welcome"
+            greetingName={welcomeName}
+            onDone={handleWelcomeDone}
+            status="Your dashboard is ready"
+          />
+        ) : bootView === 'splash' ? (
           <SplashScreen
             key="splash"
             onDone={handleSplashDone}
@@ -429,10 +472,19 @@ export function App() {
         ) : (
           <motion.div
             key="dashboard"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            initial={revealDashboard
+              ? { opacity: 0, y: 28, clipPath: 'inset(0 0 100% 0 round 16px)' }
+              : { opacity: 0 }}
+            animate={revealDashboard
+              ? { opacity: 1, y: 0, clipPath: 'inset(0 0 0% 0 round 0px)' }
+              : { opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            transition={revealDashboard
+              ? { duration: 0.72, ease: [0.22, 1, 0.36, 1] }
+              : { duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            onAnimationComplete={() => {
+              if (revealDashboard) setRevealDashboard(false);
+            }}
           >
             <Shell
               data={data}
