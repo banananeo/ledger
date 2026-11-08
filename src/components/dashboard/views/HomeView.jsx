@@ -231,7 +231,6 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
     >
       <motion.section className="home__hero" variants={homeItemVariants}>
         <div className="home__hero-info">
-          <div className="view-intro__meta home__meta"><span>SRM / {profile?.name || 'Student'}</span><span>Sample data</span></div>
           <h2 className="home__hero-title">{new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening'},<br />{(profile?.name || 'Student').split(' ')[0]}.</h2>
           <p className="home__hero-meta">{new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · {new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</p>
         </div>
@@ -340,9 +339,10 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
 
       <motion.section className="home__brief" variants={homeItemVariants}>
         <div className="home__brief-heading">
-          <h3>Academic Brief</h3><span>LEDGER AI</span>
+          <h3>Ledger AI</h3><span>Ask Anything</span>
+
         </div>
-        <p>Turn your schedule, attendance and marks into a short academic overview.</p>
+        <br></br>
         <button type="button" onClick={onOpenAI} aria-label="Open Ledger AI">
           <span className="home__brief-action-label">Open Ledger AI</span>
           <span className="home__brief-action-icon" aria-hidden="true"><Sparkles size={18} strokeWidth={1.8} /></span>
@@ -391,7 +391,7 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
         )}
       </motion.section>
 
-      <p className="attendance__connection"><span /> ACADEMIA + STUDENT PORTAL CONNECTED</p>
+
 
     </motion.div>
   );

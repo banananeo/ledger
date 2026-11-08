@@ -61,7 +61,7 @@ export function SplashScreen({ onDone = () => {} } = {}) {
       <div className="slo-paper-grid" aria-hidden="true" />
       <div className="slo-stack">
         <div className="slo-brand" aria-label="Ledger">
-          Ledger
+          ledger
           <span className="slo-letter-dot">
             .
           </span>

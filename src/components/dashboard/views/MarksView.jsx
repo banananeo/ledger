@@ -17,7 +17,6 @@ function MarksView({ marks = [], courses = [], schedule = [], attendance = [], c
   return (
     <div className="marks">
       <header className="view-intro">
-        <div className="view-intro__meta"><span>STUDENT PORTAL / CONNECTED</span><span>Sample data</span></div>
         <h2>Marks</h2>
         <p>Your internal assessments: cycle tests, quizzes and labs, organised by course.</p>
       </header>
@@ -86,8 +85,6 @@ function MarksView({ marks = [], courses = [], schedule = [], attendance = [], c
           );
         })}
       </ul>}
-      <div className="marks__display-bands"><span>DISPLAY BANDS</span><p><i className="high" /> ≥75 high　 <i className="mid" /> ≥50 middle　 <i className="low" /> &lt;50 low</p><small>Bands are visual emphasis only, not pass/fail rules.</small></div>
-      <p className="attendance__connection"><span /> ACADEMIA + STUDENT PORTAL CONNECTED</p>
     </div>
   );
 }

@@ -40,14 +40,14 @@
 .slo-brand {
   display: inline-flex;
   align-items: baseline;
-  color: #1534a6;
+  color: #111111;
   font: 700 clamp(50px, 14vw, 68px)/0.98 var(--display, system-ui, sans-serif);
-  letter-spacing: -0.075em;
+  letter-spacing: -0.055em;
   opacity: 1;
   transform: none;
 }
 
-.slo-letter-dot { color: #2349eb; transform-origin: 50% 80%; }
+.slo-letter-dot { color: #b84b25; transform-origin: 50% 80%; }
 
 .slo-accent-track {
   width: min(100%, 184px);
