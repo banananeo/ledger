@@ -318,33 +318,31 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
   return (
     <div className="attendance">
       <header className="view-intro">
-        <div className="view-intro__meta"><span>STUDENT PORTAL / CONNECTED</span><span>Sample data</span></div>
         <h2>Attendance</h2>
-        <p>Know your margins. Plan your next class.</p>
       </header>
       {/* Overall attendance summary */}
       <div className="bcard attendance__summary">
         <p className="eyebrow">Overall Attendance</p>
+
         <div className="attendance__summary-main">
-            <p
-              className={`attendance__summary-value num${
-                (simulation ? simulation.simOverall : overall) < REQUIRED_PERCENTAGE
-                  ? ' attendance__summary-value--danger'
-                  : ''
+          <p
+            className={`attendance__summary-value num${(simulation ? simulation.simOverall : overall) < REQUIRED_PERCENTAGE
+              ? ' attendance__summary-value--danger'
+              : ''
               }`}
-            >
-              {(simulation ? simulation.simOverall : overall).toFixed(1)}%
-            </p>
-            {simulation && (
-              <span className="bchip bchip--warning attendance__sim-delta num">
-                -{simulation.overallDrop.toFixed(1)}% if skipped
-              </span>
-            )}
-          {totalConducted > 0 && <span className="attendance__summary-count num">{simulation ? simulation.simTotalAttended || totalAttended : totalAttended} / {simulation ? (totalConducted + simulation.totalSkippedHours) : totalConducted}</span>}
+          >
+            {(simulation ? simulation.simOverall : overall).toFixed(1)}%
+          </p>
+          {simulation && (
+            <span className="bchip bchip--warning attendance__sim-delta num">
+              -{simulation.overallDrop.toFixed(1)}% if skipped
+            </span>
+          )}
+
         </div>
-        <p className="attendance__summary-sub">Attended / conducted · weighted by conducted count</p>
-        <div className="attendance__summary-divider" />
-        <div className="attendance__summary-bottom"><span>Below 75% Cutoff</span><span className="attendance__summary-badge">{simulation ? simulation.simAtRisk : atRiskList.length} {(simulation ? simulation.simAtRisk : atRiskList.length) === 1 ? 'course' : 'courses'}</span></div>
+
+        <br></br>
+        <div className="attendance__summary-bottom"><span>Below 75%</span><span className="attendance__summary-badge">{simulation ? simulation.simAtRisk : atRiskList.length} {(simulation ? simulation.simAtRisk : atRiskList.length) === 1 ? 'course' : 'courses'}</span></div>
         {simulation && simulation.newAtRiskCount > 0 && <span className="attendance__summary-simulation">+{simulation.newAtRiskCount} new at risk if skipped</span>}
       </div>
 
@@ -382,9 +380,8 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
             {dayOrders.map((d) => (
               <button
                 key={d}
-                className={`attendance-predictor__day-btn${
-                  simulatedDayOrder === d ? ' attendance-predictor__day-btn--active' : ''
-                }`}
+                className={`attendance-predictor__day-btn${simulatedDayOrder === d ? ' attendance-predictor__day-btn--active' : ''
+                  }`}
                 onClick={() => setSimulatedDayOrder(simulatedDayOrder === d ? null : d)}
               >
                 <span className="attendance-predictor__day-tag">Day</span>
@@ -431,9 +428,8 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
                   return (
                     <div
                       key={`${c.courseCode}-${i}`}
-                      className={`attendance-predictor__impact-item${
-                        droppedToRisk ? ' attendance-predictor__impact-item--danger' : ''
-                      }`}
+                      className={`attendance-predictor__impact-item${droppedToRisk ? ' attendance-predictor__impact-item--danger' : ''
+                        }`}
                     >
                       <div className="attendance-predictor__item-main">
                         <div className="attendance-predictor__item-header">
@@ -471,46 +467,6 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Filter and Sort Bar (Search removed as requested) */}
-      <div className="attendance__controls">
-        <div className="attendance__tabs">
-          <button
-            className={`attendance__tab${filterTab === 'all' ? ' attendance__tab--active' : ''}`}
-            onClick={() => setFilterTab('all')}
-          >
-            <span>All Courses</span><small>{safeAttendance.length}</small>
-          </button>
-          <button
-            className={`attendance__tab attendance__tab--risk${
-              filterTab === 'risk' ? ' attendance__tab--active' : ''
-            }`}
-            onClick={() => setFilterTab('risk')}
-          >
-            <span>Below 75%</span><small>{simulation ? simulation.simAtRisk : atRiskList.length}</small>
-          </button>
-          <button
-            className={`attendance__tab${filterTab === 'safe' ? ' attendance__tab--active' : ''}`}
-            onClick={() => setFilterTab('safe')}
-          >
-            <span>Safe ≥75%</span><small>{simulation ? safeAttendance.length - simulation.simAtRisk : safeList.length}</small>
-          </button>
-        </div>
-
-        <div className="attendance__tools">
-          <span className="attendance__course-count">{String(displayCourses.length).padStart(2, '0')} COURSES</span>
-          <select
-            className="attendance__sort-select"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            aria-label="Sort attendance"
-          >
-            <option value="lowest">Lowest % First</option>
-            <option value="highest">Highest % First</option>
-            <option value="code">Course Code</option>
-          </select>
-        </div>
       </div>
 
       {/* Course Attendance List */}
@@ -561,9 +517,8 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
             return (
               <li
                 key={`${r.courseCode || 'c'}-${r.slot || 's'}-${idx}`}
-                className={`bcard attendance__card${
-                  simulation && r.isAffected ? ' attendance__card--simulated' : ''
-                }`}
+                className={`bcard attendance__card${simulation && r.isAffected ? ' attendance__card--simulated' : ''
+                  }`}
               >
                 <div className="attendance__course-meta"><span>{courseCode || 'COURSE NAME'}{r.courseType ? ` / ${r.courseType.toUpperCase()}` : ''}</span><span className={currentPct < REQUIRED_PERCENTAGE ? 'is-risk' : currentPct === REQUIRED_PERCENTAGE ? 'is-cutoff' : 'is-safe'}>{currentPct < REQUIRED_PERCENTAGE ? 'BELOW 75%' : currentPct === REQUIRED_PERCENTAGE ? 'AT CUTOFF' : 'SAFE ≥75%'}</span></div>
 
