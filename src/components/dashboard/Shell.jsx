@@ -136,7 +136,7 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onRec
                     <AttendanceView attendance={attendance} schedule={schedule} calendar={calendar} />
                   )}
                   {currentActiveView === 'calendar' && (
-                    <CalendarView calendar={calendar} />
+                    <CalendarView calendar={calendar} schedule={schedule} />
                   )}
                   {currentActiveView === 'marks' && (
                     <MarksView marks={marks} courses={courses} schedule={schedule} attendance={attendance} calendar={calendar} />

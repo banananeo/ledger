@@ -620,6 +620,107 @@
   background: var(--danger);
 }
 
+.calendar__grid-card {
+  position: relative;
+  z-index: 2;
+  overflow: visible;
+}
+
+.calendar__day-popover {
+  position: absolute;
+  z-index: 20;
+  max-height: min(230px, 60vh);
+  overflow: auto;
+  padding: 13px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 14px 36px rgba(18, 32, 75, .22);
+}
+
+.calendar__day-popover-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.calendar__day-popover-head > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.calendar__day-popover-head strong {
+  color: var(--ink);
+  font: 700 13px/1.35 var(--display);
+}
+
+.calendar__day-popover-head button {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-size: 19px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.calendar__day-popover-count {
+  margin: 10px 0 6px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.calendar__day-popover-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.calendar__day-popover-list li {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 7px 8px;
+  border-radius: 7px;
+  background: var(--surface-raised, var(--paper));
+}
+
+.calendar__day-popover-list li span {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar__day-popover-list li small,
+.calendar__day-popover-more,
+.calendar__day-popover-note {
+  color: var(--ink-soft);
+  font-size: 10.5px;
+  line-height: 1.4;
+}
+
+.calendar__day-popover-more { margin: 7px 0 0; }
+.calendar__day-popover-note { margin: 8px 0 0; padding-top: 7px; border-top: 1px solid var(--line); }
+
+@media (max-width: 560px) {
+  .calendar__day-popover { padding: 11px; }
+  .calendar__day-popover-list li { padding: 6px 7px; }
+}
+
 .calendar__legend-swatch--tasks {
   width: 9px;
   height: 9px;
