@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ShieldCheck } from 'lucide-react';
-import { login, ApiError } from '../api';
+import { login } from '../api';
+import { friendlyLoginError } from '../utils/friendlyErrors.js';
 import './LoginForm.css';
 
 function AcademiaLoginForm({ onSuccess, onCancel = undefined, overlay = false }) {
@@ -18,7 +19,7 @@ function AcademiaLoginForm({ onSuccess, onCancel = undefined, overlay = false })
       const data = await login({ username: username.trim(), password });
       onSuccess(data);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : err?.message || 'Academia login failed.');
+      setError(friendlyLoginError(err, 'academia'));
     } finally {
       setLoading(false);
     }

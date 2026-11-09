@@ -74,8 +74,16 @@ function normalizeSavedData(data: AppData | null): AppData | null {
 }
 
 export function App() {
-  const [data, setData] = useState<AppData | null>(null);
-  const [authed, setAuthed] = useState<boolean>(false);
+  const [isFreshAppSession] = useState(() => {
+    try {
+      return sessionStorage.getItem(APP_SESSION_KEY) !== 'active';
+    } catch {
+      return false;
+    }
+  });
+  const [initialSavedData] = useState(() => normalizeSavedData(getStoredData()));
+  const [data, setData] = useState<AppData | null>(initialSavedData);
+  const [authed, setAuthed] = useState<boolean>(Boolean(initialSavedData));
   const [loginStep, setLoginStep] = useState<'academia' | 'student-portal' | null>('academia');
   const [reconnecting, setReconnecting] = useState(false);
   const [academiaIssue, setAcademiaIssue] = useState(false);
@@ -85,24 +93,22 @@ export function App() {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [captchaChallenge, setCaptchaChallenge] = useState<CaptchaChallenge | null>(null);
-  const [welcomeName, setWelcomeName] = useState<string | null>(null);
+  const [welcomeName, setWelcomeName] = useState<string | null>(() => (
+    isFreshAppSession && initialSavedData
+      ? initialSavedData.profile?.name?.trim() || ''
+      : null
+  ));
   const [revealDashboard, setRevealDashboard] = useState(false);
   const [splashDone, setSplashDone] = useState<boolean>(false);
   const [restoring, setRestoring] = useState<boolean>(true);
-  const [isFreshAppSession] = useState(() => {
-    try {
-      return sessionStorage.getItem(APP_SESSION_KEY) !== 'active';
-    } catch {
-      return false;
-    }
-  });
-  const welcomeShownRef = useRef(false);
+  const welcomeShownRef = useRef(isFreshAppSession && Boolean(initialSavedData));
 
   const lastSyncTimeRef = useRef<number>(Date.now());
 
   const handleSplashDone = useCallback(() => setSplashDone(true), []);
   const handleWelcomeDone = useCallback(() => {
     setWelcomeName(null);
+    setSplashDone(true);
     setRevealDashboard(true);
   }, []);
   const handleSplashSkip = useCallback(() => {

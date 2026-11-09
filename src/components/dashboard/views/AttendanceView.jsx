@@ -521,7 +521,6 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
                 className={`bcard attendance__card${simulation && r.isAffected ? ' attendance__card--simulated' : ''
                   }`}
               >
-                <div className="attendance__course-meta"><span>{courseCode || 'COURSE NAME'}{r.courseType ? ` / ${r.courseType.toUpperCase()}` : ''}</span><span className={currentPct < REQUIRED_PERCENTAGE ? 'is-risk' : currentPct === REQUIRED_PERCENTAGE ? 'is-cutoff' : 'is-safe'}>{currentPct < REQUIRED_PERCENTAGE ? 'BELOW 75%' : currentPct === REQUIRED_PERCENTAGE ? 'AT CUTOFF' : 'SAFE ≥75%'}</span></div>
 
                 <div className="attendance__card-main">
                   <div className="attendance__card-header-line">

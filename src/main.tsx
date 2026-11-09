@@ -4,6 +4,7 @@ import App from './App.tsx';
 import { ThemeProvider } from './context/ThemeContext.tsx';
 import './index.css';
 import './design-system.css';
+import './theme-overrides.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

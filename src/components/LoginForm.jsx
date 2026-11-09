@@ -5,6 +5,7 @@ import {
   getStudentPortalCaptcha,
   loginStudentPortal,
 } from '../api';
+import { friendlyLoginError } from '../utils/friendlyErrors.js';
 import './LoginForm.css';
 
 const containerVariants = {
@@ -33,12 +34,6 @@ const itemVariants = {
     },
   },
 };
-
-/** Never render a non-string error (it would show as "[object Object]"). */
-function readableError(err, fallback) {
-  const message = typeof err?.message === 'string' ? err.message.trim() : '';
-  return message && message !== '[object Object]' ? message : fallback;
-}
 
 function LoginForm({ onSuccess, onSkip, overlay = false }) {
   const [username, setUsername] = useState('');
@@ -76,10 +71,7 @@ function LoginForm({ onSuccess, onSkip, overlay = false }) {
       );
 
       setError(
-        readableError(
-          err,
-          'Failed to load the SRM Student Portal CAPTCHA.'
-        )
+        friendlyLoginError(err, 'student-portal', 'captcha')
       );
     } finally {
       setCaptchaLoading(false);
@@ -148,10 +140,7 @@ function LoginForm({ onSuccess, onSkip, overlay = false }) {
       );
 
       setError(
-        readableError(
-          err,
-          'Student Portal login failed.'
-        )
+        friendlyLoginError(err, 'student-portal')
       );
 
       /*
@@ -193,6 +182,8 @@ function LoginForm({ onSuccess, onSkip, overlay = false }) {
           {error && (
             <motion.div
               className="login-error-banner"
+              role="alert"
+              aria-live="assertive"
               initial={{
                 opacity: 0,
                 y: -8,

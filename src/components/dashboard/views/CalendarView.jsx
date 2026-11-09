@@ -145,7 +145,6 @@ function CalendarView({ calendar, schedule = [] }) {
       <header className="view-intro">
         <div className="view-intro__meta"><span>{calendar?.plannerType || 'ODD'} SEMESTER / {calendar?.academicYearLabel || '2026-27'}</span></div>
         <h2>Calendar</h2>
-        <p>Academic Schedule &amp; Day Orders</p>
       </header>
       <div className="calendar__header-bar">
         {index !== currentMonthIdx && (
