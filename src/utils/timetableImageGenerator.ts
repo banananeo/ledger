@@ -40,7 +40,7 @@ const STANDARD_TIME_SLOTS = [
 export function extractSlotsFromSchedule(schedule: any[]) {
   // Collect all unique slots that actually have classes, or fallback to standard hours
   const foundTimes: { start: string; end: string; startMin: number; endMin: number }[] = [];
-  
+
   schedule.forEach((day) => {
     (day.entries || []).forEach((e: any) => {
       const sMin = parseTimeToMinutes(e.startTime);
@@ -127,37 +127,37 @@ export async function generateTimetableCanvas(
   // Palette
   const colors = isDark
     ? {
-        bg: '#0c0d10',
-        cardBg: '#16181f',
-        border: '#2e323e',
-        ink: '#f1f3f9',
-        inkSoft: '#9ca3af',
-        mute: '#6b7280',
-        yellow: '#fbbf24',
-        yellowSoft: 'rgba(251, 191, 36, 0.12)',
-        sky: '#38bdf8',
-        skySoft: 'rgba(56, 189, 248, 0.12)',
-        mint: '#34d399',
-        mintSoft: 'rgba(52, 211, 153, 0.12)',
-        freeCell: '#111318',
-        roomBox: '#1e222d',
-      }
+      bg: '#0c0d10',
+      cardBg: '#16181f',
+      border: '#2e323e',
+      ink: '#f1f3f9',
+      inkSoft: '#9ca3af',
+      mute: '#6b7280',
+      yellow: '#fbbf24',
+      yellowSoft: 'rgba(251, 191, 36, 0.12)',
+      sky: '#38bdf8',
+      skySoft: 'rgba(56, 189, 248, 0.12)',
+      mint: '#34d399',
+      mintSoft: 'rgba(52, 211, 153, 0.12)',
+      freeCell: '#111318',
+      roomBox: '#1e222d',
+    }
     : {
-        bg: '#FAF9F4',
-        cardBg: '#ffffff',
-        border: '#C3CCF5',
-        ink: '#17399F',
-        inkSoft: '#60749F',
-        mute: '#60749F',
-        yellow: '#2949F5',
-        yellowSoft: '#EEF1FC',
-        sky: '#2949F5',
-        skySoft: '#EEF1FC',
-        mint: '#2949F5',
-        mintSoft: '#EEF1FC',
-        freeCell: '#FAF9F4',
-        roomBox: '#EEF1FC',
-      };
+      bg: '#FAF9F4',
+      cardBg: '#ffffff',
+      border: '#C3CCF5',
+      ink: '#17399F',
+      inkSoft: '#60749F',
+      mute: '#60749F',
+      yellow: '#2949F5',
+      yellowSoft: '#EEF1FC',
+      sky: '#2949F5',
+      skySoft: '#EEF1FC',
+      mint: '#2949F5',
+      mintSoft: '#EEF1FC',
+      freeCell: '#FAF9F4',
+      roomBox: '#EEF1FC',
+    };
 
   // Background
   ctx.fillStyle = colors.bg;
@@ -212,30 +212,6 @@ export async function generateTimetableCanvas(
   ctx.fillStyle = colors.yellow;
   ctx.fillText('WEEKLY ACADEMIC TIMETABLE', logoX + logoSize + 16, logoY + 54);
 
-  // College & Student Information Card
-  const profileName = profile?.name || 'Student Timetable';
-  const regNumber = profile?.registrationNumber || 'SRM Institute of Science and Technology';
-
-  const infoCardW = 540;
-  const infoCardX = width - infoCardW - 40;
-  const infoCardY = 40;
-  const infoCardH = 68;
-
-  ctx.fillStyle = colors.cardBg;
-  roundRect(ctx, infoCardX, infoCardY, infoCardW, infoCardH, 10);
-  ctx.fill();
-  ctx.strokeStyle = colors.border;
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  ctx.font = 'bold 17px "Manrope", sans-serif';
-  ctx.fillStyle = colors.ink;
-  ctx.fillText(profileName, infoCardX + 16, infoCardY + 28);
-
-  ctx.font = '14px "IBM Plex Mono", monospace';
-  ctx.fillStyle = colors.inkSoft;
-  ctx.fillText(regNumber, infoCardX + 16, infoCardY + 50);
-
   // Subtle divider under header
   ctx.strokeStyle = colors.border;
   ctx.lineWidth = 1.5;
@@ -243,16 +219,6 @@ export async function generateTimetableCanvas(
   ctx.moveTo(36, 126);
   ctx.lineTo(width - 36, 126);
   ctx.stroke();
-
-  // Subtitle info
-  ctx.font = '13px "IBM Plex Mono", monospace';
-  ctx.fillStyle = colors.inkSoft;
-  ctx.fillText('DAY ORDER SYSTEM • SRM KATTANKULATHUR CAMPUS', 40, 150);
-
-  const now = new Date();
-  const dateStr = `Exported on: ${now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-  ctx.textAlign = 'right';
-  ctx.fillText(dateStr, width - 40, 150);
 
   // ==========================================
   // 2. TIMETABLE GRID TABLE
@@ -370,7 +336,7 @@ export async function generateTimetableCanvas(
       const cellH = rowHeight - 8;
 
       const isLab = String(entry.slotType || '').toLowerCase().includes('practical') ||
-                    String(entry.slotType || '').toLowerCase().includes('lab');
+        String(entry.slotType || '').toLowerCase().includes('lab');
 
       // Class Card Background
       ctx.fillStyle = isDark ? '#1a1d28' : '#ffffff';
@@ -404,7 +370,7 @@ export async function generateTimetableCanvas(
       ctx.textAlign = 'left';
       ctx.font = 'bold 12.5px "Manrope", sans-serif';
       ctx.fillStyle = colors.ink;
-      
+
       const title = entry.courseTitle || entry.courseCode || 'Lecture';
       let displayTitle = title;
       if (ctx.measureText(displayTitle).width > cellW - 14) {
@@ -450,43 +416,6 @@ export async function generateTimetableCanvas(
       }
     });
   });
-
-  // ==========================================
-  // 3. FOOTER LEGEND & BRANDING
-  // ==========================================
-  const footY = height - 42;
-
-  // Legend
-  ctx.textAlign = 'left';
-  ctx.font = '12px "Manrope", sans-serif';
-
-  // Theory Pill
-  ctx.fillStyle = colors.skySoft;
-  roundRect(ctx, 40, footY - 14, 16, 16, 4);
-  ctx.fill();
-  ctx.fillStyle = colors.ink;
-  ctx.fillText('Theory Lecture', 64, footY - 1);
-
-  // Lab Pill
-  ctx.fillStyle = colors.yellowSoft;
-  roundRect(ctx, 180, footY - 14, 16, 16, 4);
-  ctx.fill();
-  ctx.fillStyle = colors.ink;
-  ctx.fillText('Practical / Lab', 204, footY - 1);
-
-  // Room Info Pill
-  ctx.fillStyle = colors.roomBox;
-  roundRect(ctx, 330, footY - 14, 16, 16, 4);
-  ctx.fill();
-  ctx.fillStyle = colors.ink;
-  ctx.fillText('Venue / Room Location Included', 354, footY - 1);
-
-  // Watermark
-  ctx.textAlign = 'right';
-  ctx.font = '12px "IBM Plex Mono", monospace';
-  ctx.fillStyle = colors.inkSoft;
-  ctx.fillText('Built with Ledger • Academia Suite', width - 40, footY - 1);
-
   return canvas;
 }
 

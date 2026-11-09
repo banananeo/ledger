@@ -233,7 +233,7 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
       <motion.section className="home__hero" variants={homeItemVariants}>
         <div className="home__hero-info">
           <h2 className="home__hero-title">{new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening'},<br />{(profile?.name || 'Student').split(' ')[0]}.</h2>
-          <p className="home__hero-meta">{new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · {new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</p>
+          <p className="home__hero-meta">{new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
         </div>
       </motion.section>
 
