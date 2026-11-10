@@ -99,21 +99,15 @@ export default function AIAssistantDrawer({ data, isOpen, onClose }) {
           >
             <div className="ai-drawer__header">
               <div>
-                <p className="eyebrow">Ledger AI · Gemini</p>
+                <p className="eyebrow">Ledger AI</p>
                 <h3 className="ai-drawer__title">Study Assistant</h3>
-                <p className="ai-drawer__sub">{health?.configured ? `Model: ${health.model} · Academia-aware + General` : 'AI not configured — set GEMINI_API_KEY'}</p>
               </div>
-              <div style={{display:'flex',gap:8}}>
+              <div style={{ display: 'flex', gap: 8 }}>
                 <button className="bbtn bbtn--outline bbtn--xs" onClick={clearThread} title="Clear chat">Clear</button>
                 <button className="bbtn bbtn--outline bbtn--icon" onClick={onClose} aria-label="Close">✕</button>
               </div>
             </div>
 
-            {!health?.configured && (
-              <div className="ai-drawer__banner bchip bchip--warning" style={{margin:'12px 16px',padding:'8px 12px',fontSize:12}}>
-                Set <code>GEMINI_API_KEY</code> in server <code>.env</code> / Vercel env to enable AI. Demo will show error until configured.
-              </div>
-            )}
 
             <div className="ai-drawer__chips">
               {QUICK_CHIPS.map((c) => (
@@ -134,7 +128,6 @@ export default function AIAssistantDrawer({ data, isOpen, onClose }) {
                     <li>“Explain photosynthesis simply”</li>
                     <li>“Write Python code for quicksort”</li>
                   </ul>
-                  <p className="ai-drawer__empty-note">Ask anything — general knowledge, coding, writing + academia. Academia answers use sanitized profile/attendance/marks/timetable only — no passwords or cookies sent.</p>
                 </div>
               )}
               {messages.map((m, i) => (
@@ -167,7 +160,6 @@ export default function AIAssistantDrawer({ data, isOpen, onClose }) {
                 {loading ? '…' : 'Send'}
               </button>
             </div>
-            <p className="ai-drawer__hint">Enter to send · Shift+Enter for newline · Academia context is included when relevant; general questions answered from AI knowledge.</p>
           </motion.div>
         </>
       )}
