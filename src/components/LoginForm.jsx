@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ShieldCheck } from 'lucide-react';
 import {
   getStudentPortalCaptcha,
+  getStoredStudentPortalCredentials,
   loginStudentPortal,
 } from '../api';
 import './LoginForm.css';
@@ -40,13 +41,31 @@ function readableError(err, fallback) {
   return message && message !== '[object Object]' ? message : fallback;
 }
 
+const MANUAL_CAPTCHA_CODES = new Set([
+  'CAPTCHA_REQUIRED',
+  'CAPTCHA_FETCH_FAILED',
+  'CAPTCHA_UNAVAILABLE',
+  'OCR_FAILED',
+  'OCR_UNAVAILABLE',
+  'CAPTCHA_SOLVER_FAILED',
+  'AUTO_CAPTCHA_FAILED',
+  'INVALID_CAPTCHA',
+  'WRONG_CAPTCHA',
+]);
+
+function needsManualCaptcha(err) {
+  if (MANUAL_CAPTCHA_CODES.has(err?.code?.toUpperCase?.() || '')) return true;
+  return /captcha|ocr/i.test(typeof err?.message === 'string' ? err.message : '');
+}
+
 function LoginForm({ onSuccess, onSkip, overlay = false }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState(() => getStoredStudentPortalCredentials()?.username || '');
+  const [password, setPassword] = useState(() => getStoredStudentPortalCredentials()?.password || '');
   const [showPassword, setShowPassword] = useState(false);
 
   const [captcha, setCaptcha] = useState('');
   const [captchaChallenge, setCaptchaChallenge] = useState(null);
+  const [manualCaptcha, setManualCaptcha] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [captchaLoading, setCaptchaLoading] = useState(false);
@@ -55,9 +74,9 @@ function LoginForm({ onSuccess, onSkip, overlay = false }) {
   /*
    * Load a CAPTCHA from the SRM Student Portal.
    */
-  const loadCaptcha = async () => {
+  const loadCaptcha = async ({ clearError = true } = {}) => {
     setCaptchaLoading(true);
-    setError('');
+    if (clearError) setError('');
 
     try {
       const challenge =
@@ -69,18 +88,23 @@ function LoginForm({ onSuccess, onSkip, overlay = false }) {
       });
 
       setCaptcha('');
+      return true;
     } catch (err) {
       console.error(
         '[StudentPortal] CAPTCHA failed:',
         err
       );
 
-      setError(
-        readableError(
-          err,
-          'Failed to load the SRM Student Portal CAPTCHA.'
-        )
-      );
+      if (clearError) {
+        setError(
+          readableError(
+            err,
+            'Failed to load the SRM Student Portal CAPTCHA.'
+          )
+        );
+      }
+      setCaptchaChallenge(null);
+      return false;
     } finally {
       setCaptchaLoading(false);
     }
@@ -103,16 +127,12 @@ function LoginForm({ onSuccess, onSkip, overlay = false }) {
       return;
     }
 
-    /*
-     * First submission:
-     * obtain a CAPTCHA session.
-     */
-    if (!captchaChallenge) {
+    if (manualCaptcha && !captchaChallenge) {
       await loadCaptcha();
       return;
     }
 
-    if (!captcha.trim()) {
+    if (manualCaptcha && !captcha.trim()) {
       setError(
         'Please enter the CAPTCHA shown above.'
       );
@@ -127,8 +147,8 @@ function LoginForm({ onSuccess, onSkip, overlay = false }) {
         await loginStudentPortal(
           username.trim(),
           password,
-          captcha.trim(),
-          captchaChallenge.challengeId
+          manualCaptcha ? captcha.trim() : undefined,
+          manualCaptcha ? captchaChallenge.challengeId : undefined
         );
 
       console.log(
@@ -147,19 +167,23 @@ function LoginForm({ onSuccess, onSkip, overlay = false }) {
         err
       );
 
-      setError(
-        readableError(
-          err,
-          'Student Portal login failed.'
-        )
-      );
-
-      /*
-       * CAPTCHA sessions should not be reused after
-       * a failed authentication attempt.
-       */
-      setCaptchaChallenge(null);
-      setCaptcha('');
+      const message = readableError(err, 'Student Portal login failed.');
+      if (!manualCaptcha && needsManualCaptcha(err)) {
+        setManualCaptcha(true);
+        const loaded = await loadCaptcha({ clearError: false });
+        setError(loaded
+          ? `${message} Enter the CAPTCHA manually to continue.`
+          : `${message} A CAPTCHA could not be loaded. Please try again.`);
+      } else if (manualCaptcha) {
+        // Manual CAPTCHA sessions are single-use, including after a rejected
+        // answer, so load a fresh challenge before the next attempt.
+        const loaded = await loadCaptcha({ clearError: false });
+        setError(loaded
+          ? `${message} A fresh CAPTCHA is ready; please try again.`
+          : `${message} A new CAPTCHA could not be loaded. Please try again.`);
+      } else {
+        setError(message);
+      }
     } finally {
       setLoading(false);
     }
@@ -172,24 +196,25 @@ function LoginForm({ onSuccess, onSkip, overlay = false }) {
         <span className="login-topbar__context">STUDENT PORTAL</span>
       </header>
       <motion.main
-        className={`login-card${captchaChallenge ? ' login-card--captcha' : ' login-card--student-portal'}`}
+        className={`login-card${manualCaptcha ? ' login-card--captcha' : ' login-card--student-portal'}`}
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
         <section className="login-editorial-hero">
-          <div className="login-editorial-step"><span>{captchaChallenge ? '03' : '02'}</span><span>STUDENT PORTAL</span><span>{captchaChallenge ? 'VERIFY' : 'CONNECT'}</span></div>
-          <h1>{captchaChallenge ? <>One last<br />step.</> : <>Bring it<br />together.</>}</h1>
-          <p>{captchaChallenge ? 'Enter the security code shown below to finish connecting your SRM account.' : 'Add attendance and marks from SRM to your Ledger dashboard.'}</p>
+          <div className="login-editorial-step"><span>{manualCaptcha ? '03' : '02'}</span><span>STUDENT PORTAL</span><span>{manualCaptcha ? 'VERIFY' : 'CONNECT'}</span></div>
+          <h1>{manualCaptcha ? <>One last<br />step.</> : <>Bring it<br />together.</>}</h1>
+          <p>{manualCaptcha ? 'Enter the security code shown below to finish connecting your SRM account.' : 'Add attendance and marks from SRM. Ledger can reconnect automatically when a session expires.'}</p>
         </section>
         <motion.div
           className="login-header"
           variants={itemVariants}
         >
-          <span className="login-step-label">{captchaChallenge ? 'CAPTCHA VERIFICATION' : 'STUDENT PORTAL CREDENTIALS'}</span>
+          <span className="login-step-label">{manualCaptcha ? 'CAPTCHA VERIFICATION' : 'STUDENT PORTAL CREDENTIALS'}</span>
         </motion.div>
 
         <AnimatePresence>
+
           {error && (
             <motion.div
               className="login-error-banner"
@@ -301,7 +326,7 @@ function LoginForm({ onSuccess, onSkip, overlay = false }) {
             </div>
           </motion.div>
 
-          {captchaChallenge && (
+          {manualCaptcha && captchaChallenge && (
             <motion.div
               className="captcha-box"
               initial={{
@@ -365,10 +390,31 @@ function LoginForm({ onSuccess, onSkip, overlay = false }) {
               {captchaLoading
                 ? 'Loading CAPTCHA…'
                 : loading
-                  ? 'Signing in to Student Portal…'
-                  : captchaChallenge
-                    ? 'Connect Student Portal'
-                    : 'Continue'}
+                  ? manualCaptcha ? 'Checking CAPTCHA…' : 'Connecting to Student Portal…'
+                  : manualCaptcha && !captchaChallenge
+                    ? 'Load CAPTCHA'
+                    : manualCaptcha
+                      ? 'Connect Student Portal'
+                      : 'Connect automatically'}
+            </button>
+            <button
+              type="button"
+              className="login-mode-toggle"
+              onClick={() => {
+                if (manualCaptcha) {
+                  setManualCaptcha(false);
+                  setCaptchaChallenge(null);
+                  setCaptcha('');
+                  setError('');
+                } else {
+                  setManualCaptcha(true);
+                  void loadCaptcha();
+                }
+              }}
+              disabled={loading || captchaLoading}
+              aria-pressed={manualCaptcha}
+            >
+              {manualCaptcha ? 'Try automatic login' : 'Enter CAPTCHA manually'}
             </button>
             {onSkip && (
               <button type="button" className="btn-secondary" onClick={onSkip} disabled={loading || captchaLoading}>
@@ -383,7 +429,7 @@ function LoginForm({ onSuccess, onSkip, overlay = false }) {
           variants={itemVariants}
         >
           <ShieldCheck className="login-footer-icon" size={16} aria-hidden="true" />
-          <span><strong>Secure connection.</strong> Your credentials are used to establish an SRM session for Ledger.</span>
+          <span><strong>Saved in this browser.</strong> Student Portal credentials are used for automatic reconnection when the SRM session expires.</span>
         </motion.div>
       </motion.main>
     </div>

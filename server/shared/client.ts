@@ -1,4 +1,10 @@
 const JAAW_API_BASE_URL = "https://api.jaaw.tosh.cc.cd";
+const JAAW_EXPIRED_SESSION_CODES = new Set([
+  "SESSION_EXPIRED",
+  "SESSION_INVALID",
+  "INVALID_SESSION",
+  "UNAUTHORIZED",
+]);
 
 interface JaawCaptchaResponse {
   success: boolean;
@@ -20,6 +26,26 @@ export interface StudentPortalData {
   attendance: unknown[];
   marks: unknown[];
   cookies: Record<string, string>;
+}
+
+export class JaawApiError extends Error {
+  constructor(
+    message: string,
+    public readonly code?: string,
+    public readonly statusCode?: number,
+  ) {
+    super(message);
+    this.name = "JaawApiError";
+  }
+}
+
+function codeFrom(value: unknown): string | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const record = value as Record<string, unknown>;
+  const detail = record.detail && typeof record.detail === "object"
+    ? record.detail as Record<string, unknown>
+    : record;
+  return typeof detail.type === "string" ? detail.type.trim().toUpperCase() : undefined;
 }
 
 /** Friendly text for the error codes the Student Portal API can return. */
@@ -73,7 +99,7 @@ function messageFrom(value: unknown): string | null {
  * let a raw object reach `new Error()` (it would display as "[object Object]").
  */
 export function describeJaawError(payload: unknown, fallback = "The SRM Student Portal request failed."): string {
-  return messageFrom(payload) || fallback;
+  return (messageFrom(payload) || fallback).replace(/\bjaaw\b/gi, "Student Portal service");
 }
 
 async function request<T>(path: string, body?: unknown): Promise<T> {
@@ -84,7 +110,11 @@ async function request<T>(path: string, body?: unknown): Promise<T> {
   });
   const result = (await response.json().catch(() => ({}))) as T & Record<string, unknown>;
   if (!response.ok) {
-    throw new Error(describeJaawError(result, `jaaw API request failed (${response.status})`));
+    throw new JaawApiError(
+      describeJaawError(result, `Student Portal service request failed (${response.status})`),
+      codeFrom(result),
+      response.status,
+    );
   }
   return result;
 }
@@ -102,18 +132,25 @@ export async function getJaawCaptcha(): Promise<JaawCaptchaResponse> {
 export async function loginWithJaaw(
   username: string,
   password: string,
-  captcha: string,
-  cdigest: string,
+  captcha?: string,
+  cdigest?: string,
 ): Promise<StudentPortalData> {
-  const result = await request<JaawLoginResponse>("/sp/login", {
+  if (Boolean(captcha) !== Boolean(cdigest)) {
+    throw new JaawApiError("CAPTCHA text and session are both required for manual login.", "BAD_STATE", 400);
+  }
+  const payload: Record<string, string> = {
     username,
     password,
-    captcha,
-    cdigest,
-  });
+  };
+  if (captcha && cdigest) {
+    payload.captcha = captcha;
+    payload.cdigest = cdigest;
+  }
+  const result = await request<JaawLoginResponse>("/sp/login", payload);
   if (!result.success || !Array.isArray(result.attendance) || !Array.isArray(result.marks)) {
-    throw new Error(
+    throw new JaawApiError(
       describeJaawError(result, "SRM Student Portal could not authenticate with those credentials."),
+      codeFrom(result),
     );
   }
   return {
@@ -126,8 +163,13 @@ export async function loginWithJaaw(
 export async function refreshJaawSession(cookies: Record<string, string>): Promise<StudentPortalData> {
   const result = await request<JaawLoginResponse>("/sp/refresh", { cookies });
   if (!result.success || !Array.isArray(result.attendance) || !Array.isArray(result.marks)) {
-    throw new Error(
-      describeJaawError(result, "SRM Student Portal could not refresh this session."),
+    const code = codeFrom(result);
+    const message = describeJaawError(result, "SRM Student Portal could not refresh this session.");
+    const sessionExpired = JAAW_EXPIRED_SESSION_CODES.has(code || "") || /session.{0,24}(expired|invalid)|unauthorized/i.test(message);
+    throw new JaawApiError(
+      message,
+      code,
+      sessionExpired ? 401 : undefined,
     );
   }
   return {

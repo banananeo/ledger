@@ -6,6 +6,7 @@ const STUDENT_PORTAL_COOKIE_STORAGE_KEY = "eduwars_student_portal_cookies";
 const PROFILE_STORAGE_KEY = "eduwars_student_profile";
 const METADATA_STORAGE_KEY = "eduwars_last_sync";
 const CREDS_STORAGE_KEY = "eduwars_user_creds";
+const STUDENT_PORTAL_CREDS_STORAGE_KEY = "ledger_student_portal_creds";
 /**
  * Device-local preference: the user chose "Skip for now" on the optional
  * Student Portal onboarding. Kept out of clearStoredSession() on purpose so
@@ -60,15 +61,18 @@ export interface StudentPortalAttendanceResponse {
 export class ApiError extends Error {
   captchaChallenge?: CaptchaChallenge;
   statusCode?: number;
+  code?: string;
 
   constructor(
     message: string,
     statusCode?: number,
-    challenge?: CaptchaChallenge
+    challenge?: CaptchaChallenge,
+    code?: string
   ) {
     super(message);
     this.statusCode = statusCode;
     this.captchaChallenge = challenge;
+    this.code = code;
   }
 }
 
@@ -141,9 +145,16 @@ export function saveStudentPortalCookies(cookies: Record<string, string>) {
 }
 
 export function getStoredCredentials(): StoredCredentials | null {
+  return getSavedCredentials(CREDS_STORAGE_KEY);
+}
+
+export function getStoredStudentPortalCredentials(): StoredCredentials | null {
+  return getSavedCredentials(STUDENT_PORTAL_CREDS_STORAGE_KEY);
+}
+
+function getSavedCredentials(key: string): StoredCredentials | null {
   try {
-    const raw =
-      localStorage.getItem(CREDS_STORAGE_KEY);
+    const raw = localStorage.getItem(key);
 
     if (!raw) return null;
 
@@ -160,6 +171,16 @@ export function getStoredCredentials(): StoredCredentials | null {
 export function saveStoredCredentials(
   creds: StoredCredentials
 ) {
+  saveSavedCredentials(CREDS_STORAGE_KEY, creds);
+}
+
+export function saveStoredStudentPortalCredentials(
+  creds: StoredCredentials
+) {
+  saveSavedCredentials(STUDENT_PORTAL_CREDS_STORAGE_KEY, creds);
+}
+
+function saveSavedCredentials(key: string, creds: StoredCredentials) {
   try {
     if (!creds.username) return;
 
@@ -171,10 +192,7 @@ export function saveStoredCredentials(
       )
     );
 
-    localStorage.setItem(
-      CREDS_STORAGE_KEY,
-      encoded
-    );
+    localStorage.setItem(key, encoded);
   } catch (err) {
     console.error(
       "Failed to save credentials to localStorage:",
@@ -250,6 +268,7 @@ export function clearStoredSession() {
     localStorage.removeItem(
       CREDS_STORAGE_KEY
     );
+    localStorage.removeItem(STUDENT_PORTAL_CREDS_STORAGE_KEY);
   } catch (err) {
     console.error(
       "Failed to clear session:",
@@ -452,9 +471,19 @@ export async function getStudentPortalCaptcha(): Promise<StudentPortalCaptcha> {
 export async function loginStudentPortal(
   username: string,
   password: string,
-  captcha: string,
-  challengeId: string
+  captcha?: string,
+  challengeId?: string
 ): Promise<StudentPortalAttendanceResponse> {
+  if (Boolean(captcha) !== Boolean(challengeId)) {
+    throw new ApiError("CAPTCHA text and challenge ID are both required for manual login.");
+  }
+
+  const payload: Record<string, string> = { username, password };
+  if (captcha && challengeId) {
+    payload.captcha = captcha;
+    payload.challengeId = challengeId;
+  }
+
   const response = await fetch(
     "/api/attendance",
     {
@@ -463,12 +492,7 @@ export async function loginStudentPortal(
         "Content-Type":
           "application/json",
       },
-      body: JSON.stringify({
-        username,
-        password,
-        captcha,
-        challengeId,
-      }),
+      body: JSON.stringify(payload),
     }
   );
 
@@ -476,16 +500,23 @@ export async function loginStudentPortal(
     await parseJsonResponse(response);
 
   if (!response.ok) {
+    const detail = data?.detail;
     throw new ApiError(
       errorMessageFromPayload(
         data,
         "Failed to authenticate with the SRM Student Portal."
       ),
-      response.status
+      response.status,
+      undefined,
+      typeof detail?.type === "string" ? detail.type.trim().toUpperCase() : undefined
     );
   }
 
-  return data as StudentPortalAttendanceResponse;
+  const portalData = data as StudentPortalAttendanceResponse;
+  if (portalData.success) {
+    saveStoredStudentPortalCredentials({ username: username.trim(), password });
+  }
+  return portalData;
 }
 
 /* =========================================================
@@ -534,7 +565,9 @@ export async function refreshSession(
 
     throw new ApiError(
       message,
-      response.status
+      response.status,
+      undefined,
+      typeof detail?.type === "string" ? detail.type.trim().toUpperCase() : undefined
     );
   }
 

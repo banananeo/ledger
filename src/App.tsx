@@ -13,16 +13,53 @@ import {
   saveAcademiaCookies,
   saveStudentPortalCookies,
   getStoredCredentials,
+  getStoredStudentPortalCredentials,
+  loginStudentPortal,
   getStoredData,
   saveStoredData,
   getStudentPortalSkipped,
   saveStudentPortalSkipped,
   ApiError,
   CaptchaChallenge,
+  StoredCredentials,
 } from './api';
 import type { AppData } from './types';
 import { hasAcademiaAuthSignal, resolveBootView, shouldOfferStudentPortal } from './utils/session.ts';
 import './App.css';
+
+const EXPIRED_STUDENT_PORTAL_CODES = new Set([
+  'SESSION_EXPIRED',
+  'SESSION_INVALID',
+  'INVALID_SESSION',
+  'UNAUTHORIZED',
+]);
+
+function isExpiredStudentPortalSession(error: unknown): error is ApiError {
+  return error instanceof ApiError && (
+    error.statusCode === 401 || EXPIRED_STUDENT_PORTAL_CODES.has(error.code || '')
+  );
+}
+
+async function restoreStudentPortalSession(
+  cookies: Record<string, string> | null,
+  credentials: StoredCredentials | null,
+): Promise<AppData> {
+  if (cookies) {
+    try {
+      return await refreshSession({ source: 'student-portal', cookies });
+    } catch (error) {
+      // Only a rejected/expired session should trigger a credential login.
+      // Preserve service and network failures so we do not retry needlessly.
+      if (!isExpiredStudentPortalSession(error)) throw error;
+    }
+  }
+
+  if (credentials?.username && credentials.password) {
+    return loginStudentPortal(credentials.username, credentials.password);
+  }
+
+  throw new ApiError('Student Portal session expired. Reconnect to continue.', 401, undefined, 'SESSION_EXPIRED');
+}
 
 function mergeAppData(prev: AppData | null, fresh: AppData): AppData {
   const isStudentPortal = fresh.metadata?.source === 'student-portal';
@@ -109,6 +146,7 @@ export function App() {
     const academiaCookies = getAcademiaCookies() || cachedData?.session?.academiaCookies || null;
     const studentPortalCookies = getStudentPortalCookies() || cachedData?.session?.studentPortalCookies || null;
     const savedCreds = getStoredCredentials();
+    const savedPortalCreds = getStoredStudentPortalCredentials();
 
     if (cachedData) {
       setData(cachedData);
@@ -132,10 +170,10 @@ export function App() {
         }),
       });
     }
-    if (studentPortalCookies) {
+    if (studentPortalCookies || savedPortalCreds) {
       providers.push({
         source: 'student-portal',
-        promise: refreshSession({ source: 'student-portal', cookies: studentPortalCookies }),
+        promise: restoreStudentPortalSession(studentPortalCookies, savedPortalCreds),
       });
     }
 
@@ -151,7 +189,7 @@ export function App() {
         setAuthed(false);
         setLoginStep('academia');
       }
-      if (!studentPortalCookies) noteMissingStudentPortal();
+      if (!studentPortalCookies && !savedPortalCreds) noteMissingStudentPortal();
       setRestoring(false);
       return;
     }
@@ -180,7 +218,7 @@ export function App() {
             setError(outcome.reason?.message || 'Could not refresh Academia. Showing saved data.');
           } else {
             setStudentPortalIssue(true);
-            setStudentPortalError('Student Portal session needs to be reconnected.');
+            setStudentPortalError(outcome.reason?.message || 'Student Portal session needs to be reconnected.');
           }
         }
 
@@ -189,7 +227,7 @@ export function App() {
           saveStoredData(merged);
           setAuthed(true);
           setLastSynced(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-          if (!studentPortalCookies) noteMissingStudentPortal();
+          if (!studentPortalCookies && !savedPortalCreds) noteMissingStudentPortal();
           setLoginStep(null);
         } else {
           setAuthed(false);
@@ -213,18 +251,19 @@ export function App() {
     setError('');
 
     const studentPortalCookies = getStudentPortalCookies();
-    if (studentPortalCookies) {
+    const savedPortalCreds = getStoredStudentPortalCredentials();
+    if (studentPortalCookies || savedPortalCreds) {
       setRefreshing(true);
       try {
-        const portalData = await refreshSession({ source: 'student-portal', cookies: studentPortalCookies });
+        const portalData = await restoreStudentPortalSession(studentPortalCookies, savedPortalCreds);
         const complete = mergeAppData(merged, portalData);
         setData(complete);
         saveStoredData(complete);
         setStudentPortalIssue(false);
         setStudentPortalError('');
-      } catch {
+      } catch (error) {
         setStudentPortalIssue(true);
-        setStudentPortalError('Student Portal session needs to be reconnected.');
+        setStudentPortalError(error instanceof Error ? error.message : 'Student Portal session needs to be reconnected.');
       } finally {
         setRefreshing(false);
       }
@@ -273,6 +312,7 @@ export function App() {
       const interactive = options?.interactive !== false;
       if (refreshing) return;
       const savedCreds = getStoredCredentials();
+      const savedPortalCreds = getStoredStudentPortalCredentials();
       const academiaCookies = data?.session?.academiaCookies || getAcademiaCookies();
       const studentPortalCookies = data?.session?.studentPortalCookies || getStudentPortalCookies();
       const requests: Array<{ provider: 'academia' | 'student-portal'; promise: Promise<AppData> }> = [];
@@ -289,10 +329,10 @@ export function App() {
           }),
         });
       }
-      if (studentPortalCookies) {
+      if (studentPortalCookies || savedPortalCreds) {
         requests.push({
           provider: 'student-portal',
-          promise: refreshSession({ source: 'student-portal', cookies: studentPortalCookies }),
+          promise: restoreStudentPortalSession(studentPortalCookies, savedPortalCreds),
         });
       }
       if (!requests.length) return;
@@ -332,7 +372,7 @@ export function App() {
             }
           } else {
             setStudentPortalIssue(true);
-            setStudentPortalError('Student Portal session needs to be reconnected.');
+            setStudentPortalError(result.reason?.message || 'Student Portal session needs to be reconnected.');
           }
         }
         if (mergedData) {

@@ -7,7 +7,7 @@ import { getDemoData } from "./shared/demo-data.js";
 import { generateAIResponse, isGeminiConfigured } from "./ai/gemini.js";
 import { BRIEF_PROMPT } from "./ai/prompts.js";
 import { checkRateLimit, rateLimitKey } from "./ai/rateLimit.js";
-import { getJaawCaptcha, loginWithJaaw, refreshJaawSession } from "./shared/client.js";
+import { getJaawCaptcha, JaawApiError, loginWithJaaw, refreshJaawSession } from "./shared/client.js";
 import { randomUUID } from "crypto";
 const studentPortalSessions = new Map<
   string,
@@ -149,6 +149,11 @@ export function createApp(): Express {
         metadata: data.metadata,
       });
     } catch (err: any) {
+      if (err instanceof JaawApiError) {
+        return res.status(err.statusCode || 502).json({
+          detail: { type: err.code || "STUDENT_PORTAL_ERROR", message: err.message },
+        });
+      }
       if (err instanceof HttpError) {
         // Genuine auth problems (invalid/expired cookies with no fallback creds)
         return res.status(err.statusCode).json({ detail: err.detail });
@@ -257,35 +262,30 @@ export function createApp(): Express {
         });
       }
 
-      if (!captcha) {
+      const hasCaptcha = typeof captcha === "string" && captcha.trim().length > 0;
+      const hasChallenge = typeof challengeId === "string" && challengeId.trim().length > 0;
+      if (hasCaptcha !== hasChallenge) {
         return res.status(400).json({
-          detail:
-            "Student Portal CAPTCHA is required",
+          detail: "Provide both CAPTCHA text and challenge ID for manual login, or omit both for automatic login.",
         });
       }
 
-      if (!challengeId) {
-        return res.status(400).json({
-          detail:
-            "Student Portal CAPTCHA session is required",
-        });
+      let data: Awaited<ReturnType<typeof loginWithJaaw>>;
+      if (hasCaptcha && hasChallenge) {
+        const session = studentPortalSessions.get(challengeId);
+        if (!session) {
+          return res.status(400).json({
+            detail: "Student Portal CAPTCHA session expired. Please request a new CAPTCHA.",
+          });
+        }
+
+        // Manual CAPTCHA sessions are single-use.
+        studentPortalSessions.delete(challengeId);
+        data = await loginWithJaaw(username, password, captcha.trim(), session.cdigest);
+      } else {
+        // JAAW fetches and solves a fresh CAPTCHA when only credentials are sent.
+        data = await loginWithJaaw(username, password);
       }
-
-      const session =
-        studentPortalSessions.get(challengeId);
-
-      if (!session) {
-        return res.status(400).json({
-          detail:
-            "Student Portal CAPTCHA session expired. Please request a new CAPTCHA.",
-        });
-      }
-
-      /*
-       * CAPTCHA sessions are single-use.
-       */
-      studentPortalSessions.delete(challengeId);
-      const data = await loginWithJaaw(username, password, captcha, session.cdigest);
 
       return res.json({
         success: true,
@@ -299,6 +299,15 @@ export function createApp(): Express {
         "[Student Portal Attendance]",
         err
       );
+
+      if (err instanceof JaawApiError) {
+        return res.status(err.statusCode || 502).json({
+          detail: { type: err.code || "STUDENT_PORTAL_ERROR", message: err.message },
+        });
+      }
+      if (err instanceof TypeError) {
+        return res.status(503).json({ detail: "Student Portal service is unreachable. Please try again." });
+      }
 
       const message = safeErrorMessage(
         err,

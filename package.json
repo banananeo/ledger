@@ -22,8 +22,8 @@
     "framer-motion": "^13.1.0",
     "lucide-react": "^0.546.0",
     "motion": "^12.43.0",
-    "react": "^19.0.1",
-    "react-dom": "^19.0.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
     "vite": "^6.2.3"
   },
   "devDependencies": {

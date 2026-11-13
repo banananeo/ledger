@@ -263,11 +263,14 @@
 .form-label { font: 500 11px/1.4 var(--mono); letter-spacing: 0; text-transform: none; color: #1534a6; }
 .form-input { min-height: 56px; border: 1px solid #1534a6; border-radius: 0; background: transparent; box-shadow: none; }
 .form-input:focus { background: #fff; box-shadow: 0 0 0 2px rgba(35,73,235,.14); }
-.login-actions { display: flex; gap: 0; }
-.login-actions .btn-primary { flex: 1; min-height: 56px; justify-content: space-between; padding: 0 16px; border: 0; border-radius: 0; background: #4052e6; color: #fff; text-align: left; }
+.login-actions { display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
+.login-actions .btn-primary { flex: none; min-height: 56px; justify-content: space-between; padding: 0 16px; border: 0; border-radius: 0; background: #4052e6; color: #fff; text-align: left; }
 .login-actions .btn-primary::after { content: '→'; display: grid; place-items: center; align-self: stretch; width: 56px; margin: 0 -16px 0 12px; background: #ebf581; color: #1534a6; font: 32px/1 var(--sans); }
+.login-actions .login-mode-toggle { align-self: center; padding: 4px 8px; border: 0; background: transparent; color: #2349eb; cursor: pointer; font: 600 11px/1.4 var(--mono); text-decoration: underline; text-underline-offset: 3px; }
+.login-actions .login-mode-toggle:disabled { opacity: .55; cursor: wait; }
 .login-actions .btn-secondary { display: none; }
 .login-card--student-portal .login-actions .btn-secondary,
+.login-card--captcha .login-actions .btn-secondary,
 .login-actions--has-cancel .btn-secondary { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 14px; border: 1px solid #bec8e9; border-radius: 0; background: transparent; color: #53638d; }
 .login-card--student-portal .login-editorial-hero h1,
 .login-card--captcha .login-editorial-hero h1 { font-size: 40px; }
