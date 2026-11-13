@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-type Theme = 'light';
+type Theme = 'light' | 'dark';
 
 interface ThemeContextType {
   theme: Theme;
@@ -13,27 +13,34 @@ const THEME_STORAGE_KEY = 'eduwars_theme';
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme] = useState<Theme>('light');
+  const [theme, setThemeState] = useState<Theme>(() => {
+    try {
+      return localStorage.getItem(THEME_STORAGE_KEY) === 'light' ? 'light' : 'dark';
+    } catch {
+      return 'dark';
+    }
+  });
 
   useEffect(() => {
     try {
       const root = document.documentElement;
-      root.classList.remove('dark');
-      root.setAttribute('data-theme', 'light');
-      localStorage.setItem(THEME_STORAGE_KEY, 'light');
+      root.classList.toggle('dark', theme === 'dark');
+      root.classList.toggle('light', theme === 'light');
+      root.setAttribute('data-theme', theme);
+      localStorage.setItem(THEME_STORAGE_KEY, theme);
 
       const metaThemeColor = document.querySelector('meta[name="theme-color"]');
       if (metaThemeColor) {
-        metaThemeColor.setAttribute('content', '#fafaf5');
+        metaThemeColor.setAttribute('content', theme === 'dark' ? '#0B101A' : '#fafaf5');
       }
     } catch (e) {
       console.error('Failed to sync theme to DOM/storage:', e);
     }
-  }, []);
+  }, [theme]);
 
-  const toggleTheme = () => {};
+  const toggleTheme = () => setThemeState((current) => current === 'dark' ? 'light' : 'dark');
 
-  const setTheme = () => {};
+  const setTheme = (next: Theme) => setThemeState(next);
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>

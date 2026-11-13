@@ -6,6 +6,7 @@ import {
   getStoredStudentPortalCredentials,
   loginStudentPortal,
 } from '../api';
+import { friendlyLoginError } from '../utils/friendlyErrors.js';
 import './LoginForm.css';
 
 const containerVariants = {
@@ -35,12 +36,6 @@ const itemVariants = {
   },
 };
 
-/** Never render a non-string error (it would show as "[object Object]"). */
-function readableError(err, fallback) {
-  const message = typeof err?.message === 'string' ? err.message.trim() : '';
-  return message && message !== '[object Object]' ? message : fallback;
-}
-
 const MANUAL_CAPTCHA_CODES = new Set([
   'CAPTCHA_REQUIRED',
   'CAPTCHA_FETCH_FAILED',
@@ -57,7 +52,6 @@ function needsManualCaptcha(err) {
   if (MANUAL_CAPTCHA_CODES.has(err?.code?.toUpperCase?.() || '')) return true;
   return /captcha|ocr/i.test(typeof err?.message === 'string' ? err.message : '');
 }
-
 function LoginForm({ onSuccess, onSkip, overlay = false }) {
   const [username, setUsername] = useState(() => getStoredStudentPortalCredentials()?.username || '');
   const [password, setPassword] = useState(() => getStoredStudentPortalCredentials()?.password || '');
@@ -95,14 +89,7 @@ function LoginForm({ onSuccess, onSkip, overlay = false }) {
         err
       );
 
-      if (clearError) {
-        setError(
-          readableError(
-            err,
-            'Failed to load the SRM Student Portal CAPTCHA.'
-          )
-        );
-      }
+      if (clearError) setError(friendlyLoginError(err, 'student-portal', 'captcha'));
       setCaptchaChallenge(null);
       return false;
     } finally {
@@ -167,7 +154,7 @@ function LoginForm({ onSuccess, onSkip, overlay = false }) {
         err
       );
 
-      const message = readableError(err, 'Student Portal login failed.');
+      const message = friendlyLoginError(err, 'student-portal');
       if (!manualCaptcha && needsManualCaptcha(err)) {
         setManualCaptcha(true);
         const loaded = await loadCaptcha({ clearError: false });
@@ -218,6 +205,8 @@ function LoginForm({ onSuccess, onSkip, overlay = false }) {
           {error && (
             <motion.div
               className="login-error-banner"
+              role="alert"
+              aria-live="assertive"
               initial={{
                 opacity: 0,
                 y: -8,

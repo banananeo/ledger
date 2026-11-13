@@ -5,7 +5,7 @@ import './SplashScreen.css';
 const INTRO_MS = 2200;
 const SAFETY_MS = 4000;
 
-export function SplashScreen({ onDone = () => {} } = {}) {
+export function SplashScreen({ onDone = () => {}, greetingName, status } = {}) {
   const doneRef = useRef(onDone);
   const firedRef = useRef(false);
   const [reducedMotion, setReducedMotion] = useState(() => (
@@ -42,7 +42,7 @@ export function SplashScreen({ onDone = () => {} } = {}) {
 
   return (
     <motion.div
-      className="splash-screen splash-logo-only"
+      className={`splash-screen splash-logo-only${greetingName !== undefined ? ' splash-screen--welcome' : ''}`}
       data-animate={reducedMotion ? 'false' : 'true'}
       onClick={fireDone}
       onKeyDown={(event) => {
@@ -55,29 +55,31 @@ export function SplashScreen({ onDone = () => {} } = {}) {
       exit={{ opacity: 0, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } }}
       role="button"
       tabIndex={0}
-      aria-label="Loading Ledger — activate to skip"
-      title="Tap to skip"
+      aria-label={greetingName !== undefined
+        ? `Welcome${greetingName ? `, ${greetingName}` : ' to Ledger'} — activate to open the dashboard`
+        : 'Loading Ledger — activate to skip'}
+      title={greetingName !== undefined ? 'Tap to open your dashboard' : 'Tap to skip'}
     >
       <div className="slo-paper-grid" aria-hidden="true" />
-      <div className="slo-stack">
-        <div className="slo-brand" aria-label="Ledger">
-          ledger
-          <span className="slo-letter-dot">
-            .
-          </span>
+      {greetingName !== undefined ? (
+        <div className="slo-stack slo-welcome">
+          <p className="slo-status">WELCOME TO LEDGER</p>
+          <h1 className="slo-welcome-title">
+            {greetingName ? `Welcome, ${greetingName}` : 'Your study space is ready'}
+          </h1>
+          <div className="slo-accent-track" aria-hidden="true" />
+          <p className="slo-status">{status || 'Your dashboard is ready'}</p>
         </div>
-
-        <div
-          className="slo-accent-track"
-          aria-hidden="true"
-        />
-
-        <p
-          className="slo-status"
-        >
-          SRM ACADEMIA
-        </p>
-      </div>
+      ) : (
+        <div className="slo-stack">
+          <div className="slo-brand" aria-label="Ledger">
+            ledger
+            <span className="slo-letter-dot">.</span>
+          </div>
+          <div className="slo-accent-track" aria-hidden="true" />
+          <p className="slo-status">{status || 'SRM ACADEMIA'}</p>
+        </div>
+      )}
     </motion.div>
   );
 }

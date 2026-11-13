@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon, CalendarIcon } from '../Icons.jsx';
 import { buildMonthGrid, monthIndexForDate, monthLabel, todayISO } from '../../../utils/calendar.js';
 import './CalendarView.css';
@@ -22,7 +22,7 @@ function formatDateDisplay(dateStr) {
   });
 }
 
-function CalendarView({ calendar }) {
+function CalendarView({ calendar, schedule = [] }) {
   const months = calendar?.months || [];
   const today = todayISO();
   const currentMonthIdx = useMemo(() => monthIndexForDate(months, today), [months, today]);
@@ -36,6 +36,9 @@ function CalendarView({ calendar }) {
   const [addingTask, setAddingTask] = useState(false);
   const [taskPriority, setTaskPriority] = useState('Medium');
   const [taskCourse, setTaskCourse] = useState('');
+  const [dayPopup, setDayPopup] = useState(null);
+  const gridRef = useRef(null);
+  const lastTouchRef = useRef({ date: '', time: 0 });
   const saveTasks = (next) => {
     setTasks(next);
     try { localStorage.setItem('ledger_calendar_tasks', JSON.stringify(next)); } catch { /* retain in-memory tasks */ }
@@ -49,6 +52,49 @@ function CalendarView({ calendar }) {
     if (!month?.entries || !selectedDate) return null;
     return month.entries.find((e) => e.date === selectedDate) || null;
   }, [month, selectedDate]);
+
+  const popupEntry = dayPopup
+    ? month?.entries?.find((entry) => entry.date === dayPopup.date) || { date: dayPopup.date, dayOrder: null, title: null, category: 'empty' }
+    : null;
+  const popupClasses = popupEntry?.dayOrder
+    ? schedule.find((day) => String(day.dayLabel).match(/\d+/)?.[0] === String(popupEntry.dayOrder))?.entries || []
+    : [];
+
+  useEffect(() => {
+    if (!dayPopup) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setDayPopup(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [dayPopup]);
+
+  const openDaySummary = (event, entry) => {
+    const gridRect = gridRef.current?.getBoundingClientRect();
+    if (!gridRect) return;
+    const cellRect = event.currentTarget.getBoundingClientRect();
+    const popupWidth = Math.max(180, Math.min(280, gridRect.width - 24, window.innerWidth - 32));
+    const maxLeft = Math.max(8, gridRect.width - popupWidth - 8);
+    const left = Math.max(8, Math.min(maxLeft, cellRect.left - gridRect.left + cellRect.width / 2 - popupWidth / 2));
+    let top = cellRect.bottom - gridRect.top + 8;
+    if (top + 210 > gridRect.height) {
+      top = Math.max(8, cellRect.top - gridRect.top - 218);
+    }
+    setSelectedDate(entry.date);
+    setDayPopup({ date: entry.date, left, top, width: popupWidth });
+  };
+
+  const handleDateTouch = (event, entry) => {
+    if (event.pointerType !== 'touch') return;
+    const now = Date.now();
+    const lastTouch = lastTouchRef.current;
+    if (lastTouch.date === entry.date && now - lastTouch.time < 450) {
+      openDaySummary(event, entry);
+      lastTouchRef.current = { date: '', time: 0 };
+    } else {
+      lastTouchRef.current = { date: entry.date, time: now };
+    }
+  };
 
   // Monthly stats
   const stats = useMemo(() => {
@@ -66,11 +112,12 @@ function CalendarView({ calendar }) {
 
   if (months.length === 0) {
     return (
-      <div className="calendar"><header className="view-intro"><div className="view-intro__meta"><span>ODD SEMESTER / {calendar?.academicYearLabel || '2026-27'}</span></div><h2>Calendar</h2><p>Academic Schedule &amp; Day Orders</p></header><div className="bcard calendar__empty-card"><p>No academic calendar data available from Academia.</p></div><p className="attendance__connection"><span /> ACADEMIA + STUDENT PORTAL CONNECTED</p></div>
+      <div className="calendar"><header className="view-intro"><div className="view-intro__meta"><span>ODD SEMESTER / {calendar?.academicYearLabel || '2026-27'}</span><span>Sample data</span></div><h2>Calendar</h2><p>Academic Schedule &amp; Day Orders</p></header><div className="bcard calendar__empty-card"><p>No academic calendar data available from Academia.</p></div><p className="attendance__connection"><span /> ACADEMIA + STUDENT PORTAL CONNECTED</p></div>
     );
   }
 
   const goTo = (next) => {
+    setDayPopup(null);
     const nextIdx = Math.max(0, Math.min(months.length - 1, next));
     setIndex(nextIdx);
     // select first valid day of that month
@@ -82,6 +129,7 @@ function CalendarView({ calendar }) {
   };
 
   const jumpToToday = () => {
+    setDayPopup(null);
     setIndex(currentMonthIdx);
     setSelectedDate(today);
   };
@@ -97,7 +145,6 @@ function CalendarView({ calendar }) {
       <header className="view-intro">
         <div className="view-intro__meta"><span>{calendar?.plannerType || 'ODD'} SEMESTER / {calendar?.academicYearLabel || '2026-27'}</span></div>
         <h2>Calendar</h2>
-        <p>Academic Schedule &amp; Day Orders</p>
       </header>
       <div className="calendar__header-bar">
         {index !== currentMonthIdx && (
@@ -138,7 +185,7 @@ function CalendarView({ calendar }) {
       </div>
 
       {/* Main Calendar Grid */}
-      <div className="bcard calendar__grid-card">
+      <div className="bcard calendar__grid-card" ref={gridRef}>
         <div className="calendar__weekdays">
           {weekdays.map((w) => (
             <span key={w} className={w === 'Sun' ? 'calendar__weekday--sun' : ''}>
@@ -163,8 +210,14 @@ function CalendarView({ calendar }) {
                     key={cell.date}
                     type="button"
                     className={`calendar__cell ${categoryClass(cell.category)}${isToday ? ' calendar__cell--today' : ''}${isSelected ? ' calendar__cell--selected' : ''}`}
-                    onClick={() => setSelectedDate(cell.date)}
-                    title={cell.title ? `${cell.date}: ${cell.title}` : cell.date}
+                    onClick={() => {
+                      setSelectedDate(cell.date);
+                      setDayPopup((current) => current?.date === cell.date ? current : null);
+                    }}
+                    onDoubleClick={(event) => openDaySummary(event, cell)}
+                    onPointerDown={(event) => handleDateTouch(event, cell)}
+                    title={`${cell.date} · Double-click to view classes`}
+                    aria-label={`${formatDateDisplay(cell.date)}${cell.dayOrder ? `, Day Order ${cell.dayOrder}` : ''}. Double-click for class summary.`}
                   >
                     <span className="calendar__cell-num num">{Number(cell.date.slice(-2))}</span>
 
@@ -185,6 +238,43 @@ function CalendarView({ calendar }) {
             </div>
           ))}
         </div>
+
+        {dayPopup && popupEntry && (
+          <div
+            className="calendar__day-popover"
+            role="dialog"
+            aria-label={`Classes for ${formatDateDisplay(popupEntry.date)}`}
+            style={{ left: dayPopup.left, top: dayPopup.top, width: dayPopup.width }}
+          >
+            <div className="calendar__day-popover-head">
+              <div>
+                <span className="eyebrow">Class Summary</span>
+                <strong>{formatDateDisplay(popupEntry.date)}</strong>
+              </div>
+              <button type="button" aria-label="Close class summary" onClick={() => setDayPopup(null)}>×</button>
+            </div>
+            <p className="calendar__day-popover-count">
+              {popupClasses.length
+                ? `${popupClasses.length} ${popupClasses.length === 1 ? 'class' : 'classes'}${popupEntry.dayOrder ? ` · Day Order ${popupEntry.dayOrder}` : ''}`
+                : 'No classes scheduled'}
+            </p>
+            {popupClasses.length > 0 && (
+              <ul className="calendar__day-popover-list">
+                {popupClasses.slice(0, 3).map((classEntry, classIndex) => {
+                  const time = classEntry.timeLabel || [classEntry.startTime, classEntry.endTime].filter(Boolean).join('–');
+                  return (
+                    <li key={`${classEntry.slotCode || classEntry.courseCode}-${classIndex}`}>
+                      <span>{classEntry.courseTitle || classEntry.courseCode}</span>
+                      <small>{time}{classEntry.room ? `${time ? ' · ' : ''}${classEntry.room}` : ''}</small>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            {popupClasses.length > 3 && <p className="calendar__day-popover-more">+{popupClasses.length - 3} more classes</p>}
+            {popupEntry.title && <p className="calendar__day-popover-note">{popupEntry.title}</p>}
+          </div>
+        )}
 
         {/* Legend */}
         <div className="calendar__legend">

@@ -19,7 +19,6 @@ function MarksView({ marks = [], courses = [], schedule = [], attendance = [], c
       <header className="view-intro">
         <h2>Marks</h2>
       </header>
-
       {marks.length === 0 ? <div className="bcard marks__empty-card"><p>No internal assessment marks recorded in Academia for this semester yet.</p></div> : null}
 
       {marks.length > 0 && <ul className="marks__list">

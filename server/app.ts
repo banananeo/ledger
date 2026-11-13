@@ -5,7 +5,7 @@ import { MarksParser } from "./parsers/marks-parser.js";
 import { HttpError } from "./shared/errors.js";
 import { getDemoData } from "./shared/demo-data.js";
 import { generateAIResponse, isGeminiConfigured } from "./ai/gemini.js";
-import { BRIEF_PROMPT } from "./ai/prompts.js";
+import { BRIEF_PROMPT, replaceCourseCodesWithNames } from "./ai/prompts.js";
 import { checkRateLimit, rateLimitKey } from "./ai/rateLimit.js";
 import { getJaawCaptcha, JaawApiError, loginWithJaaw, refreshJaawSession } from "./shared/client.js";
 import { randomUUID } from "crypto";
@@ -455,10 +455,11 @@ export function createApp(): Express {
         if (Array.isArray(context.schedule)) safeContext.schedule = context.schedule.slice(0, 6);
         if (context.calendar) safeContext.calendar = context.calendar;
       }
-      const reply = await generateAIResponse({
+      const generatedReply = await generateAIResponse({
         message: BRIEF_PROMPT,
         context: safeContext,
       });
+      const reply = replaceCourseCodesWithNames(generatedReply, safeContext);
       return res.json({ success: true, reply });
     } catch (err: any) {
       return res.status(500).json({ detail: err?.message || "AI summary failed" });

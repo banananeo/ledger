@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { RefreshCw, UserRound, LogOut, Bell } from 'lucide-react';
+import { RefreshCw, UserRound, LogOut, Bell, Sun, Moon } from 'lucide-react';
 import { useNotifications } from '../../context/NotificationContext.tsx';
+import { useTheme } from '../../context/ThemeContext.tsx';
 import './TopBar.css';
 
 function initials(name) {
@@ -10,10 +11,11 @@ function initials(name) {
   return (parts[0]?.[0] || '') + (parts[1]?.[0] || '');
 }
 
-function TopBar({ onRefresh, refreshing, profile, onLogout }) {
+function TopBar({ onRefresh, refreshing, profile, onLogout, onOpenAI, onEasterEggTap }) {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
   const { activeReminders, testReminder, setIsDrawerOpen } = useNotifications();
+  const { theme, toggleTheme } = useTheme();
 
   const profileName = profile?.name;
   const regNo = profile?.registrationNumber;
@@ -36,14 +38,14 @@ function TopBar({ onRefresh, refreshing, profile, onLogout }) {
   return (
     <header className="topbar">
       <div className="topbar__left">
-          <div className="topbar__logo">
+          <button className="topbar__logo" type="button" onClick={onEasterEggTap} aria-label="Ledger">
             <div className="topbar__logo-icon-box">
               <img src="/icon.svg" alt="Ledger" className="topbar__logo-img" />
             </div>
             <span className="topbar__logo-text">
               Ledger<span className="topbar__logo-dot">.</span>
             </span>
-          </div>
+          </button>
       </div>
       <div className="topbar__right" ref={menuRef}>
 
@@ -70,6 +72,24 @@ function TopBar({ onRefresh, refreshing, profile, onLogout }) {
           title="Sync with SRM Academia"
         >
           <RefreshCw size={18} className={refreshing ? 'topbar__spin' : ''} />
+        </button>
+
+        <button
+          className="bbtn bbtn--outline bbtn--icon topbar__ai"
+          onClick={onOpenAI}
+          aria-label="Open Ledger AI"
+          title="Open Ledger AI"
+        >
+          <span className="topbar__ai-mark" aria-hidden="true">AI</span>
+        </button>
+
+        <button
+          className="bbtn bbtn--outline bbtn--icon topbar__theme"
+          onClick={toggleTheme}
+          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+        >
+          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
         </button>
 
         <button
@@ -106,7 +126,7 @@ function TopBar({ onRefresh, refreshing, profile, onLogout }) {
                 onLogout();
               }}
             >
-              <LogoutIcon width={16} height={16} />
+              <LogOut size={16} aria-hidden="true" />
               <span>Log out</span>
             </button>
           </div>

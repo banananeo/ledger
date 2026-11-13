@@ -37,6 +37,19 @@
   gap: 14px;
 }
 
+.slo-welcome {
+  gap: 18px;
+}
+
+.slo-welcome-title {
+  max-width: 9ch;
+  margin: 0;
+  color: #1534a6;
+  font: 700 clamp(34px, 10vw, 48px)/1.04 var(--display, system-ui, sans-serif);
+  letter-spacing: -0.055em;
+  overflow-wrap: anywhere;
+}
+
 .slo-brand {
   display: inline-flex;
   align-items: baseline;
@@ -97,10 +110,14 @@
 .splash-screen[data-animate="true"] .slo-status {
   animation: slo-status-fade 340ms cubic-bezier(0.16, 1, 0.3, 1) 1260ms both;
 }
+.splash-screen[data-animate="true"] .slo-welcome-title {
+  animation: slo-wordmark-settle 680ms cubic-bezier(0.16, 1, 0.3, 1) 180ms both;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .splash-screen[data-animate="true"] .slo-brand,
   .splash-screen[data-animate="true"] .slo-letter-dot,
   .splash-screen[data-animate="true"] .slo-accent-track,
   .splash-screen[data-animate="true"] .slo-status { animation: none; }
+  .splash-screen[data-animate="true"] .slo-welcome-title { animation: none; }
 }

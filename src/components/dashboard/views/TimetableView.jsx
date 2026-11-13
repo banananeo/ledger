@@ -58,9 +58,7 @@ function TimetableView({ schedule = [], calendar, profile }) {
     return (
       <div className="timetable">
         <header className="view-intro">
-          <div className="view-intro__meta"><span>ACADEMIA / ODD SEMESTER</span></div>
           <h2>Timetable</h2>
-          <p>Regular timetable for Day Orders 1–5</p>
         </header>
         <div className="timetable__empty-card"><p>No timetable data came back from Academia.</p></div>
       </div>
