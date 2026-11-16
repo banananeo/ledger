@@ -8,14 +8,6 @@ import { generateAIResponse, isGeminiConfigured } from "./ai/gemini.js";
 import { BRIEF_PROMPT, replaceCourseCodesWithNames } from "./ai/prompts.js";
 import { checkRateLimit, rateLimitKey } from "./ai/rateLimit.js";
 import { getJaawCaptcha, JaawApiError, loginWithJaaw, refreshJaawSession } from "./shared/client.js";
-import { randomUUID } from "crypto";
-const studentPortalSessions = new Map<
-  string,
-  {
-    cdigest: string;
-    image: string;
-  }
->();
 
 /**
  * Errors bubbled up from third-party clients can carry objects; never send a
@@ -28,6 +20,41 @@ function safeErrorMessage(err: any, fallback: string): string {
     if (trimmed && trimmed !== "[object Object]") return trimmed;
   }
   return fallback;
+}
+
+function sanitizeAIContext(context: any): Record<string, unknown> {
+  const safeContext: Record<string, unknown> = {};
+  if (!context || typeof context !== "object") return safeContext;
+
+  if (context.profile && typeof context.profile === "object") {
+    const profile = context.profile;
+    safeContext.profile = {
+      batch: profile.batch,
+      semester: profile.semester,
+      department: profile.department,
+      section: profile.section,
+      program: profile.program,
+    };
+  }
+  if (Array.isArray(context.attendance)) safeContext.attendance = context.attendance.slice(0, 20);
+  if (Array.isArray(context.marks)) safeContext.marks = context.marks.slice(0, 20);
+  if (Array.isArray(context.schedule)) safeContext.schedule = context.schedule.slice(0, 6);
+  if (context.calendar && typeof context.calendar === "object") {
+    const calendar = context.calendar;
+    safeContext.calendar = {
+      plannerType: calendar.plannerType,
+      academicYearLabel: calendar.academicYearLabel,
+      months: Array.isArray(calendar.months)
+        ? calendar.months.slice(0, 12).map((month: any) => ({
+          month: month.month,
+          monthIndex: month.monthIndex,
+          year: month.year,
+          entries: Array.isArray(month.entries) ? month.entries.slice(0, 35) : [],
+        }))
+        : [],
+    };
+  }
+  return safeContext;
 }
 
 export function createApp(): Express {
@@ -175,16 +202,12 @@ export function createApp(): Express {
     try {
       const captcha = await getJaawCaptcha();
 
-      const challengeId = randomUUID();
-
-      studentPortalSessions.set(challengeId, {
-        cdigest: captcha.cdigest,
-        image: captcha.image,
-      });
-
       return res.json({
         success: true,
-        challengeId,
+        // The digest is already part of the CAPTCHA challenge returned to the
+        // browser. Returning it directly keeps manual login stateless across
+        // serverless function instances.
+        challengeId: captcha.cdigest,
         imageUrl: captcha.image.startsWith("data:") || captcha.image.startsWith("http")
           ? captcha.image
           : `data:image/png;base64,${captcha.image}`,
@@ -200,41 +223,6 @@ export function createApp(): Express {
       });
     }
   });
-  router.get(
-    "/student-portal/captcha-image/:challengeId",
-    async (req: Request, res: Response) => {
-      try {
-        const session = studentPortalSessions.get(
-          req.params.challengeId
-        );
-
-        if (!session) {
-          return res.status(404).json({
-            detail:
-              "CAPTCHA session not found or expired",
-          });
-        }
-
-        if (session.image.startsWith("data:") || session.image.startsWith("http")) {
-          return res.redirect(session.image);
-        }
-        res.setHeader("Content-Type", "image/png");
-        return res.send(Buffer.from(session.image, "base64"));
-      } catch (err: any) {
-        console.error(
-          "[Student Portal CAPTCHA Image]",
-          err
-        );
-
-        return res.status(500).json({
-          detail: safeErrorMessage(
-            err,
-            "Failed to return CAPTCHA image",
-          ),
-        });
-      }
-    }
-  );
   // attendance handler
   // Student Portal attendance handler
   router.post("/attendance", async (req: Request, res: Response) => {
@@ -272,16 +260,9 @@ export function createApp(): Express {
 
       let data: Awaited<ReturnType<typeof loginWithJaaw>>;
       if (hasCaptcha && hasChallenge) {
-        const session = studentPortalSessions.get(challengeId);
-        if (!session) {
-          return res.status(400).json({
-            detail: "Student Portal CAPTCHA session expired. Please request a new CAPTCHA.",
-          });
-        }
-
-        // Manual CAPTCHA sessions are single-use.
-        studentPortalSessions.delete(challengeId);
-        data = await loginWithJaaw(username, password, captcha.trim(), session.cdigest);
+        // The challenge digest is returned to the browser and submitted with
+        // the answer, so this remains reliable across serverless instances.
+        data = await loginWithJaaw(username, password, captcha.trim(), challengeId);
       } else {
         // JAAW fetches and solves a fresh CAPTCHA when only credentials are sent.
         data = await loginWithJaaw(username, password);
@@ -394,14 +375,7 @@ export function createApp(): Express {
         return res.status(400).json({ detail: "message too long (max 2000 chars)" });
       }
       // Sanitize context: only allow known shape, drop cookies/passwords if any
-      const safeContext: any = {};
-      if (context && typeof context === "object") {
-        if (context.profile) safeContext.profile = context.profile;
-        if (Array.isArray(context.attendance)) safeContext.attendance = context.attendance.slice(0, 20);
-        if (Array.isArray(context.marks)) safeContext.marks = context.marks.slice(0, 20);
-        if (Array.isArray(context.schedule)) safeContext.schedule = context.schedule.slice(0, 6);
-        if (context.calendar) safeContext.calendar = context.calendar;
-      }
+      const safeContext = sanitizeAIContext(context);
 
       const wantsStream = req.query.stream === "1" || req.body?.stream === true;
       if (wantsStream) {
@@ -447,14 +421,7 @@ export function createApp(): Express {
     if (!isGeminiConfigured()) return res.status(503).json({ detail: "AI not configured" });
     try {
       const { context } = req.body || {};
-      const safeContext: any = {};
-      if (context && typeof context === "object") {
-        if (context.profile) safeContext.profile = context.profile;
-        if (Array.isArray(context.attendance)) safeContext.attendance = context.attendance.slice(0, 20);
-        if (Array.isArray(context.marks)) safeContext.marks = context.marks.slice(0, 20);
-        if (Array.isArray(context.schedule)) safeContext.schedule = context.schedule.slice(0, 6);
-        if (context.calendar) safeContext.calendar = context.calendar;
-      }
+      const safeContext = sanitizeAIContext(context);
       const generatedReply = await generateAIResponse({
         message: BRIEF_PROMPT,
         context: safeContext,

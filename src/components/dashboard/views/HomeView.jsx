@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { Sparkles } from 'lucide-react';
 import { ClockIcon, CalendarIcon, BellIcon } from '../Icons.jsx';
 import { todayISO, findEntryForDate, allEntries } from '../../../utils/calendar.js';
+import { parseTimeToMinutes } from '../../../utils/reminderEngine.ts';
 import { useNotifications } from '../../../context/NotificationContext.tsx';
 import { aiSummary } from '../../../api.ts';
 import { friendlyBriefError } from '../../../utils/friendlyErrors.js';
@@ -32,26 +33,6 @@ const homeItemVariants = {
   },
 };
 
-function parseTimeMinutes(timeStr) {
-  if (!timeStr) return null;
-  const match = String(timeStr).trim().match(/(\d+):(\d+)(?:\s*(AM|PM))?/i);
-  if (!match) return null;
-  let hours = parseInt(match[1], 10);
-  const minutes = parseInt(match[2], 10);
-  const meridiem = match[3]?.toUpperCase();
-  if (meridiem === 'PM' && hours < 12) {
-    hours += 12;
-  } else if (meridiem === 'AM' && hours === 12) {
-    hours = 0;
-  } else if (!meridiem) {
-    // In university timetables, hours 1 to 6 are afternoon (PM: 13:00 - 18:00)
-    if (hours >= 1 && hours <= 6) {
-      hours += 12;
-    }
-  }
-  return hours * 60 + minutes;
-}
-
 function dayNumber(dayLabel) {
   const match = String(dayLabel || '').match(/\d+/);
   return match ? match[0] : String(dayLabel || '');
@@ -67,8 +48,15 @@ function getTodayOverview(schedule = [], calendar) {
     ? schedule.find((day) => dayNumber(day.dayLabel) === String(dayOrder))
     : null;
   const classes = [...(todaySchedule?.entries || [])]
-    .map((entry) => ({ ...entry, startMinutes: parseTimeMinutes(entry.startTime), endMinutes: parseTimeMinutes(entry.endTime) }))
-    .filter((entry) => entry.endMinutes == null || entry.endMinutes >= currentMinutes)
+    .map((entry) => {
+      const startMinutes = parseTimeToMinutes(entry.startTime);
+      return {
+        ...entry,
+        startMinutes,
+        endMinutes: parseTimeToMinutes(entry.endTime) ?? (startMinutes == null ? null : startMinutes + 50),
+      };
+    })
+    .filter((entry) => entry.startMinutes != null && entry.endMinutes != null && entry.endMinutes >= currentMinutes)
     .sort((a, b) => (a.startMinutes ?? 0) - (b.startMinutes ?? 0));
   const events = ['event', 'holiday'].includes(calendarEntry?.category) && calendarEntry.title
     ? [calendarEntry.title]
@@ -88,12 +76,14 @@ function getNextClassInfo(schedule = [], calendar) {
     const todaysDayObj = schedule.find(
       (d) => dayNumber(d.dayLabel) === String(todayDayOrder)
     );
-    const todaysClasses = todaysDayObj?.entries ? [...todaysDayObj.entries] : [];
-    todaysClasses.sort((a, b) => (parseTimeMinutes(a.startTime) ?? 0) - (parseTimeMinutes(b.startTime) ?? 0));
+    const todaysClasses = todaysDayObj?.entries
+      ? todaysDayObj.entries.filter((entry) => parseTimeToMinutes(entry.startTime) != null)
+      : [];
+    todaysClasses.sort((a, b) => (parseTimeToMinutes(a.startTime) ?? 0) - (parseTimeToMinutes(b.startTime) ?? 0));
 
     for (const c of todaysClasses) {
-      const startMin = parseTimeMinutes(c.startTime);
-      const endMin = parseTimeMinutes(c.endTime) || (startMin != null ? startMin + 50 : null);
+      const startMin = parseTimeToMinutes(c.startTime);
+      const endMin = parseTimeToMinutes(c.endTime) ?? (startMin != null ? startMin + 50 : null);
 
       if (startMin != null && endMin != null) {
         if (currentMinutes >= startMin && currentMinutes <= endMin) {
@@ -131,8 +121,10 @@ function getNextClassInfo(schedule = [], calendar) {
     const nextDayObj = schedule.find(
       (d) => dayNumber(d.dayLabel) === String(futureWorkingDay.dayOrder)
     );
-    const nextClasses = nextDayObj?.entries ? [...nextDayObj.entries] : [];
-    nextClasses.sort((a, b) => (parseTimeMinutes(a.startTime) ?? 0) - (parseTimeMinutes(b.startTime) ?? 0));
+    const nextClasses = nextDayObj?.entries
+      ? nextDayObj.entries.filter((entry) => parseTimeToMinutes(entry.startTime) != null)
+      : [];
+    nextClasses.sort((a, b) => (parseTimeToMinutes(a.startTime) ?? 0) - (parseTimeToMinutes(b.startTime) ?? 0));
 
     if (nextClasses.length > 0) {
       return {
@@ -157,15 +149,19 @@ function getNextClassInfo(schedule = [], calendar) {
     }
     const targetDay = schedule[nextDayIndex] || schedule[0];
     if (targetDay && targetDay.entries && targetDay.entries.length > 0) {
-      const sorted = [...targetDay.entries].sort((a, b) => (parseTimeMinutes(a.startTime) ?? 0) - (parseTimeMinutes(b.startTime) ?? 0));
-      return {
-        entry: sorted[0],
-        status: 'Next Scheduled Class',
-        statusTone: 'neutral',
-        timingNote: `Starts at ${sorted[0].startTime}`,
-        dayLabel: targetDay.dayLabel,
-        isOngoing: false,
-      };
+      const sorted = targetDay.entries
+        .filter((entry) => parseTimeToMinutes(entry.startTime) != null)
+        .sort((a, b) => parseTimeToMinutes(a.startTime) - parseTimeToMinutes(b.startTime));
+      if (sorted.length > 0) {
+        return {
+          entry: sorted[0],
+          status: 'Next Scheduled Class',
+          statusTone: 'neutral',
+          timingNote: `Starts at ${sorted[0].startTime}`,
+          dayLabel: targetDay.dayLabel,
+          isOngoing: false,
+        };
+      }
     }
   }
 

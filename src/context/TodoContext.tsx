@@ -36,11 +36,15 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
   const todosRef = useRef<TodoItem[]>(todos);
   todosRef.current = todos;
 
-  const { notificationsEnabled, soundEnabled } = useNotifications();
+  const { notificationsEnabled, soundEnabled, permission } = useNotifications();
   const notificationsEnabledRef = useRef(notificationsEnabled);
   notificationsEnabledRef.current = notificationsEnabled;
   const soundEnabledRef = useRef(soundEnabled);
   soundEnabledRef.current = soundEnabled;
+  const permissionRef = useRef(permission);
+  permissionRef.current = permission;
+  const lastPermissionRef = useRef(permission);
+  const attemptedReminderIdsRef = useRef<Set<string>>(new Set());
 
   // Persist on change; the initial hydration read is never written back.
   const hydratedRef = useRef(false);
@@ -116,16 +120,22 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
     const checkDueTasks = () => {
       if (!notificationsEnabledRef.current) return;
 
+      if (permissionRef.current === 'granted' && lastPermissionRef.current !== 'granted') {
+        attemptedReminderIdsRef.current.clear();
+      }
+      lastPermissionRef.current = permissionRef.current;
+
       const today = todayISO();
       const due = todosRef.current.filter((todo) => !todo.completed && todo.dueDate === today);
       if (due.length === 0) return;
 
       const log = loadReminderLog();
       const notified = new Set(log[today] || []);
-      let changed = false;
 
       for (const todo of due) {
-        if (notified.has(todo.id)) continue;
+        const attemptId = `${today}:${todo.id}`;
+        if (notified.has(todo.id) || attemptedReminderIdsRef.current.has(attemptId)) continue;
+        attemptedReminderIdsRef.current.add(attemptId);
 
         const details = [kindLabel(todo.kind)];
         if (todo.courseCode) details.push(todo.courseCode);
@@ -138,15 +148,16 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
           data: { url: '/?view=calendar', view: 'calendar' },
           playSound: soundEnabledRef.current,
           vibrate: true,
+        }).then((sent) => {
+          if (!sent) return;
+          const latestLog = loadReminderLog();
+          const latestNotified = new Set(latestLog[today] || []);
+          latestNotified.add(todo.id);
+          saveReminderLog({ ...latestLog, [today]: [...latestNotified] });
         }).catch(() => {
           // Notifications are best-effort.
         });
-
-        notified.add(todo.id);
-        changed = true;
       }
-
-      if (changed) saveReminderLog({ ...log, [today]: [...notified] });
     };
 
     checkDueTasks();

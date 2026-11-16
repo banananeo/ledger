@@ -7,6 +7,7 @@ import NotificationDrawer from './NotificationDrawer.jsx';
 import AcademiaDownBanner from './AcademiaDownBanner.jsx';
 import CurtainsScopeTransition from './CurtainsScopeTransition.jsx';
 import { NotificationProvider } from '../../context/NotificationContext.tsx';
+import { TodoProvider } from '../../context/TodoContext.tsx';
 import HomeView from './views/HomeView.jsx';
 import TimetableView from './views/TimetableView.jsx';
 import AttendanceView from './views/AttendanceView.jsx';
@@ -17,7 +18,12 @@ import AfterHoursScene from './AfterHoursScene.jsx';
 import './Shell.css';
 
 function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onReconnectAcademia, onConnectStudentPortal, academiaIssue, studentPortalIssue, studentPortalError }) {
-  const [view, setView] = useState('home');
+  const [view, setView] = useState(() => {
+    const requestedView = new URLSearchParams(window.location.search).get('view');
+    return ['home', 'timetable', 'attendance', 'calendar', 'marks'].includes(requestedView)
+      ? requestedView
+      : 'home';
+  });
   const [transitionOrigin, setTransitionOrigin] = useState({ x: 50, y: 50 });
   const [aiOpen, setAiOpen] = useState(false);
   const [afterHoursOpen, setAfterHoursOpen] = useState(false);
@@ -81,12 +87,13 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onRec
 
   return (
     <NotificationProvider schedule={schedule} calendar={calendar}>
-      <div
-        className="shell"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
+      <TodoProvider>
+        <div
+          className="shell"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
         <Sidebar
           view={view}
           onNavigate={navigate}
@@ -166,7 +173,8 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onRec
         <NotificationDrawer onNavigate={navigate} />
         <AIAssistantDrawer data={data} isOpen={aiOpen} onClose={() => setAiOpen(false)} />
         {afterHoursOpen && <AfterHoursScene onClose={() => setAfterHoursOpen(false)} />}
-      </div>
+        </div>
+      </TodoProvider>
     </NotificationProvider>
   );
 }

@@ -1,26 +1,9 @@
+import { parseTimeToMinutes } from './reminderEngine.ts';
+
 export interface GenerateTimetableOptions {
   schedule: any[];
   profile?: any;
   theme?: 'light' | 'dark';
-}
-
-function parseTimeToMinutes(timeStr: string): number {
-  if (!timeStr) return 0;
-  const match = String(timeStr).trim().match(/(\d+):(\d+)(?:\s*(AM|PM))?/i);
-  if (!match) return 0;
-  let hours = parseInt(match[1], 10);
-  const minutes = parseInt(match[2], 10);
-  const meridiem = match[3]?.toUpperCase();
-  if (meridiem === 'PM' && hours < 12) {
-    hours += 12;
-  } else if (meridiem === 'AM' && hours === 12) {
-    hours = 0;
-  } else if (!meridiem) {
-    if (hours >= 1 && hours <= 6) {
-      hours += 12;
-    }
-  }
-  return hours * 60 + minutes;
 }
 
 // Standard time slots across SRM schedule
@@ -44,8 +27,9 @@ export function extractSlotsFromSchedule(schedule: any[]) {
   schedule.forEach((day) => {
     (day.entries || []).forEach((e: any) => {
       const sMin = parseTimeToMinutes(e.startTime);
-      const eMin = parseTimeToMinutes(e.endTime) || sMin + 50;
-      if (sMin && !foundTimes.some((t) => Math.abs(t.startMin - sMin) < 15)) {
+      if (sMin == null) return;
+      const eMin = parseTimeToMinutes(e.endTime) ?? sMin + 50;
+      if (!foundTimes.some((t) => Math.abs(t.startMin - sMin) < 15)) {
         foundTimes.push({
           start: e.startTime,
           end: e.endTime || '',
@@ -56,7 +40,7 @@ export function extractSlotsFromSchedule(schedule: any[]) {
     });
   });
 
-  if (foundTimes.length >= 4) {
+  if (foundTimes.length > 0) {
     foundTimes.sort((a, b) => a.startMin - b.startMin);
     return foundTimes.map((t, idx) => ({
       label: `Period ${idx + 1}`,
@@ -312,7 +296,7 @@ export async function generateTimetableCanvas(
     const dayEntries = dayObj.entries || [];
     dayEntries.forEach((entry: any) => {
       const entryStartMin = parseTimeToMinutes(entry.startTime);
-      if (!entryStartMin) return;
+      if (entryStartMin == null) return;
 
       // Find closest column matching this entry
       let closestColIdx = -1;

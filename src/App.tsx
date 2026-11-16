@@ -110,6 +110,10 @@ function normalizeSavedData(data: AppData | null): AppData | null {
   };
 }
 
+function getFirstName(name?: string): string {
+  return name?.trim().split(/\s+/)[0] || '';
+}
+
 export function App() {
   const [isFreshAppSession] = useState(() => {
     try {
@@ -132,13 +136,14 @@ export function App() {
   const [captchaChallenge, setCaptchaChallenge] = useState<CaptchaChallenge | null>(null);
   const [welcomeName, setWelcomeName] = useState<string | null>(() => (
     isFreshAppSession && initialSavedData
-      ? initialSavedData.profile?.name?.trim() || ''
+      ? getFirstName(initialSavedData.profile?.name)
       : null
   ));
   const [revealDashboard, setRevealDashboard] = useState(false);
   const [splashDone, setSplashDone] = useState<boolean>(false);
   const [restoring, setRestoring] = useState<boolean>(true);
   const welcomeShownRef = useRef(isFreshAppSession && Boolean(initialSavedData));
+  const sessionGenerationRef = useRef(0);
 
   const lastSyncTimeRef = useRef<number>(Date.now());
 
@@ -164,7 +169,7 @@ export function App() {
   const showSessionWelcome = (profile?: AppData['profile']) => {
     if (!isFreshAppSession || welcomeShownRef.current) return;
     welcomeShownRef.current = true;
-    setWelcomeName(profile?.name?.trim() || '');
+    setWelcomeName(getFirstName(profile?.name));
   };
 
   // The splash doubles as the restore screen, but it must never trap the user.
@@ -178,6 +183,8 @@ export function App() {
 
   // Boot: paint the cached dashboard immediately, then revalidate in the background.
   useEffect(() => {
+    let active = true;
+    const generation = sessionGenerationRef.current;
     const cachedData = normalizeSavedData(getStoredData());
     const academiaCookies = getAcademiaCookies() || cachedData?.session?.academiaCookies || null;
     const studentPortalCookies = getStudentPortalCookies() || cachedData?.session?.studentPortalCookies || null;
@@ -228,7 +235,7 @@ export function App() {
       }
       if (!studentPortalCookies && !savedPortalCreds) noteMissingStudentPortal();
       setRestoring(false);
-      return;
+      return () => { active = false; };
     }
 
     setRefreshing(true);
@@ -236,10 +243,18 @@ export function App() {
       providers.map(async ({ source, promise }) => ({ source, result: await Promise.allSettled([promise]) })),
     )
       .then((results) => {
+        if (!active || generation !== sessionGenerationRef.current) return;
         let merged = cachedData;
+        let restoredProviderCount = 0;
 
         for (const { source, result: [outcome] } of results) {
           if (outcome.status === 'fulfilled') {
+            restoredProviderCount += 1;
+            const cookies = outcome.value.session?.cookies;
+            if (cookies) {
+              if (source === 'academia') saveAcademiaCookies(cookies);
+              else saveStudentPortalCookies(cookies);
+            }
             merged = mergeAppData(merged, outcome.value);
             if (source === 'academia') {
               setAcademiaIssue(false);
@@ -264,7 +279,9 @@ export function App() {
           saveStoredData(merged);
           setAuthed(true);
           showSessionWelcome(merged.profile);
-          setLastSynced(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+          if (restoredProviderCount > 0) {
+            setLastSynced(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+          }
           if (!studentPortalCookies && !savedPortalCreds) noteMissingStudentPortal();
           setLoginStep(null);
         } else {
@@ -272,15 +289,19 @@ export function App() {
           setLoginStep('academia');
         }
 
-        lastSyncTimeRef.current = Date.now();
+        lastSyncTimeRef.current = restoredProviderCount > 0 ? Date.now() : 0;
       })
       .finally(() => {
+        if (!active || generation !== sessionGenerationRef.current) return;
         setRefreshing(false);
         setRestoring(false);
       });
+
+    return () => { active = false; };
   }, []);
 
   const handleAcademiaSuccess = async (loginData: AppData) => {
+    const generation = ++sessionGenerationRef.current;
     const merged = mergeAppData(normalizeSavedData(data), loginData);
     setData(merged);
     if (loginData.session?.cookies) saveAcademiaCookies(loginData.session.cookies);
@@ -294,21 +315,25 @@ export function App() {
       setRefreshing(true);
       try {
         const portalData = await restoreStudentPortalSession(studentPortalCookies, savedPortalCreds);
+        if (generation !== sessionGenerationRef.current) return;
         const complete = mergeAppData(merged, portalData);
+        if (portalData.session?.cookies) saveStudentPortalCookies(portalData.session.cookies);
         setData(complete);
         saveStoredData(complete);
         setStudentPortalIssue(false);
         setStudentPortalError('');
       } catch (error) {
+        if (generation !== sessionGenerationRef.current) return;
         setStudentPortalIssue(true);
         setStudentPortalError(error instanceof Error ? error.message : 'Student Portal session needs to be reconnected.');
       } finally {
-        setRefreshing(false);
+        if (generation === sessionGenerationRef.current) setRefreshing(false);
       }
+      if (generation !== sessionGenerationRef.current) return;
       setAuthed(true);
       setLoginStep(null);
       setReconnecting(false);
-      showSessionWelcome(complete.profile);
+      showSessionWelcome(merged.profile);
       return;
     }
 
@@ -333,6 +358,7 @@ export function App() {
   };
 
   const handleStudentPortalSuccess = (portalData: AppData) => {
+    sessionGenerationRef.current += 1;
     const merged = mergeAppData(normalizeSavedData(data), portalData);
     setData(merged);
     if (portalData.session?.cookies) saveStudentPortalCookies(portalData.session.cookies);
@@ -352,6 +378,7 @@ export function App() {
     async (captchaText?: string, options?: { interactive?: boolean }) => {
       const interactive = options?.interactive !== false;
       if (refreshing) return;
+      const generation = sessionGenerationRef.current;
       const savedCreds = getStoredCredentials();
       const savedPortalCreds = getStoredStudentPortalCredentials();
       const academiaCookies = data?.session?.academiaCookies || getAcademiaCookies();
@@ -387,12 +414,18 @@ export function App() {
             result: (await Promise.allSettled([promise]))[0],
           })),
         );
+        if (generation !== sessionGenerationRef.current) return;
         let mergedData = data;
         const academiaErrors: string[] = [];
-        setLastSynced(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-        lastSyncTimeRef.current = Date.now();
+        let syncedProviderCount = 0;
         for (const { provider, result } of results) {
           if (result.status === 'fulfilled') {
+            syncedProviderCount += 1;
+            const cookies = result.value.session?.cookies;
+            if (cookies) {
+              if (provider === 'academia') saveAcademiaCookies(cookies);
+              else saveStudentPortalCookies(cookies);
+            }
             mergedData = mergeAppData(mergedData, result.value);
             if (provider === 'academia') setAcademiaIssue(false);
             else {
@@ -420,10 +453,18 @@ export function App() {
           setData(mergedData);
           saveStoredData(mergedData);
         }
+        if (syncedProviderCount > 0) {
+          setLastSynced(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+          lastSyncTimeRef.current = Date.now();
+        } else {
+          lastSyncTimeRef.current = 0;
+        }
         setError(academiaErrors.join(' '));
       } finally {
-        setRefreshing(false);
-        if (!waitingForCaptcha) setCaptchaChallenge(null);
+        if (generation === sessionGenerationRef.current) {
+          setRefreshing(false);
+          if (!waitingForCaptcha) setCaptchaChallenge(null);
+        }
       }
     },
     [data, refreshing, captchaChallenge],
@@ -449,12 +490,15 @@ export function App() {
   }, [authed, data, handleSync, refreshing]);
 
   const handleLogout = () => {
+    sessionGenerationRef.current += 1;
     clearStoredSession();
     setAuthed(false);
     setLoginStep('academia');
     setReconnecting(false);
     setData(null);
     setLastSynced(null);
+    setRefreshing(false);
+    setWelcomeName(null);
     setError('');
     setStudentPortalError('');
     setAcademiaIssue(false);
@@ -559,6 +603,7 @@ export function App() {
       <AnimatePresence>
         {captchaChallenge && (
           <CaptchaModal
+            key={captchaChallenge.cdigest}
             challenge={captchaChallenge}
             onSubmit={(code: string) => handleSync(code)}
             onCancel={() => setCaptchaChallenge(null)}

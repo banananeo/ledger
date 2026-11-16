@@ -406,21 +406,8 @@ export async function login(
     );
   }
 
-  if (data?.session?.cookies) {
-    saveAcademiaCookies(
-      data.session.cookies
-    );
-  }
-
-  if (
-    payload.username &&
-    payload.password &&
-    !payload.isDemo
-  ) {
-    saveStoredCredentials({
-      username: payload.username,
-      password: payload.password,
-    });
+  if (!data || typeof data !== "object" || data.success !== true) {
+    throw new ApiError("Academia returned incomplete login data.", response.status);
   }
 
   return data as AppData;
@@ -456,6 +443,10 @@ export async function getStudentPortalCaptcha(): Promise<StudentPortalCaptcha> {
       ),
       response.status
     );
+  }
+
+  if (!data?.success || typeof data.challengeId !== "string" || typeof data.imageUrl !== "string") {
+    throw new ApiError("Student Portal returned an incomplete CAPTCHA challenge.", response.status);
   }
 
   return data as StudentPortalCaptcha;
@@ -513,8 +504,8 @@ export async function loginStudentPortal(
   }
 
   const portalData = data as StudentPortalAttendanceResponse;
-  if (portalData.success) {
-    saveStoredStudentPortalCredentials({ username: username.trim(), password });
+  if (!portalData.success || !Array.isArray(portalData.attendance) || !Array.isArray(portalData.marks)) {
+    throw new ApiError("Student Portal returned incomplete attendance data.", response.status);
   }
   return portalData;
 }
@@ -571,12 +562,8 @@ export async function refreshSession(
     );
   }
 
-  if (data?.session?.cookies) {
-    if (payload.source === "student-portal") {
-      saveStudentPortalCookies(data.session.cookies);
-    } else {
-      saveAcademiaCookies(data.session.cookies);
-    }
+  if (!data || typeof data !== "object" || data.success !== true) {
+    throw new ApiError("Academia returned incomplete refresh data.", response.status);
   }
 
   return data as AppData;
@@ -621,7 +608,10 @@ export async function aiChat(
     );
   }
 
-  return data.reply as string;
+  if (typeof data?.reply !== "string") {
+    throw new ApiError("AI returned an incomplete reply.", res.status);
+  }
+  return data.reply;
 }
 
 export async function aiChatStream(
@@ -676,6 +666,37 @@ export async function aiChatStream(
   let buffer = "";
   let full = "";
 
+  const processLine = (line: string) => {
+    const trimmed = line.trim();
+    if (!trimmed.startsWith("data:")) return;
+
+    const jsonStr = trimmed.slice(5).trim();
+    if (!jsonStr) return;
+
+    let obj: any;
+    try {
+      obj = JSON.parse(jsonStr);
+    } catch {
+      return;
+    }
+
+    if (obj.error) {
+      const message = typeof obj.error === "string"
+        ? obj.error
+        : errorMessageFromPayload(obj.error, "AI streaming failed");
+      throw new ApiError(message);
+    }
+
+    if (typeof obj.chunk === "string" && obj.chunk) {
+      full += obj.chunk;
+      onChunk(obj.chunk);
+    }
+
+    if (obj.done && typeof obj.full === "string") {
+      full = obj.full;
+    }
+  };
+
   while (true) {
     const {
       done,
@@ -696,54 +717,12 @@ export async function aiChatStream(
       lines.pop() || "";
 
     for (const line of lines) {
-      const trimmed =
-        line.trim();
-
-      if (
-        !trimmed.startsWith(
-          "data:"
-        )
-      ) {
-        continue;
-      }
-
-      const jsonStr =
-        trimmed
-          .slice(5)
-          .trim();
-
-      if (!jsonStr) continue;
-
-      try {
-        const obj =
-          JSON.parse(
-            jsonStr
-          );
-
-        if (obj.chunk) {
-          full += obj.chunk;
-          onChunk(
-            obj.chunk
-          );
-        }
-
-        if (
-          obj.done &&
-          obj.full
-        ) {
-          full = obj.full;
-        }
-
-        if (obj.error) {
-          throw new Error(
-            obj.error
-          );
-        }
-      } catch {
-        // Ignore malformed stream chunks.
-      }
+      processLine(line);
     }
   }
+
+  buffer += decoder.decode();
+  if (buffer.trim()) processLine(buffer);
 
   return full;
 }
@@ -758,6 +737,14 @@ export async function aiHealth(): Promise<{
 
   const data =
     await parseJsonResponse(res);
+
+  if (!res.ok) {
+    throw new ApiError(errorMessageFromPayload(data, "AI status check failed"), res.status);
+  }
+
+  if (typeof data?.configured !== "boolean" || typeof data?.model !== "string") {
+    throw new ApiError("AI status check returned incomplete data.", res.status);
+  }
 
   return data;
 }
@@ -792,5 +779,8 @@ export async function aiSummary(
     );
   }
 
-  return data.reply as string;
+  if (typeof data?.reply !== "string") {
+    throw new ApiError("AI returned an incomplete brief.", res.status);
+  }
+  return data.reply;
 }

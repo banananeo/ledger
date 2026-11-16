@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Download } from 'lucide-react';
 import { todayISO, findEntryForDate, allEntries } from '../../../utils/calendar.js';
+import { parseTimeToMinutes } from '../../../utils/reminderEngine.ts';
 import { downloadTimetableImage } from '../../../utils/timetableImageGenerator';
 import './TimetableView.css';
 
@@ -70,6 +71,22 @@ function TimetableView({ schedule = [], calendar, profile }) {
   const currentDayNum = dayNumber(day?.dayLabel);
   const isToday = todayDayOrder && currentDayNum === String(todayDayOrder);
   const entries = day?.entries || [];
+  const currentMinutes = new Date().getHours() * 60 + new Date().getMinutes();
+  const inProgressIndex = isToday
+    ? entries.findIndex((entry) => {
+      const start = parseTimeToMinutes(entry.startTime);
+      const end = parseTimeToMinutes(entry.endTime) ?? (start == null ? null : start + 50);
+      return start != null && end != null && start <= currentMinutes && currentMinutes < end;
+    })
+    : -1;
+  const nextClassIndex = isToday
+    ? entries.findIndex((entry) => {
+      const start = parseTimeToMinutes(entry.startTime);
+      const end = parseTimeToMinutes(entry.endTime) ?? (start == null ? null : start + 50);
+      return start != null && end != null && (inProgressIndex >= 0 ? start <= currentMinutes && currentMinutes < end : start > currentMinutes);
+    })
+    : -1;
+  const highlightedClassIndex = inProgressIndex >= 0 ? inProgressIndex : nextClassIndex;
 
   // Calculate the upcoming / associated calendar date for this Day Order
   const dateInfo = useMemo(() => {
@@ -165,7 +182,7 @@ function TimetableView({ schedule = [], calendar, profile }) {
       ) : (
         <ul className="timetable__list">
           {entries.map((p, i) => (
-            <li key={`${p.slotCode}-${i}`} className={`timetable__period${isToday && i === 0 ? ' timetable__period--up-next' : ''}`}>
+            <li key={`${p.slotCode}-${i}`} className={`timetable__period${i === highlightedClassIndex ? ' timetable__period--up-next' : ''}`}>
               <div className="timetable__period-header-row">
                 <div className="timetable__period-time-badge">
                   <span className="num">{p.startTime}</span>
@@ -174,7 +191,7 @@ function TimetableView({ schedule = [], calendar, profile }) {
                 </div>
 
                 <span className="timetable__period-type">
-                  {isToday && i === 0 ? 'UP NEXT / ' : ''}{(p.slotType || 'Theory').toUpperCase()}
+                  {i === inProgressIndex ? 'IN PROGRESS / ' : i === nextClassIndex ? 'UP NEXT / ' : ''}{(p.slotType || 'Theory').toUpperCase()}
                 </span>
               </div>
 

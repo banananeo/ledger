@@ -3,7 +3,6 @@ import {
   ClassReminderItem,
   getTodaysScheduledClasses,
   getActiveReminders,
-  formatCountdown,
 } from '../utils/reminderEngine';
 import {
   initMobileServiceWorker,
@@ -42,6 +41,34 @@ const STORAGE_KEYS = {
   DISMISSED: 'ledger_reminder_dismissed',
 };
 
+const VALID_LEAD_MINUTES = [5, 10, 15, 30];
+
+function readPreference(key: string): string | null {
+  try {
+    return typeof localStorage === 'undefined' ? null : localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writePreference(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Keep the feature usable when browser storage is disabled or full.
+  }
+}
+
+function readDismissedIds(): string[] {
+  try {
+    const saved = readPreference(STORAGE_KEYS.DISMISSED);
+    const parsed: unknown = saved ? JSON.parse(saved) : [];
+    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
 export function NotificationProvider({
   children,
   schedule = [],
@@ -52,17 +79,17 @@ export function NotificationProvider({
   calendar?: any;
 }) {
   const [notificationsEnabled, setNotificationsEnabledState] = useState<boolean>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.ENABLED);
+    const saved = readPreference(STORAGE_KEYS.ENABLED);
     return saved !== null ? saved === 'true' : true;
   });
 
   const [leadMinutes, setLeadMinutesState] = useState<number>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.LEAD_MINUTES);
-    return saved ? parseInt(saved, 10) : 15;
+    const saved = Number(readPreference(STORAGE_KEYS.LEAD_MINUTES));
+    return VALID_LEAD_MINUTES.includes(saved) ? saved : 15;
   });
 
   const [soundEnabled, setSoundEnabledState] = useState<boolean>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.SOUND);
+    const saved = readPreference(STORAGE_KEYS.SOUND);
     return saved !== null ? saved === 'true' : true;
   });
 
@@ -73,14 +100,7 @@ export function NotificationProvider({
     return 'default';
   });
 
-  const [dismissedIds, setDismissedIds] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.DISMISSED);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [dismissedIds, setDismissedIds] = useState<string[]>(readDismissedIds);
 
   const [activeReminders, setActiveReminders] = useState<ClassReminderItem[]>([]);
   const [todaysClasses, setTodaysClasses] = useState<ClassReminderItem[]>([]);
@@ -96,21 +116,26 @@ export function NotificationProvider({
 
   const setNotificationsEnabled = (val: boolean) => {
     setNotificationsEnabledState(val);
-    localStorage.setItem(STORAGE_KEYS.ENABLED, String(val));
+    writePreference(STORAGE_KEYS.ENABLED, String(val));
     unlockAudioContext();
     if (val && permission === 'default' && typeof window !== 'undefined' && 'Notification' in window) {
-      Notification.requestPermission().then((p) => setPermission(p));
+      try {
+        void Notification.requestPermission().then((nextPermission) => setPermission(nextPermission)).catch(() => {});
+      } catch {
+        // Permission prompts are not available in every browser context.
+      }
     }
   };
 
   const setLeadMinutes = (mins: number) => {
-    setLeadMinutesState(mins);
-    localStorage.setItem(STORAGE_KEYS.LEAD_MINUTES, String(mins));
+    const next = VALID_LEAD_MINUTES.includes(mins) ? mins : 15;
+    setLeadMinutesState(next);
+    writePreference(STORAGE_KEYS.LEAD_MINUTES, String(next));
   };
 
   const setSoundEnabled = (val: boolean) => {
     setSoundEnabledState(val);
-    localStorage.setItem(STORAGE_KEYS.SOUND, String(val));
+    writePreference(STORAGE_KEYS.SOUND, String(val));
     if (val) unlockAudioContext();
   };
 
@@ -133,16 +158,14 @@ export function NotificationProvider({
 
   const dismissReminder = useCallback((id: string) => {
     setDismissedIds((prev) => {
-      const next = [...new Set([...prev, id])];
-      localStorage.setItem(STORAGE_KEYS.DISMISSED, JSON.stringify(next));
+      const next = [...new Set([...prev, id])].slice(-100);
+      writePreference(STORAGE_KEYS.DISMISSED, JSON.stringify(next));
       return next;
     });
   }, []);
 
   const triggerTestReminder = useCallback(() => {
     unlockAudioContext();
-    triggerHapticVibration([200, 100, 200, 100, 300]);
-
     const testItem: ClassReminderItem = {
       id: 'test_class_reminder_' + Date.now(),
       courseCode: '18CSC302J',
@@ -165,16 +188,17 @@ export function NotificationProvider({
 
     setTestReminder(testItem);
 
-    if (soundEnabled) {
-      playNotificationChime();
-    }
-
     if (notificationsEnabled) {
-      sendMobileClassNotification({
+      void sendMobileClassNotification({
         title: `🔔 Class Reminder: ${testItem.courseTitle}`,
         body: `Room: ${testItem.room} • Starts in 15 mins (${testItem.startTime})`,
         tag: testItem.id,
-      });
+        playSound: soundEnabled,
+        vibrate: true,
+      }).catch(() => {});
+    } else {
+      if (soundEnabled) playNotificationChime();
+      triggerHapticVibration([200, 100, 200, 100, 300]);
     }
   }, [soundEnabled, notificationsEnabled]);
 
@@ -203,17 +227,13 @@ export function NotificationProvider({
         if (!notifiedClassIdsRef.current.has(item.id)) {
           notifiedClassIdsRef.current.add(item.id);
 
-          if (soundEnabled) {
-            playNotificationChime();
-          }
-
-          triggerHapticVibration([250, 100, 250]);
-
-          sendMobileClassNotification({
+          void sendMobileClassNotification({
             title: `🔔 Class in ${item.startsInMinutes > 0 ? `${item.startsInMinutes}m` : 'moments'}: ${item.courseTitle}`,
             body: `Room: ${item.room} • Starts at ${item.startTime}\n${item.faculty || ''}`,
             tag: item.id,
-          });
+            playSound: soundEnabled,
+            vibrate: true,
+          }).catch(() => {});
         }
       });
     };

@@ -6,6 +6,7 @@ import {
   marginTone,
   REQUIRED_PERCENTAGE,
 } from '../../../utils/attendance.js';
+import { parseTimeToMinutes } from '../../../utils/reminderEngine.ts';
 import './AttendanceView.css';
 
 const LAB_SPLIT_STORAGE_KEY = 'ledger_attendance_lab_misses';
@@ -18,18 +19,6 @@ function parseDayNum(dayLabel) {
 function isPracticalEntry(entry) {
   return [entry?.slotType, entry?.rawType, entry?.slotCode, entry?.slot]
     .some((value) => String(value || '').toLowerCase().includes('practical') || String(value || '').toUpperCase().startsWith('P'));
-}
-
-function timeInMinutes(value) {
-  const match = String(value || '').trim().match(/(\d{1,2}):(\d{2})(?:\s*(AM|PM))?/i);
-  if (!match) return null;
-  let hours = Number(match[1]);
-  const minutes = Number(match[2]);
-  const meridiem = match[3]?.toUpperCase();
-  if (meridiem === 'PM' && hours < 12) hours += 12;
-  if (meridiem === 'AM' && hours === 12) hours = 0;
-  if (!meridiem && hours < 8) hours += 12;
-  return hours * 60 + minutes;
 }
 
 function AttendanceView({ attendance = [], schedule = [], calendar }) {
@@ -60,11 +49,11 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
     const labInfo = new Map();
     const scheduleByDay = new Map((Array.isArray(schedule) ? schedule : []).map((day) => [parseDayNum(day.dayLabel), day]));
     (calendar?.months || []).flatMap((month) => month.entries || []).forEach((entry) => {
-      if (!entry?.date || entry.date >= todayStr || !entry.dayOrder) return;
+      if (!entry?.date || entry.date >= todayStr || !entry.dayOrder || entry.category === 'holiday' || entry.category === 'empty') return;
       const day = scheduleByDay.get(String(entry.dayOrder));
       const labsByCourse = new Map();
       (day?.entries || []).forEach((scheduled) => {
-        if (scheduled?.slotType !== 'Practical') return;
+        if (!isPracticalEntry(scheduled)) return;
         const code = String(scheduled.courseCode || '').trim().toUpperCase();
         if (!code) return;
         if (!labsByCourse.has(code)) labsByCourse.set(code, []);
@@ -72,7 +61,7 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
       });
       labsByCourse.forEach((entries, code) => {
         const ordered = entries
-          .map((item) => ({ item, start: timeInMinutes(item.startTime), end: timeInMinutes(item.endTime) }))
+          .map((item) => ({ item, start: parseTimeToMinutes(item.startTime), end: parseTimeToMinutes(item.endTime) }))
           .sort((a, b) => (a.start ?? 0) - (b.start ?? 0));
         const current = labInfo.get(code) || { labHours: 0, sessions: 0, sessionLengths: [] };
         current.labHours += ordered.length;
@@ -109,66 +98,62 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
   // Extract base attendance records
   const safeAttendance = useMemo(() => {
     return (Array.isArray(attendance) ? attendance : []).map((r) => {
-      const pct = Number(r.attendancePercentage) || 0;
-      const conducted = Number(r.classesConducted) || 0;
-      const absent = Number(r.classesAbsent) || 0;
-      const attended = conducted > 0 ? Math.max(0, conducted - absent) : Math.round((pct / 100) * 30);
+      const rawPercentage = Number(r.attendancePercentage);
+      const pct = Number.isFinite(rawPercentage) ? Math.max(0, Math.min(100, rawPercentage)) : 0;
+      const rawConducted = Number(r.classesConducted);
+      const rawAbsent = Number(r.classesAbsent);
+      const conducted = Number.isFinite(rawConducted) ? Math.max(0, rawConducted) : 0;
+      const absent = Number.isFinite(rawAbsent) ? Math.max(0, rawAbsent) : 0;
+      const hasCountData = Number.isFinite(rawConducted) && Number.isFinite(rawAbsent)
+        && rawConducted > 0 && rawAbsent >= 0 && rawAbsent <= rawConducted;
       return {
         ...r,
         numericPct: pct,
-        conducted: conducted > 0 ? conducted : 30,
+        hasCountData,
+        conducted,
         absent,
-        attended,
+        attended: Math.max(0, conducted - absent),
       };
     });
   }, [attendance]);
 
+  const hasReliableAttendanceCounts = safeAttendance.every((record) => record.hasCountData);
+
   // Determine available day orders from schedule
   const dayOrders = useMemo(() => {
-    const orders = new Set(['1', '2', '3', '4', '5']);
-    if (Array.isArray(schedule)) {
-      schedule.forEach((d) => {
-        const num = parseDayNum(d.dayLabel);
-        if (num && ['1', '2', '3', '4', '5'].includes(num)) {
-          orders.add(num);
-        }
-      });
-    }
+    const orders = new Set();
+    (Array.isArray(schedule) ? schedule : []).forEach((d) => {
+      const num = parseDayNum(d.dayLabel);
+      if (num) orders.add(num);
+    });
     return Array.from(orders).sort((a, b) => Number(a) - Number(b));
   }, [schedule]);
+
+  useEffect(() => {
+    if (simulatedDayOrder && !dayOrders.includes(String(simulatedDayOrder))) {
+      setSimulatedDayOrder(null);
+    }
+  }, [dayOrders, simulatedDayOrder]);
 
   // Predictor Simulation Engine
   const simulation = useMemo(() => {
     if (!simulatedDayOrder) return null;
+    // A percentage alone is not enough to predict the effect of a skipped
+    // class. Do not manufacture a class count and present an invented margin.
+    if (!safeAttendance.every((course) => course.hasCountData)) return null;
 
     // Find schedule entries for this day order
-    let scheduledEntries = [];
-    if (Array.isArray(schedule)) {
-      const dayObj = schedule.find((d) => parseDayNum(d.dayLabel) === String(simulatedDayOrder));
-      if (dayObj?.entries && dayObj.entries.length > 0) {
-        scheduledEntries = dayObj.entries;
-      }
-    }
-
-    // Fallback template entries if schedule is empty
-    if (scheduledEntries.length === 0 && safeAttendance.length > 0) {
-      // Map courses deterministically to day orders for simulation
-      const dayIdx = (Number(simulatedDayOrder) - 1) % 5;
-      scheduledEntries = safeAttendance
-        .filter((_, idx) => idx % 5 === dayIdx || (idx + 1) % 5 === dayIdx)
-        .map((c) => ({
-          courseCode: c.courseCode,
-          courseTitle: c.courseTitle,
-          slotType: c.courseType === 'Practical' ? 'Practical' : 'Theory',
-          slot: c.slot || 'A1',
-        }));
-    }
+    const dayObj = Array.isArray(schedule)
+      ? schedule.find((d) => parseDayNum(d.dayLabel) === String(simulatedDayOrder))
+      : null;
+    const scheduledEntries = Array.isArray(dayObj?.entries) ? dayObj.entries : [];
 
     // Calculate hours to skip per course code
     const hoursMissedMap = new Map();
     const labHoursMissedMap = new Map();
     scheduledEntries.forEach((entry) => {
       const code = (entry.courseCode || '').toUpperCase().trim();
+      if (!code) return;
       const isLab =
         String(entry.slotType).toLowerCase().includes('practical') ||
         String(entry.rawType).toLowerCase().includes('practical') ||
@@ -184,23 +169,14 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
     // Map each course in attendance to simulated figures
     const simulatedCourses = safeAttendance.map((course) => {
       const code = (course.courseCode || '').toUpperCase().trim();
-      // Match by exact courseCode or partial match
+      // Only exact course-code matches can be simulated safely.
       let missedHours = hoursMissedMap.get(code) || 0;
       let missedLabHours = labHoursMissedMap.get(code) || 0;
-      if (missedHours === 0) {
-        for (const [k, v] of hoursMissedMap.entries()) {
-          if (k && (code.includes(k) || k.includes(code))) {
-            missedHours = v;
-            missedLabHours = labHoursMissedMap.get(k) || 0;
-            break;
-          }
-        }
-      }
 
       const origConducted = course.conducted;
       const origAttended = course.attended;
       const origAbsent = course.absent;
-      const origPct = course.numericPct;
+      const origPct = origConducted > 0 ? (origAttended / origConducted) * 100 : course.numericPct;
       const origMargin = getAttendanceMargin(origConducted, origAbsent);
 
       if (missedHours > 0) {
@@ -234,7 +210,7 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
     const origOverall =
       origTotalConducted > 0
         ? (origTotalAttended / origTotalConducted) * 100
-        : safeAttendance.reduce((sum, r) => sum + r.numericPct, 0) / (safeAttendance.length || 1);
+      : safeAttendance.reduce((sum, r) => sum + r.numericPct, 0) / (safeAttendance.length || 1);
 
     const simTotalConducted = origTotalConducted + totalSkippedHours;
     const simTotalAttended = origTotalAttended;
@@ -265,12 +241,11 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
   const totalConducted = safeAttendance.reduce((sum, r) => sum + r.conducted, 0);
   const totalAttended = safeAttendance.reduce((sum, r) => sum + r.attended, 0);
 
-  const overall =
-    safeAttendance.length > 0
-      ? totalConducted > 0
-        ? (totalAttended / totalConducted) * 100
-        : safeAttendance.reduce((sum, r) => sum + r.numericPct, 0) / safeAttendance.length
-      : 0;
+  const overall = safeAttendance.length > 0
+    ? hasReliableAttendanceCounts
+      ? (totalAttended / totalConducted) * 100
+      : safeAttendance.reduce((sum, r) => sum + r.numericPct, 0) / safeAttendance.length
+    : 0;
 
   const atRiskList = safeAttendance.filter((r) => r.numericPct < REQUIRED_PERCENTAGE);
   const safeList = safeAttendance.filter((r) => r.numericPct >= REQUIRED_PERCENTAGE);
@@ -322,7 +297,7 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
       </header>
       {/* Overall attendance summary */}
       <div className="bcard attendance__summary">
-        <p className="eyebrow">Overall Attendance</p>
+        <p className="eyebrow">{hasReliableAttendanceCounts ? 'Overall Attendance' : 'Average Attendance Across Courses'}</p>
 
         <div className="attendance__summary-main">
           <p
@@ -338,7 +313,7 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
               -{simulation.overallDrop.toFixed(1)}% if skipped
             </span>
           )}
-          {totalConducted > 0 && <span className="attendance__summary-count num">{simulation ? simulation.simTotalAttended || totalAttended : totalAttended} / {simulation ? (totalConducted + simulation.totalSkippedHours) : totalConducted}</span>}
+      {hasReliableAttendanceCounts && totalConducted > 0 && <span className="attendance__summary-count num">{simulation ? simulation.simTotalAttended : totalAttended} / {simulation ? (totalConducted + simulation.totalSkippedHours) : totalConducted}</span>}
         </div>
         <div className="attendance__summary-divider" />
         <div className="attendance__summary-bottom"><span>Below 75%</span><span className="attendance__summary-badge">{simulation ? simulation.simAtRisk : atRiskList.length} {(simulation ? simulation.simAtRisk : atRiskList.length) === 1 ? 'course' : 'courses'}</span></div>
@@ -390,10 +365,17 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
           </div>
         </div>
 
-        {!simulation && <p className="attendance-predictor__status">NO SIMULATION APPLIED</p>}
+        {!simulation && (dayOrders.length === 0
+          ? <p className="attendance-predictor__status">Sync your timetable to simulate a missed day.</p>
+          : simulatedDayOrder && !hasReliableAttendanceCounts
+            ? <p className="attendance-predictor__status">Class counts are missing for some courses, so a skip-day estimate would be unreliable. Attendance percentages are still shown.</p>
+          : <p className="attendance-predictor__status">NO SIMULATION APPLIED</p>)}
 
         {/* Active Simulation Impact Breakdown */}
-        {simulation && (
+        {simulation && simulation.scheduledEntries.length === 0 && (
+          <p className="attendance-predictor__status">No classes are listed for Day {simulation.dayOrder}; attendance is unchanged.</p>
+        )}
+        {simulation && simulation.scheduledEntries.length > 0 && (
           <div className="attendance-predictor__impact-panel">
             <div className="attendance-predictor__impact-header">
               <div>
@@ -477,7 +459,11 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
         <ul className="attendance__list">
           {displayCourses.map((r, idx) => {
             const currentPct = simulation ? r.newPct : r.numericPct;
-            const currentMargin = simulation ? r.newMargin : getAttendanceMargin(r.conducted, r.absent);
+            const currentMargin = simulation
+              ? r.newMargin
+              : r.hasCountData
+                ? getAttendanceMargin(r.conducted, r.absent)
+                : { status: 'unknown', value: 0 };
             const courseCode = String(r.courseCode || '').trim().toUpperCase();
             const isJointCourse = /J$/i.test(courseCode);
             const lab = labInfoByCourse.get(courseCode) || { labHours: 0, sessions: 0, hoursPerSession: 0 };
@@ -537,7 +523,7 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
 
                   <div className="attendance__card-sub">
                     <strong className={currentPct < REQUIRED_PERCENTAGE || currentPct === REQUIRED_PERCENTAGE ? 'is-risk' : 'is-safe'}>{currentPct.toFixed(1)}%</strong>
-                    {r.conducted > 0 && <span className="num">{r.attended} / {simulation ? r.conducted + r.missedHours : r.conducted} attended</span>}
+                    {r.hasCountData && <span className="num">{r.attended} / {simulation ? r.conducted + r.missedHours : r.conducted} attended</span>}
                   </div>
                 </div>
 

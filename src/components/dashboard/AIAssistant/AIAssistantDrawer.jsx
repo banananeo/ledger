@@ -12,6 +12,22 @@ const QUICK_CHIPS = [
   { label: 'Week Plan', prompt: 'Create a practical seven-day study plan around my timetable and calendar.' },
 ];
 
+function loadMessages() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem('ledger_ai_thread') || '[]');
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((message) => (
+        message &&
+        (message.role === 'user' || message.role === 'assistant') &&
+        typeof message.text === 'string'
+      ))
+      .slice(-20);
+  } catch {
+    return [];
+  }
+}
+
 function buildContext(data) {
   if (!data) return {};
   const { profile, attendance, marks, schedule, calendar } = data;
@@ -19,12 +35,7 @@ function buildContext(data) {
 }
 
 export default function AIAssistantDrawer({ data, isOpen, onClose }) {
-  const [messages, setMessages] = useState(() => {
-    try {
-      const raw = localStorage.getItem('ledger_ai_thread');
-      return raw ? JSON.parse(raw) : [];
-    } catch { return []; }
-  });
+  const [messages, setMessages] = useState(loadMessages);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [streamingText, setStreamingText] = useState('');
@@ -37,7 +48,11 @@ export default function AIAssistantDrawer({ data, isOpen, onClose }) {
   }, [isOpen]);
 
   useEffect(() => {
-    localStorage.setItem('ledger_ai_thread', JSON.stringify(messages.slice(-20)));
+    try {
+      localStorage.setItem('ledger_ai_thread', JSON.stringify(messages.slice(-20)));
+    } catch {
+      // Chat remains available even when browser storage is full or disabled.
+    }
   }, [messages]);
 
   useEffect(() => {
@@ -64,6 +79,7 @@ export default function AIAssistantDrawer({ data, isOpen, onClose }) {
           full += chunk;
           setStreamingText(full);
         });
+        if (!full.trim()) throw new Error('Ledger AI returned an empty reply.');
         setStreamingText('');
         setMessages((m) => [...m, { role: 'assistant', text: full, ts: Date.now() }]);
       } catch (e) {
@@ -82,7 +98,11 @@ export default function AIAssistantDrawer({ data, isOpen, onClose }) {
 
   const clearThread = () => {
     setMessages([]);
-    localStorage.removeItem('ledger_ai_thread');
+    try {
+      localStorage.removeItem('ledger_ai_thread');
+    } catch {
+      // Clearing the in-memory thread is still useful without storage.
+    }
   };
 
   return (

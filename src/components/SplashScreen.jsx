@@ -5,19 +5,34 @@ import './SplashScreen.css';
 const INTRO_MS = 2200;
 const SAFETY_MS = 4000;
 
-export function SplashScreen({ onDone = () => {}, greetingName, status } = {}) {
+/**
+ * @param {{ onDone?: () => void, onSkip?: () => void, greetingName?: string, status?: string }} props
+ */
+export function SplashScreen({ onDone = () => {}, onSkip, greetingName, status } = {}) {
   const doneRef = useRef(onDone);
+  const skipRef = useRef(onSkip);
   const firedRef = useRef(false);
   const [reducedMotion, setReducedMotion] = useState(() => (
     typeof window !== 'undefined'
     && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
   ));
   doneRef.current = onDone;
+  skipRef.current = onSkip;
 
   const fireDone = () => {
     if (firedRef.current) return;
     firedRef.current = true;
     doneRef.current?.();
+  };
+
+  const handleActivate = () => {
+    if (greetingName === undefined && skipRef.current) {
+      if (firedRef.current) return;
+      firedRef.current = true;
+      skipRef.current();
+      return;
+    }
+    fireDone();
   };
 
   useEffect(() => {
@@ -44,11 +59,11 @@ export function SplashScreen({ onDone = () => {}, greetingName, status } = {}) {
     <motion.div
       className={`splash-screen splash-logo-only${greetingName !== undefined ? ' splash-screen--welcome' : ''}`}
       data-animate={reducedMotion ? 'false' : 'true'}
-      onClick={fireDone}
+      onClick={handleActivate}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
-          fireDone();
+          handleActivate();
         }
       }}
       initial={{ opacity: 1 }}

@@ -5,6 +5,7 @@ import {
   getStudentPortalCaptcha,
   getStoredStudentPortalCredentials,
   loginStudentPortal,
+  saveStoredStudentPortalCredentials,
 } from '../api';
 import { friendlyLoginError } from '../utils/friendlyErrors.js';
 import './LoginForm.css';
@@ -137,6 +138,8 @@ function LoginForm({ onSuccess, onSkip, overlay = false }) {
           manualCaptcha ? captcha.trim() : undefined,
           manualCaptcha ? captchaChallenge.challengeId : undefined
         );
+
+      saveStoredStudentPortalCredentials({ username: username.trim(), password });
 
       console.log(
         '[StudentPortal] Attendance:',

@@ -22,11 +22,12 @@ export interface ClassReminderItem {
 
 export function parseTimeToMinutes(timeStr: string): number | null {
   if (!timeStr) return null;
-  const match = String(timeStr).trim().match(/(\d+):(\d+)(?:\s*(AM|PM))?/i);
+  const match = String(timeStr).trim().match(/^(\d{1,2}):(\d{2})(?:\s*(AM|PM))?$/i);
   if (!match) return null;
   let hours = parseInt(match[1], 10);
   const minutes = parseInt(match[2], 10);
   const meridiem = match[3]?.toUpperCase();
+  if (minutes > 59 || (meridiem && (hours < 1 || hours > 12)) || (!meridiem && hours > 23)) return null;
   if (meridiem === 'PM' && hours < 12) {
     hours += 12;
   } else if (meridiem === 'AM' && hours === 12) {
@@ -69,11 +70,10 @@ function extractDayNumber(dayLabel: any): string {
 export function getTodaysScheduledClasses(schedule: any[] = [], calendar: any): ClassReminderItem[] {
   const today = todayISO();
   const todayEntry = findEntryForDate(calendar, today);
-  const todayDayOrder = todayEntry?.dayOrder || 1; // Fallback to Day 1 if weekend/holiday for test preview
+  const todayDayOrder = todayEntry?.dayOrder;
+  if (!todayDayOrder || todayEntry?.category === 'holiday' || todayEntry?.category === 'empty') return [];
 
-  const todaysDayObj = schedule.find(
-    (d) => extractDayNumber(d.dayLabel) === String(todayDayOrder)
-  ) || schedule[0];
+  const todaysDayObj = schedule.find((d) => extractDayNumber(d.dayLabel) === String(todayDayOrder));
 
   if (!todaysDayObj || !todaysDayObj.entries) return [];
 
@@ -87,7 +87,7 @@ export function getTodaysScheduledClasses(schedule: any[] = [], calendar: any): 
     const c = todaysDayObj.entries[i];
     const startMin = parseTimeToMinutes(c.startTime);
     if (startMin == null) continue;
-    const endMin = parseTimeToMinutes(c.endTime) || startMin + 50;
+    const endMin = parseTimeToMinutes(c.endTime) ?? startMin + 50;
 
     const startSeconds = startMin * 60;
     const diffSeconds = startSeconds - currentTotalSeconds;
@@ -96,7 +96,7 @@ export function getTodaysScheduledClasses(schedule: any[] = [], calendar: any): 
     const isOngoing = currentMinutes >= startMin && currentMinutes < endMin;
 
     items.push({
-      id: `${c.courseCode}_${c.startTime}_${i}`,
+      id: `${today}_${c.courseCode}_${c.startTime}_${i}`,
       courseCode: c.courseCode || 'COURSE',
       courseTitle: c.courseTitle || c.courseCode || 'Class Lecture',
       room: c.room || 'TBA',
@@ -132,7 +132,8 @@ export function getActiveReminders(
   const classes = getTodaysScheduledClasses(schedule, calendar);
   const now = new Date();
   const currentTotalSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-  const leadSeconds = leadMinutes * 60;
+  const safeLeadMinutes = Number.isFinite(leadMinutes) ? Math.max(0, leadMinutes) : 15;
+  const leadSeconds = safeLeadMinutes * 60;
 
   return classes.filter((c) => {
     const diffSeconds = c.startMinutes * 60 - currentTotalSeconds;

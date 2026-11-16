@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { ShieldCheck } from 'lucide-react';
-import { login } from '../api';
+import { ApiError, login, saveStoredCredentials } from '../api';
 import { friendlyLoginError } from '../utils/friendlyErrors.js';
+import CaptchaModal from './CaptchaModal.jsx';
 import './LoginForm.css';
 
 function AcademiaLoginForm({ onSuccess, onCancel = undefined, overlay = false }) {
@@ -10,6 +11,14 @@ function AcademiaLoginForm({ onSuccess, onCancel = undefined, overlay = false })
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [captchaChallenge, setCaptchaChallenge] = useState(null);
+
+  const finishLogin = (data) => {
+    if (data?.metadata?.loginBy !== 'demo' && username.trim() && password) {
+      saveStoredCredentials({ username: username.trim(), password });
+    }
+    onSuccess(data);
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -17,9 +26,38 @@ function AcademiaLoginForm({ onSuccess, onCancel = undefined, overlay = false })
     setError('');
     try {
       const data = await login({ username: username.trim(), password });
-      onSuccess(data);
+      finishLogin(data);
     } catch (err) {
-      setError(friendlyLoginError(err, 'academia'));
+      if (err instanceof ApiError && err.captchaChallenge) {
+        setCaptchaChallenge(err.captchaChallenge);
+      } else {
+        setError(friendlyLoginError(err, 'academia'));
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCaptchaSubmit = async (captcha) => {
+    if (!captchaChallenge) return;
+    setLoading(true);
+    setError('');
+    try {
+      const data = await login({
+        username: username.trim(),
+        password,
+        captcha,
+        cdigest: captchaChallenge.cdigest,
+      });
+      setCaptchaChallenge(null);
+      finishLogin(data);
+    } catch (err) {
+      if (err instanceof ApiError && err.captchaChallenge) {
+        setCaptchaChallenge(err.captchaChallenge);
+      } else {
+        setCaptchaChallenge(null);
+        setError(friendlyLoginError(err, 'academia'));
+      }
     } finally {
       setLoading(false);
     }
@@ -64,6 +102,16 @@ function AcademiaLoginForm({ onSuccess, onCancel = undefined, overlay = false })
         <div className="login-student-note"><span>Student Portal</span><small>OPTIONAL / LATER</small><p>After Academia, connect separately for attendance and marks. You can do this later.</p></div>
         <div className="login-footer-tip"><ShieldCheck className="login-footer-icon" size={16} aria-hidden="true" /><span>Your campus, at a glance.</span><span className="login-footer-brand">SRM / LEDGER</span></div>
       </main>
+      {captchaChallenge && (
+        <CaptchaModal
+          key={captchaChallenge.cdigest}
+          challenge={captchaChallenge}
+          onSubmit={handleCaptchaSubmit}
+          onCancel={() => setCaptchaChallenge(null)}
+          loading={loading}
+          purpose="login"
+        />
+      )}
     </div>
   );
 }

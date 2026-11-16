@@ -7,6 +7,7 @@ import { todayISO } from './calendar.js';
  * clearStoredSession(): they are user-authored content, not session state.
  */
 export const TODOS_STORAGE_KEY = 'ledger_todos_v1';
+const LEGACY_TODOS_STORAGE_KEY = 'ledger_calendar_tasks';
 
 /** `{ "YYYY-MM-DD": ["todoId", ...] }` so a reminder never fires twice in a day. */
 export const TODO_REMINDER_LOG_KEY = 'ledger_todo_reminders_v1';
@@ -27,20 +28,67 @@ function getStorage(): Storage | null {
 export function loadTodos(): TodoItem[] {
   const store = getStorage();
   if (!store) return [];
+
+  const todos: TodoItem[] = [];
   try {
-    const raw = store.getItem(TODOS_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    const todos: TodoItem[] = [];
-    for (const entry of parsed) {
-      const todo = sanitizeTodo(entry);
-      if (todo) todos.push(todo);
+    const parsed: unknown = JSON.parse(store.getItem(TODOS_STORAGE_KEY) || '[]');
+    if (Array.isArray(parsed)) {
+      for (const entry of parsed) {
+        const todo = sanitizeTodo(entry);
+        if (todo) todos.push(todo);
+      }
     }
-    return todos;
   } catch {
-    return [];
+    // A damaged task cache should not prevent loading tasks from the legacy key.
   }
+
+  let legacyRaw: string | null = null;
+  try {
+    legacyRaw = store.getItem(LEGACY_TODOS_STORAGE_KEY);
+  } catch {
+    return todos;
+  }
+  if (!legacyRaw) return todos;
+
+  try {
+    const legacyItems: unknown = JSON.parse(legacyRaw);
+    if (!Array.isArray(legacyItems)) return todos;
+
+    const existingIds = new Set(todos.map((todo) => todo.id));
+    for (const entry of legacyItems) {
+      if (!entry || typeof entry !== 'object') continue;
+      const legacy = entry as Record<string, unknown>;
+      const completed = legacy.done === true;
+      const todo = sanitizeTodo({
+        id: typeof legacy.id === 'string' && legacy.id.trim() ? legacy.id : `legacy_${Date.now()}_${todos.length}`,
+        title: legacy.title,
+        dueDate: legacy.due,
+        kind: 'assignment',
+        priority: typeof legacy.priority === 'string' ? legacy.priority.toLowerCase() : 'medium',
+        courseCode: legacy.course,
+        notes: '',
+        completed,
+        createdAt: new Date().toISOString(),
+        completedAt: completed ? new Date().toISOString() : null,
+      });
+      if (todo && !existingIds.has(todo.id)) {
+        todos.push(todo);
+        existingIds.add(todo.id);
+      }
+    }
+
+    // Remove legacy data only after the migrated copy has been saved.
+    try {
+      store.setItem(TODOS_STORAGE_KEY, JSON.stringify(todos));
+      store.removeItem(LEGACY_TODOS_STORAGE_KEY);
+    } catch {
+      // Keep legacy tasks available on the next launch if storage is full.
+    }
+  } catch {
+    // Leave malformed legacy data in place rather than deleting user data.
+  }
+
+  return todos;
 }
 
 export function saveTodos(todos: TodoItem[]): boolean {

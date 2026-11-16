@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import './CaptchaModal.css';
 
-function CaptchaModal({ challenge, onSubmit, onCancel, loading }) {
+/** @param {{ challenge: { image: string }, onSubmit: (captcha: string) => void, onCancel: () => void, loading?: boolean, purpose?: 'login' | 'sync' }} props */
+function CaptchaModal({ challenge, onSubmit, onCancel, loading = false, purpose = 'sync' }) {
   const [captcha, setCaptcha] = useState('');
 
   const handleSubmit = (e) => {
@@ -29,7 +30,9 @@ function CaptchaModal({ challenge, onSubmit, onCancel, loading }) {
         <div className="captcha-modal-header">
           <h3 className="captcha-modal-title">Verification Required</h3>
           <p className="captcha-modal-desc">
-            Academia security requested a quick image verification to complete your sync.
+            {purpose === 'login'
+              ? 'Academia security requested a quick image verification to sign you in.'
+              : 'Academia security requested a quick image verification to complete your sync.'}
           </p>
         </div>
 
@@ -63,7 +66,7 @@ function CaptchaModal({ challenge, onSubmit, onCancel, loading }) {
               className="bbtn"
               disabled={loading || !captcha.trim()}
             >
-              {loading ? 'Verifying…' : 'Verify & Sync'}
+              {loading ? 'Verifying…' : purpose === 'login' ? 'Verify & Sign In' : 'Verify & Sync'}
             </button>
           </div>
         </form>
