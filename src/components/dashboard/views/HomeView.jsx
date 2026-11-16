@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { Sparkles } from 'lucide-react';
 import { ClockIcon, CalendarIcon, BellIcon } from '../Icons.jsx';
@@ -7,6 +7,7 @@ import { parseTimeToMinutes } from '../../../utils/reminderEngine.ts';
 import { useNotifications } from '../../../context/NotificationContext.tsx';
 import { aiSummary } from '../../../api.ts';
 import { friendlyBriefError } from '../../../utils/friendlyErrors.js';
+import { computeWrappedAnalytics } from '../../../utils/wrappedAnalytics.ts';
 import MarkdownText from '../../MarkdownText.jsx';
 import './HomeView.css';
 
@@ -194,7 +195,7 @@ function getDailyAffirmation(dateStr) {
   return DAILY_AFFIRMATIONS[hash % DAILY_AFFIRMATIONS.length];
 }
 
-function HomeView({ profile, attendance = [], schedule = [], marks = [], calendar, lastSynced, onNavigate }) {
+function HomeView({ profile, attendance = [], schedule = [], marks = [], calendar, lastSynced, onNavigate, onOpenWrapped }) {
   const nextClassInfo = getNextClassInfo(schedule, calendar);
   const todayOverview = getTodayOverview(schedule, calendar);
   const positiveMessage = getDailyAffirmation(todayISO());
@@ -202,6 +203,11 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
   const [academicBrief, setAcademicBrief] = useState('');
   const [briefLoading, setBriefLoading] = useState(false);
   const [briefError, setBriefError] = useState('');
+  const [wrappedDismissed, setWrappedDismissed] = useState(false);
+  const wrappedStats = useMemo(
+    () => computeWrappedAnalytics({ profile, attendance, marks, schedule, calendar }),
+    [profile, attendance, marks, schedule, calendar]
+  );
 
   const generateBrief = async () => {
     if (briefLoading) return;
@@ -232,6 +238,52 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
           <p className="home__hero-meta">{new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
         </div>
       </motion.section>
+
+      {/* Semester Wrapped Opener  */}
+      {wrappedStats.hasData && !wrappedDismissed && (
+        <motion.section
+          className="home__wrapped-opener"
+          variants={homeItemVariants}
+          aria-label="Semester Wrapped"
+          data-node-id="81:2"
+          onClick={onOpenWrapped}
+        >
+          <div className="home__wrapped-opener-top" data-node-id="81:3">
+            <span className="home__wrapped-opener-context" data-node-id="81:4">
+              {wrappedStats.semesterTag} / ON RECORD
+            </span>
+            <button
+              type="button"
+              className="home__wrapped-opener-dismiss"
+              aria-label="Dismiss Wrapped"
+              data-node-id="81:5"
+              onClick={(e) => {
+                e.stopPropagation();
+                setWrappedDismissed(true);
+              }}
+            >
+              ×
+            </button>
+          </div>
+          <h3 className="home__wrapped-opener-title" data-node-id="81:7">
+            Your semester. Wrapped.
+          </h3>
+          <p className="home__wrapped-opener-desc" data-node-id="81:8">
+            The classes, the bunks, the close calls.
+          </p>
+          <button
+            type="button"
+            className="home__wrapped-opener-action"
+            data-node-id="81:9"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onOpenWrapped) onOpenWrapped();
+            }}
+          >
+            Open my Wrapped &nbsp;↗
+          </button>
+        </motion.section>
+      )}
 
       {/* Next Class with Room Details */}
       <motion.section className="home__next-class-card" variants={homeItemVariants}>
@@ -290,8 +342,6 @@ function HomeView({ profile, attendance = [], schedule = [], marks = [], calenda
           </div>
         )}
       </motion.section>
-
-
 
       <motion.section className="bcard home__brief-card" variants={homeItemVariants} aria-label="Academic Brief">
         <div className="home__brief-head">

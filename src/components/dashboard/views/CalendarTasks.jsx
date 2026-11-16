@@ -26,16 +26,14 @@ const FILTERS = [
   { id: 'open', label: 'Open' },
   { id: 'today', label: 'Today' },
   { id: 'overdue', label: 'Overdue' },
-  { id: 'done', label: 'Done' },
-  { id: 'all', label: 'All' },
+  { id: 'done', label: 'Done' }
 ];
 
 const EMPTY_MESSAGES = {
   open: 'No open tasks yet — add your first exam or assignment.',
   today: 'Nothing due today.',
   overdue: 'Nothing overdue. Nicely done.',
-  done: 'No completed tasks yet.',
-  all: 'No tasks yet — add your first exam or assignment.',
+  done: 'No completed tasks yet.'
 };
 
 function TaskForm({ initial, courses, submitLabel, onSubmit, onCancel }) {
@@ -319,7 +317,6 @@ function CalendarTasks({ selectedDate, courses = [] }) {
     today: stats.dueToday,
     overdue: stats.overdue,
     done: stats.completed,
-    all: stats.total,
   };
 
   const defaultDueDate = isValidDateStr(selectedDate) ? selectedDate : today;
@@ -448,27 +445,13 @@ function CalendarTasks({ selectedDate, courses = [] }) {
       {visible.length === 0 ? (
         <div className="ctasks__empty" role="status">
           <p>{EMPTY_MESSAGES[filter] || EMPTY_MESSAGES.all}</p>
-          {(filter === 'open' || filter === 'all') && (
-            <button type="button" className="bbtn ctasks__empty-btn" onClick={openAddForm}>
-              <PlusIcon width={16} height={16} />
-              <span>Add a task</span>
-            </button>
-          )}
         </div>
       ) : (
-        <>
-          <ul className="ctasks__list">
-            {visible.map((todo) => (
-              <TaskRow key={todo.id} todo={todo} today={today} onEdit={startEditing} />
-            ))}
-          </ul>
-          {!formOpen && !editingTodo && (
-            <button type="button" className="bbtn bbtn--outline ctasks__add-footer" onClick={openAddForm}>
-              <PlusIcon width={16} height={16} />
-              <span>Add another task</span>
-            </button>
-          )}
-        </>
+        <ul className="ctasks__list">
+          {visible.map((todo) => (
+            <TaskRow key={todo.id} todo={todo} today={today} onEdit={startEditing} />
+          ))}
+        </ul>
       )}
     </section>
   );

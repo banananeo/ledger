@@ -7,6 +7,7 @@ import {
   REQUIRED_PERCENTAGE,
 } from '../../../utils/attendance.js';
 import { parseTimeToMinutes } from '../../../utils/reminderEngine.ts';
+import { computeWrappedAnalytics } from '../../../utils/wrappedAnalytics.ts';
 import './AttendanceView.css';
 
 const LAB_SPLIT_STORAGE_KEY = 'ledger_attendance_lab_misses';
@@ -21,7 +22,11 @@ function isPracticalEntry(entry) {
     .some((value) => String(value || '').toLowerCase().includes('practical') || String(value || '').toUpperCase().startsWith('P'));
 }
 
-function AttendanceView({ attendance = [], schedule = [], calendar }) {
+function AttendanceView({ attendance = [], schedule = [], calendar, profile, marks = [], courses = [], onOpenWrapped }) {
+  const wrappedStats = useMemo(
+    () => computeWrappedAnalytics({ profile, attendance, marks, schedule, calendar, courses }),
+    [profile, attendance, marks, schedule, calendar, courses]
+  );
   const [filterTab, setFilterTab] = useState('all'); // 'all' | 'risk' | 'safe'
   const [sortBy, setSortBy] = useState('lowest'); // 'lowest' | 'highest' | 'code'
   const [simulatedDayOrder, setSimulatedDayOrder] = useState(null); // null | '1' | '2' | '3' | '4' | '5'
@@ -210,7 +215,7 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
     const origOverall =
       origTotalConducted > 0
         ? (origTotalAttended / origTotalConducted) * 100
-      : safeAttendance.reduce((sum, r) => sum + r.numericPct, 0) / (safeAttendance.length || 1);
+        : safeAttendance.reduce((sum, r) => sum + r.numericPct, 0) / (safeAttendance.length || 1);
 
     const simTotalConducted = origTotalConducted + totalSkippedHours;
     const simTotalAttended = origTotalAttended;
@@ -313,12 +318,14 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
               -{simulation.overallDrop.toFixed(1)}% if skipped
             </span>
           )}
-      {hasReliableAttendanceCounts && totalConducted > 0 && <span className="attendance__summary-count num">{simulation ? simulation.simTotalAttended : totalAttended} / {simulation ? (totalConducted + simulation.totalSkippedHours) : totalConducted}</span>}
+          {hasReliableAttendanceCounts && totalConducted > 0 && <span className="attendance__summary-count num">{simulation ? simulation.simTotalAttended : totalAttended} / {simulation ? (totalConducted + simulation.totalSkippedHours) : totalConducted}</span>}
         </div>
         <div className="attendance__summary-divider" />
         <div className="attendance__summary-bottom"><span>Below 75%</span><span className="attendance__summary-badge">{simulation ? simulation.simAtRisk : atRiskList.length} {(simulation ? simulation.simAtRisk : atRiskList.length) === 1 ? 'course' : 'courses'}</span></div>
         {simulation && simulation.newAtRiskCount > 0 && <span className="attendance__summary-simulation">+{simulation.newAtRiskCount} new at risk if skipped</span>}
       </div>
+
+
 
       {/* Attendance Predictor Feature Card */}
       <div className="bcard attendance-predictor">
@@ -369,7 +376,7 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
           ? <p className="attendance-predictor__status">Sync your timetable to simulate a missed day.</p>
           : simulatedDayOrder && !hasReliableAttendanceCounts
             ? <p className="attendance-predictor__status">Class counts are missing for some courses, so a skip-day estimate would be unreliable. Attendance percentages are still shown.</p>
-          : <p className="attendance-predictor__status">NO SIMULATION APPLIED</p>)}
+            : <p className="attendance-predictor__status">NO SIMULATION APPLIED</p>)}
 
         {/* Active Simulation Impact Breakdown */}
         {simulation && simulation.scheduledEntries.length === 0 && (
@@ -524,6 +531,12 @@ function AttendanceView({ attendance = [], schedule = [], calendar }) {
                   <div className="attendance__card-sub">
                     <strong className={currentPct < REQUIRED_PERCENTAGE || currentPct === REQUIRED_PERCENTAGE ? 'is-risk' : 'is-safe'}>{currentPct.toFixed(1)}%</strong>
                     {r.hasCountData && <span className="num">{r.attended} / {simulation ? r.conducted + r.missedHours : r.conducted} attended</span>}
+                    {(() => {
+                      const fac = wrappedStats.courses.find((c) => c.courseCode === courseCode)?.faculty;
+                      return fac && fac !== 'Assigned Faculty' ? (
+                        <span className="attendance__card-faculty">{fac}</span>
+                      ) : null;
+                    })()}
                   </div>
                 </div>
 

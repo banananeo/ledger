@@ -15,6 +15,7 @@ import MarksView from './views/MarksView.jsx';
 import CalendarView from './views/CalendarView.jsx';
 import AIAssistantDrawer from './AIAssistant/AIAssistantDrawer.jsx';
 import AfterHoursScene from './AfterHoursScene.jsx';
+import SemesterWrappedModal from './SemesterWrappedModal.jsx';
 import './Shell.css';
 
 function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onReconnectAcademia, onConnectStudentPortal, academiaIssue, studentPortalIssue, studentPortalError }) {
@@ -27,6 +28,7 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onRec
   const [transitionOrigin, setTransitionOrigin] = useState({ x: 50, y: 50 });
   const [aiOpen, setAiOpen] = useState(false);
   const [afterHoursOpen, setAfterHoursOpen] = useState(false);
+  const [wrappedOpen, setWrappedOpen] = useState(false);
   const logoTapRef = useRef({ count: 0, lastTap: 0 });
   const stageRef = useRef(null);
   const { profile, attendance = [], schedule = [], marks = [], courses = [], calendar } = data || {};
@@ -149,6 +151,7 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onRec
                       calendar={calendar}
                       lastSynced={lastSynced}
                       onNavigate={navigate}
+                      onOpenWrapped={() => setWrappedOpen(true)}
                     />
                   )}
                   {currentActiveView === 'timetable' && (
@@ -156,7 +159,15 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onRec
                   )}
 
                   {currentActiveView === 'attendance' && (
-                    <AttendanceView attendance={attendance} schedule={schedule} calendar={calendar} />
+                    <AttendanceView
+                      attendance={attendance}
+                      schedule={schedule}
+                      calendar={calendar}
+                      profile={profile}
+                      marks={marks}
+                      courses={courses}
+                      onOpenWrapped={() => setWrappedOpen(true)}
+                    />
                   )}
                   {currentActiveView === 'calendar' && (
                     <CalendarView calendar={calendar} schedule={schedule} />
@@ -172,6 +183,7 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onRec
         <MobileTabBar view={view} onNavigate={navigate} />
         <NotificationDrawer onNavigate={navigate} />
         <AIAssistantDrawer data={data} isOpen={aiOpen} onClose={() => setAiOpen(false)} />
+        <SemesterWrappedModal data={data} isOpen={wrappedOpen} onClose={() => setWrappedOpen(false)} />
         {afterHoursOpen && <AfterHoursScene onClose={() => setAfterHoursOpen(false)} />}
         </div>
       </TodoProvider>

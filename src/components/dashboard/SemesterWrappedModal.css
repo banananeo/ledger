@@ -1,0 +1,1313 @@
+/* =========================================================================
+   Ledger Wrapped — Exact Implementation of Figma Nodes 74:2, 74:6, 74:10, 74:14, 74:18
+   with Full Motion Context Support
+   ========================================================================= */
+
+:root {
+  --sw-display: 'Space Grotesk', 'Manrope', system-ui, sans-serif;
+  --sw-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+  --sw-sans: 'Inter', 'Manrope', system-ui, sans-serif;
+}
+
+.sw-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(8, 12, 22, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.sw-stage {
+  position: relative;
+  width: min(100%, 393px);
+  min-height: min(860px, calc(100dvh - 24px));
+  max-height: calc(100dvh - 24px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.55);
+  transition: background-color 0.28s ease, color 0.28s ease;
+  user-select: none;
+}
+
+/* 5 Figma Frame Palettes */
+.sw-stage--01-cobalt {
+  background: #2349eb;
+  color: #fafaf5;
+}
+
+.sw-stage--02-lime {
+  background: #ebf581;
+  color: #1534a6;
+}
+
+.sw-stage--03-paper {
+  background: #fafaf5;
+  color: #1534a6;
+}
+
+.sw-stage--04-midnight {
+  background: #10151f;
+  color: #fafaf5;
+}
+
+.sw-stage--05-receipt {
+  background: #fafaf5;
+  color: #1534a6;
+}
+
+/* Staggered Text Group Spans */
+.sw-anim-word {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+.sw-anim-char {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+.sw-anim-line {
+  display: block;
+  will-change: transform, opacity;
+}
+
+/* =========================================================================
+   Story Header (110px in Figma)
+   ========================================================================= */
+
+.sw-header {
+  position: relative;
+  width: 100%;
+  padding: 18px 24px 0;
+  flex-shrink: 0;
+}
+
+.sw-progress-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+  margin-bottom: 15px;
+}
+
+.sw-progress-segment {
+  height: 3px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: rgba(250, 250, 245, 0.22);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.sw-stage--02-lime .sw-progress-segment,
+.sw-stage--03-paper .sw-progress-segment,
+.sw-stage--05-receipt .sw-progress-segment {
+  background: rgba(21, 52, 166, 0.22);
+}
+
+.sw-progress-fill {
+  display: block;
+  height: 100%;
+  background: #fafaf5;
+}
+
+.sw-stage--02-lime .sw-progress-fill,
+.sw-stage--03-paper .sw-progress-fill,
+.sw-stage--05-receipt .sw-progress-fill {
+  background: #1534a6;
+}
+
+.sw-header__main-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 36px;
+}
+
+.sw-header__brand {
+  display: flex;
+  align-items: baseline;
+}
+
+.sw-header__wordmark {
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 25px;
+  line-height: 1;
+  color: inherit;
+}
+
+.sw-header__dot {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  margin-left: 1px;
+  margin-right: 13px;
+  background: #ebf581;
+}
+
+.sw-stage--02-lime .sw-header__dot,
+.sw-stage--03-paper .sw-header__dot,
+.sw-stage--05-receipt .sw-header__dot {
+  background: #2349eb;
+}
+
+.sw-header__slash {
+  font-family: var(--sw-mono);
+  font-weight: 400;
+  font-size: 11px;
+  line-height: 1;
+  color: inherit;
+}
+
+.sw-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.sw-header__ctrl-btn {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: var(--sw-sans);
+  font-weight: 500;
+  cursor: pointer;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sw-header__pause-btn {
+  font-size: 20px;
+  width: 28px;
+  height: 28px;
+}
+
+.sw-header__close-btn {
+  font-size: 30px;
+  width: 30px;
+  height: 30px;
+}
+
+.sw-header__semester {
+  margin: 8px 0 0;
+  font-family: var(--sw-mono);
+  font-size: 10px;
+  line-height: 1.2;
+  color: #53638d;
+}
+
+.sw-stage--04-midnight .sw-header__semester {
+  color: #98a5bd;
+}
+
+.sw-header__rule {
+  width: 100%;
+  height: 1px;
+  margin-top: 14px;
+  background: currentColor;
+  opacity: 0.22;
+}
+
+/* =========================================================================
+   Story Body Container
+   ========================================================================= */
+
+.sw-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 24px 28px;
+  cursor: pointer;
+}
+
+.sw-slide {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* =========================================================================
+   SLIDE 01: Attendance (Figma 74:2)
+   ========================================================================= */
+
+.sw-slide--01 {
+  padding-top: 30px;
+  gap: 0;
+}
+
+.sw-s01__hey {
+  margin: 0;
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 23.76px;
+  color: #fafaf5;
+}
+
+.sw-s01__showed {
+  margin: 4px 0 0;
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 36px;
+  line-height: 38.88px;
+  letter-spacing: -1.8px;
+  color: #fafaf5 !important;
+}
+
+.sw-s01__pct-block {
+  margin-top: 12px;
+}
+
+.sw-s01__pct-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-left: -4px;
+}
+
+.sw-s01__pct-num {
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: clamp(92px, 28vw, 116px);
+  line-height: 1.05;
+  letter-spacing: -5.8px;
+  color: #ebf581;
+}
+
+.sw-s01__pct-sign {
+  display: inline-block;
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 46px;
+  line-height: 49.68px;
+  letter-spacing: -2.3px;
+  color: #ebf581;
+}
+
+.sw-s01__pct-caption {
+  margin: 6px 0 0;
+  font-family: var(--sw-mono);
+  font-size: 10px;
+  line-height: 10.8px;
+  color: #fafaf5 !important;
+}
+
+.sw-s01__chart-wrap {
+  position: relative;
+  margin-top: 22px;
+  width: 100%;
+  height: 76px;
+  padding: 12px 8px;
+  display: flex;
+  align-items: center;
+}
+
+.sw-s01__chart-bg {
+  position: absolute;
+  inset: 0;
+  background: #fafaf5;
+  pointer-events: none;
+}
+
+.sw-s01__chart-ticks {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+}
+
+.sw-s01__tick {
+  width: 4px;
+  height: 52px;
+  flex-shrink: 0;
+}
+
+.sw-s01__tick--unfilled {
+  background: #fafaf5;
+}
+
+.sw-s01__classes-block {
+  margin-top: 22px;
+}
+
+.sw-s01__classes-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.sw-s01__attended {
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 62px;
+  line-height: 66.96px;
+  letter-spacing: -3.1px;
+  color: #fafaf5;
+}
+
+.sw-s01__conducted {
+  display: inline-block;
+  font-family: var(--sw-display);
+  font-weight: 500;
+  font-size: 28px;
+  line-height: 30.24px;
+  color: #d2daff;
+}
+
+.sw-s01__classes-label {
+  margin: 4px 0 0;
+  font-family: var(--sw-mono);
+  font-size: 10px;
+  line-height: 10.8px;
+  color: #d2daff !important;
+}
+
+.sw-s01__divider-h {
+  width: 100%;
+  height: 1px;
+  margin: 20px 0 18px;
+  background: #fafaf5;
+}
+
+.sw-s01__split {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.sw-s01__divider-v {
+  width: 1px;
+  height: 70px;
+  background: #fafaf5;
+}
+
+.sw-s01__split-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.sw-s01__split-val {
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 27px;
+  line-height: 29.16px;
+}
+
+.sw-s01__split-val--light {
+  color: #fafaf5;
+}
+
+.sw-s01__split-val--lime {
+  font-size: 25px;
+  line-height: 27px;
+  color: #ebf581;
+}
+
+.sw-s01__split-label {
+  margin-top: 6px;
+  font-family: var(--sw-mono);
+  font-size: 9px;
+  line-height: 9.72px;
+  color: #d2daff;
+}
+
+.sw-s01__split-sub {
+  margin-top: 10px;
+  font-family: var(--sw-sans);
+  font-size: 11px;
+  line-height: 11.88px;
+  color: #d2daff;
+}
+
+.sw-s01__closing {
+  margin-top: 32px;
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.sw-s01__closing-bar {
+  width: 3px;
+  min-height: 43px;
+  background: #ebf581;
+  flex-shrink: 0;
+}
+
+.sw-s01__closing-text {
+  margin: 0;
+  font-family: var(--sw-sans);
+  font-size: 13px;
+  line-height: 19.5px;
+  color: #fafaf5 !important;
+}
+
+/* =========================================================================
+   SLIDE 02: The Bunk Report (Figma 74:6)
+   ========================================================================= */
+
+.sw-s02__kicker {
+  margin: 0;
+  font-family: var(--sw-mono);
+  font-size: 10px;
+  line-height: 11.2px;
+  color: #1534a6 !important;
+}
+
+.sw-s02__headline-block {
+  margin-top: 22px;
+}
+
+.sw-s02__headline {
+  margin: 0;
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 40px;
+  line-height: 44.8px;
+  letter-spacing: -1.8px;
+  color: #1534a6 !important;
+}
+
+.sw-s02__underline {
+  margin-top: 4px;
+  width: 164px;
+  height: 3px;
+  background: #1534a6;
+}
+
+.sw-s02__bunk-hero {
+  margin-top: 16px;
+}
+
+.sw-s02__bunk-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.sw-s02__bunk-giant {
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: clamp(92px, 28vw, 113px);
+  line-height: 1.08;
+  letter-spacing: -5.085px;
+  color: #1534a6;
+  margin-left: -4px;
+}
+
+.sw-s02__bunk-label {
+  display: inline-block;
+  font-family: var(--sw-mono);
+  font-size: 12px;
+  line-height: 16.8px;
+  color: #1534a6;
+}
+
+.sw-s02__bunk-sub {
+  margin: 4px 0 0;
+  font-family: var(--sw-sans);
+  font-size: 13px;
+  line-height: 14.56px;
+  color: #1534a6 !important;
+}
+
+.sw-s02__panel {
+  margin-top: 24px;
+  width: 100%;
+  min-height: 80px;
+  padding: 15px 14px;
+  background: #1534a6;
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  gap: 18px;
+  align-items: center;
+}
+
+.sw-s02__panel-sep {
+  width: 1px;
+  height: 48px;
+  background: #fafaf5;
+}
+
+.sw-s02__panel-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sw-s02__panel-val {
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 25px;
+  line-height: 28px;
+  color: #fafaf5;
+}
+
+.sw-s02__panel-sub {
+  font-family: var(--sw-mono);
+  font-size: 10px;
+  line-height: 11.2px;
+  color: #fafaf5;
+}
+
+.sw-s02__leaderboard {
+  margin-top: 26px;
+}
+
+.sw-s02__leaderboard-title {
+  margin: 0 0 20px;
+  font-family: var(--sw-mono);
+  font-size: 10px;
+  line-height: 11.2px;
+  color: #1534a6 !important;
+}
+
+.sw-s02__leaderboard-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.sw-s02__lb-item {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sw-s02__lb-top {
+  display: grid;
+  grid-template-columns: 35px 1fr auto;
+  align-items: baseline;
+}
+
+.sw-s02__lb-rank {
+  font-family: var(--sw-mono);
+  font-size: 10px;
+  line-height: 11.2px;
+  color: #1534a6;
+}
+
+.sw-s02__lb-name {
+  font-family: var(--sw-sans);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 15px;
+  color: #1534a6;
+  padding-right: 10px;
+}
+
+.sw-s02__lb-count {
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 15.68px;
+  color: #1534a6;
+}
+
+.sw-s02__lb-track-wrap {
+  position: relative;
+  margin-left: 35px;
+  height: 3px;
+}
+
+.sw-s02__lb-track-bg {
+  position: absolute;
+  inset: 0;
+  background: #1534a6;
+}
+
+.sw-s02__lb-fill {
+  position: relative;
+  z-index: 1;
+  display: block;
+  height: 100%;
+  background: #2349eb;
+}
+
+/* =========================================================================
+   SLIDE 03: Ghosts & Loyalties (Figma 74:10)
+   ========================================================================= */
+
+.sw-s03__kicker {
+  margin: 0;
+  font-family: var(--sw-mono);
+  font-size: 10px;
+  line-height: 11.2px;
+  color: #53638d !important;
+}
+
+.sw-s03__headline {
+  margin: 22px 0 0;
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 35.84px;
+  letter-spacing: -1.28px;
+  color: #1534a6 !important;
+}
+
+.sw-s03__bunked-box {
+  margin-top: 24px;
+  width: 100%;
+  min-height: 190px;
+  padding: 18px 16px;
+  background: #1534a6;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.sw-s03__bunked-tag {
+  margin: 0;
+  font-family: var(--sw-mono);
+  font-size: 10px;
+  line-height: 11.2px;
+  color: #ebf581 !important;
+}
+
+.sw-s03__bunked-title {
+  margin: 14px 0 0;
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 21px;
+  line-height: 23.52px;
+  color: #fafaf5 !important;
+}
+
+.sw-s03__bunked-stats {
+  margin-top: 14px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.sw-s03__bunked-left {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.sw-s03__bunked-num {
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 55px;
+  line-height: 61.6px;
+  letter-spacing: -2.2px;
+  color: #ebf581;
+}
+
+.sw-s03__bunked-unit {
+  font-family: var(--sw-mono);
+  font-size: 10px;
+  line-height: 11.2px;
+  color: #fafaf5;
+}
+
+.sw-s03__bunked-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-bottom: 6px;
+}
+
+.sw-s03__bunked-pct {
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 21px;
+  line-height: 23.52px;
+  color: #fafaf5;
+}
+
+.sw-s03__bunked-att-label {
+  margin-top: 4px;
+  font-family: var(--sw-mono);
+  font-size: 8px;
+  line-height: 8.96px;
+  color: #fafaf5;
+}
+
+.sw-s03__loyal-box {
+  margin-top: 12px;
+  width: 100%;
+  min-height: 174px;
+  padding: 18px 16px;
+  background: #ebf581;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.sw-s03__loyal-tag {
+  margin: 0;
+  font-family: var(--sw-mono);
+  font-size: 10px;
+  line-height: 11.2px;
+  color: #1534a6 !important;
+}
+
+.sw-s03__loyal-title {
+  margin: 12px 0 0;
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 26.88px;
+  color: #1534a6 !important;
+}
+
+.sw-s03__loyal-pct {
+  margin: 8px 0 0;
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 49px;
+  line-height: 54.88px;
+  letter-spacing: -1.96px;
+  color: #1534a6 !important;
+}
+
+.sw-s03__loyal-sub {
+  margin: 8px 0 0;
+  font-family: var(--sw-mono);
+  font-size: 10px;
+  line-height: 11.2px;
+  color: #1534a6 !important;
+}
+
+.sw-s03__bottom-split {
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.sw-s03__bottom-divider {
+  width: 1px;
+  height: 100px;
+  background: #bec8e9;
+}
+
+.sw-s03__bottom-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.sw-s03__bottom-eyebrow {
+  font-family: var(--sw-mono);
+  font-size: 9px;
+  line-height: 10.08px;
+  color: #53638d;
+}
+
+.sw-s03__room-val {
+  margin-top: 12px;
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 27px;
+  line-height: 30.24px;
+  color: #1534a6;
+}
+
+.sw-s03__tightrope-code {
+  margin-top: 12px;
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 24.64px;
+  color: #1534a6;
+}
+
+.sw-s03__tightrope-pct {
+  margin-top: 2px;
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 17.92px;
+  color: #1534a6;
+}
+
+.sw-s03__bottom-note {
+  margin: 8px 0 0;
+  font-family: var(--sw-sans);
+  font-size: 12px;
+  line-height: 18px;
+  color: #53638d !important;
+}
+
+/* =========================================================================
+   SLIDE 04: The Tactical Ghost / Archetype (Figma 74:14)
+   ========================================================================= */
+
+.sw-s04__kicker {
+  margin: 0;
+  font-family: var(--sw-mono);
+  font-size: 10px;
+  line-height: 10.8px;
+  color: #98a5bd !important;
+}
+
+.sw-s04__intro {
+  margin: 18px 0 0;
+  font-family: var(--sw-sans);
+  font-size: 12px;
+  line-height: 18px;
+  color: #98a5bd !important;
+}
+
+.sw-s04__badge {
+  margin-top: 28px;
+  align-self: flex-start;
+  min-width: 173px;
+  height: 27px;
+  padding: 0 12px;
+  background: #ebf581;
+  display: inline-flex;
+  align-items: center;
+}
+
+.sw-s04__badge span {
+  display: inline-block;
+  font-family: var(--sw-mono);
+  font-size: 10px;
+  line-height: 10.8px;
+  color: #10151f;
+}
+
+.sw-s04__title {
+  margin: 22px 0 0 -2px;
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: clamp(44px, 13vw, 53px);
+  line-height: 1.08;
+  letter-spacing: -2.12px;
+  color: #f2f3ee !important;
+}
+
+.sw-s04__identity-bars {
+  margin-top: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.sw-s04__id-bar {
+  width: 17px;
+  will-change: transform, opacity;
+}
+
+.sw-s04__id-bar--0 {
+  height: 3px;
+  background: #ebf581;
+}
+
+.sw-s04__id-bar--1 {
+  height: 10px;
+  background: #8098ff;
+}
+
+.sw-s04__id-bar--2 {
+  height: 17px;
+  background: #8098ff;
+}
+
+.sw-s04__quote {
+  margin: 28px 0 0;
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 28.08px;
+  color: #ebf581 !important;
+}
+
+.sw-s04__desc {
+  margin: 18px 0 0;
+  font-family: var(--sw-sans);
+  font-size: 14px;
+  line-height: 21px;
+  color: #f2f3ee !important;
+}
+
+.sw-s04__rule {
+  width: 100%;
+  height: 1px;
+  margin: 36px 0 18px;
+  background: #303c52;
+}
+
+.sw-s04__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.sw-s04__metric-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sw-s04__metric-label {
+  font-family: var(--sw-mono);
+  font-size: 9px;
+  line-height: 9.72px;
+  color: #98a5bd;
+}
+
+.sw-s04__metric-val {
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 27px;
+  line-height: 29.16px;
+  color: #f2f3ee;
+}
+
+.sw-s04__metric-val--lime {
+  color: #ebf581;
+}
+
+.sw-s04__marks-box {
+  margin-top: 24px;
+  width: 100%;
+  min-height: 74px;
+  padding: 13px 14px;
+  background: #19264b;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.sw-s04__marks-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sw-s04__marks-eyebrow {
+  font-family: var(--sw-mono);
+  font-size: 9px;
+  line-height: 9.72px;
+  color: #ebf581;
+}
+
+.sw-s04__marks-main {
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 14.04px;
+  color: #f2f3ee;
+}
+
+.sw-s04__marks-sub {
+  font-family: var(--sw-sans);
+  font-size: 10px;
+  line-height: 10.8px;
+  color: #98a5bd;
+}
+
+/* =========================================================================
+   SLIDE 05: Your Wrapped Receipt (Figma 74:18)
+   ========================================================================= */
+
+.sw-s05__kicker {
+  margin: 0;
+  font-family: var(--sw-mono);
+  font-size: 10px;
+  line-height: 11.5px;
+  color: #53638d !important;
+}
+
+.sw-s05__headline {
+  margin: 22px 0 0;
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 34px;
+  line-height: 39.1px;
+  letter-spacing: -1.36px;
+  color: #1534a6 !important;
+}
+
+.sw-s05__switcher {
+  margin-top: 14px;
+  width: 100%;
+  height: 36px;
+  padding: 3px;
+  background: #eef1fc;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+}
+
+.sw-s05__switch-btn {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #53638d;
+  font-family: var(--sw-sans);
+  font-weight: 500;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sw-s05__switch-btn > span {
+  display: inline-block;
+}
+
+.sw-s05__switch-btn--active {
+  background: #2349eb;
+  color: #fafaf5;
+}
+
+/* Shareable Semester Receipt (75:164) */
+.sw-s05__receipt {
+  margin-top: 20px;
+  width: 100%;
+  background: #2349eb;
+  color: #fafaf5;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  transition: background-color 0.22s ease;
+  will-change: transform, opacity;
+}
+
+.sw-s05__receipt--midnight {
+  background: #10151f;
+}
+
+.sw-s05__receipt-inner {
+  padding: 16px 16px 18px;
+}
+
+.sw-s05__r-brand {
+  margin: 0;
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 19px;
+  line-height: 21.85px;
+  color: #fafaf5 !important;
+}
+
+.sw-s05__r-meta {
+  margin: 7px 0 0;
+  font-family: var(--sw-mono);
+  font-size: 9px;
+  line-height: 10.35px;
+  color: #fafaf5 !important;
+}
+
+.sw-s05__r-rule {
+  width: 100%;
+  height: 1px;
+  margin: 12px 0 16px;
+  background: rgba(250, 250, 245, 0.3);
+}
+
+.sw-s05__r-hero {
+  display: grid;
+  grid-template-columns: 1.35fr 0.65fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.sw-s05__r-hero-left,
+.sw-s05__r-hero-right {
+  display: flex;
+  flex-direction: column;
+}
+
+.sw-s05__r-label {
+  font-family: var(--sw-mono);
+  font-size: 9px;
+  line-height: 10.35px;
+  color: #fafaf5;
+}
+
+.sw-s05__r-pct {
+  margin-top: 8px;
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 48px;
+  line-height: 52px;
+  letter-spacing: -1.92px;
+  color: #ebf581;
+}
+
+.sw-s05__r-bunks {
+  margin-top: 10px;
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 43px;
+  line-height: 49.45px;
+  letter-spacing: -1.72px;
+  color: #ebf581;
+}
+
+.sw-s05__r-sub {
+  margin-top: 6px;
+  font-family: var(--sw-mono);
+  font-size: 10px;
+  line-height: 11.5px;
+  color: #fafaf5;
+}
+
+.sw-s05__r-safe {
+  margin-top: 8px;
+  font-family: var(--sw-mono);
+  font-size: 10px;
+  line-height: 11.5px;
+  color: #fafaf5;
+}
+
+.sw-s05__r-courses {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.sw-s05__r-course-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sw-s05__r-course-tag {
+  font-family: var(--sw-mono);
+  font-size: 8px;
+  line-height: 9.2px;
+  color: #fafaf5;
+}
+
+.sw-s05__r-course-name {
+  margin-top: 8px;
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 11.5px;
+  line-height: 13.5px;
+  color: #fafaf5;
+}
+
+.sw-s05__r-course-stat {
+  margin-top: 10px;
+  font-family: var(--sw-mono);
+  font-size: 9px;
+  line-height: 10.35px;
+  color: #fafaf5;
+}
+
+.sw-s05__r-archetype {
+  width: 100%;
+  min-height: 58px;
+  padding: 11px 16px;
+  background: #ebf581;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+}
+
+.sw-s05__r-arch-kicker {
+  font-family: var(--sw-mono);
+  font-size: 9px;
+  line-height: 10.35px;
+  color: #1534a6;
+}
+
+.sw-s05__r-arch-quote {
+  font-family: var(--sw-display);
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 13.8px;
+  color: #1534a6;
+}
+
+.sw-s05__feedback {
+  margin: 8px 0 0;
+  font-family: var(--sw-mono);
+  font-size: 10px;
+  text-align: center;
+  color: #2349eb !important;
+}
+
+.sw-s05__actions {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sw-s05__btn-label {
+  display: inline-block;
+}
+
+.sw-s05__download-btn {
+  width: 100%;
+  height: 44px;
+  border: 0;
+  border-radius: 0;
+  background: #2349eb;
+  color: #fafaf5;
+  font-family: var(--sw-sans);
+  font-weight: 500;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.sw-s05__download-btn:hover:not(:disabled) {
+  background: #1534a6;
+}
+
+.sw-s05__secondary-row {
+  display: grid;
+  grid-template-columns: 221fr 116fr;
+  gap: 8px;
+}
+
+.sw-s05__share-btn,
+.sw-s05__replay-btn {
+  height: 32px;
+  border: 0;
+  border-radius: 0;
+  background: #eef1fc;
+  color: #1534a6;
+  font-family: var(--sw-sans);
+  font-weight: 500;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.sw-s05__share-btn:hover:not(:disabled),
+.sw-s05__replay-btn:hover:not(:disabled) {
+  background: #dce3f4;
+}
+
+/* Reduced Motion Accessibility Support */
+@media (prefers-reduced-motion: reduce) {
+  .sw-anim-word,
+  .sw-anim-char,
+  .sw-anim-line,
+  .sw-s04__id-bar,
+  .sw-s05__receipt {
+    will-change: auto;
+  }
+}

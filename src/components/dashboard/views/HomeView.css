@@ -589,4 +589,89 @@
   color: #0c0d10;
 }
 
+/* =========================================================================
+   Semester Wrapped Opener (Figma 81:2)
+   ========================================================================= */
+
+.home__wrapped-opener {
+  margin: 0 0 28px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  border: 0;
+  border-radius: 0;
+  background: #2349eb;
+  color: #fafaf5;
+  cursor: pointer;
+}
+
+.home__wrapped-opener-top {
+  width: 100%;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.home__wrapped-opener-context {
+  font-family: 'IBM Plex Mono', var(--mono), monospace;
+  font-weight: 400;
+  font-size: 9px;
+  line-height: 12px;
+  color: #ebf581;
+}
+
+.home__wrapped-opener-dismiss {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fafaf5;
+  font-family: 'Inter', var(--sans), sans-serif;
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.home__wrapped-opener-title {
+  margin: 0;
+  font-family: 'Space Grotesk', var(--display), sans-serif;
+  font-weight: 700;
+  font-size: 25px;
+  line-height: 30px;
+  letter-spacing: -0.8px;
+  color: #fafaf5 !important;
+}
+
+.home__wrapped-opener-desc {
+  margin: 0;
+  font-family: 'Inter', var(--sans), sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 18px;
+  color: #dee5ff !important;
+}
+
+.home__wrapped-opener-action {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: 'Inter', var(--sans), sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 20px;
+  color: #ebf581;
+  cursor: pointer;
+  text-align: left;
+}
+
+
+
 
