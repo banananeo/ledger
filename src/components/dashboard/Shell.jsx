@@ -184,7 +184,7 @@ function Shell({ data, lastSynced, onRefresh, refreshing, onLogout, error, onRec
         <NotificationDrawer onNavigate={navigate} />
         <AIAssistantDrawer data={data} isOpen={aiOpen} onClose={() => setAiOpen(false)} />
         <SemesterWrappedModal data={data} isOpen={wrappedOpen} onClose={() => setWrappedOpen(false)} />
-        {afterHoursOpen && <AfterHoursScene onClose={() => setAfterHoursOpen(false)} />}
+        {afterHoursOpen && <AfterHoursScene profile={profile} onClose={() => setAfterHoursOpen(false)} />}
         </div>
       </TodoProvider>
     </NotificationProvider>
